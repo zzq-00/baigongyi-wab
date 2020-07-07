@@ -1,0 +1,582 @@
+<template>
+  <div class="ask-question">
+    <p class="titles">{{$route.query.askEditOrNew=='edit'?'修改提问':'提问'}}</p>
+    <div class="ask-contents">
+      <el-form :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100" class="ask-ruleForm">
+        <el-form-item label="标题" prop="title" class="title-item">
+          <el-input v-model="ruleForm.title" maxlength="50" show-word-limit></el-input>
+        </el-form-item>
+      </el-form>
+      <div class="ask-Label">
+        <p class="label-title">
+          <span>*</span>
+          <span>问题标签</span>
+          <span>最多可添加5个标签</span>
+        </p>
+        <div class="label-list">
+          <el-tag :key="index" v-for="(tag,index) in dynamicTags" closable :disable-transitions="false" @close="handleClose(tag,index)">
+            {{tag.parentTagName}}-{{tag.tagName}}
+          </el-tag>
+        </div>
+        <p class="label-add" @click="addLabel()">
+          <img src="@/assets/images/add_label.png" alt="">
+          <span>添加标签（{{dynamicTags.length}}/5）</span>
+        </p>
+      </div>
+      <div class="ask-describe">
+        <p class="describe-title">问题描述（选填）</p>
+        <Editor v-model="ruleForm.questionContent" :value="ruleForm.questionContent" />
+      </div>
+    </div>
+    <div class="footer">
+      <button @click="release('ruleForm')">发布</button>
+    </div>
+    <el-dialog title="添加标签" :visible.sync="dialogVisible" :close-on-press-escape='false' :close-on-click-modal='false' width="785px" class=" label-dialog">
+      <div class="dialog-content">
+        <div class="have-chosen">
+          <p class="dialog-title">
+            <span></span>
+            <span>已选标签</span>
+            <span>{{diaDynamicTags.length}}/5</span>
+          </p>
+          <div class="label-list">
+            <el-tag :key="index" v-for="(tag,index) in diaDynamicTags" closable :disable-transitions="false" @close="handleCloseDia(tag,index)">
+              {{tag.parentTagName}}-{{tag.tagName}}
+            </el-tag>
+          </div>
+        </div>
+        <div class="all-label">
+          <p class="dialog-title">
+            <span></span>
+            <span>全部标签</span>
+            <span>最多可选择5个标签</span>
+          </p>
+          <div class="label-box">
+            <ul class="left-frist">
+              <li v-for="(item,index) in firstTag" :key="index" :class="[activeIndex==index?'active-style':'']" @click="changeFirst(item,index)">
+                <span class="red-label"></span>
+                <span class="frist-name">{{item.tagName}}
+                  <span class="frist-name-have" v-if="item.checkedArr.length>0">{{item.checkedArr.length}}</span>
+                </span>
+              </li>
+            </ul>
+            <ul class="right-second" v-if="firstTag[activeIndex]">
+              <li v-for="(its,ins) in computedSecondTag(firstTag[activeIndex].id)" :key="its.id" :class="[its.checked?'checked-style':'']" @click="changeSecond(its,ins)">{{its.tagName}}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="sureLabel()">确 定</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import Editor from '@/components/Editor.vue'
+export default {
+  components: {
+    Editor
+  },
+  data() {
+    return {
+      dialogVisible: false, //选择标签的弹框
+      dynamicTags: [], //问题标签
+      allTags: [],
+      activeIndex: 0,
+      tagParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 20,
+        paramObject: {}
+      },
+      ruleForm: {
+        title: '', //标题
+        questionContent: '', //问题描述
+        tagIds: '', //标签id
+        accountId: '' //账号id
+      },
+      rules: {
+        title: [
+          { required: true, message: '请输入标题', trigger: 'blur' },
+          { min: 1, max: 50, message: '长度在 50 个字符以内', trigger: 'blur' }
+        ]
+      },
+      diaDynamicTags: [] //弹框内已选的标签
+    }
+  },
+  watch: {},
+  computed: {
+    firstTag() {
+      return this.allTags.filter(item => !item.parentId)
+    }
+  },
+  methods: {
+    computedSecondTag(id) {
+      return this.allTags.filter(item => item.parentId === id)
+    },
+    // 问题详情
+    questionDetails() {
+      return new Promise((resolve, relect) => {
+        api.questionDetails(this.$route.query.id).then(res => {
+          this.questionDetailsObj = res.data.question
+          this.ruleForm.title = res.data.question.title
+          this.ruleForm.questionContent = res.data.question.questionContent
+          res.data.questionTagList.map(item => {
+            item.children.map(items => {
+              this.dynamicTags.push({
+                id: items.id,
+                createTime: items.createTime,
+                updateTime: items.createTime,
+                tagName: items.tagName,
+                icon: items.icon,
+                description: items.description,
+                sortNumber: items.sortNumber,
+                parentId: item.id,
+                children: [],
+                checkedArr: [],
+                checked: items.checked,
+                parentTagName: item.tagName
+              })
+            })
+          })  
+          resolve(this.questionDetailsObj)
+        })
+      })
+    },
+    release(formName) {
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          if (this.dynamicTags.length > 0) {
+            let arr = []
+            this.dynamicTags.map(item => {
+              arr.push(item.id)
+            })
+            this.ruleForm.tagIds = arr.toString()
+            console.log(this.$route.query.id)
+            this.ruleForm.id = this.$route.query.id
+            api.saveOrUpdateQuestion(this.ruleForm).then(res => {
+              this.$message({
+                message: '提交成功',
+                type: 'success'
+              })
+              this.$router.push('/questions')
+            })
+          } else {
+            this.$message({
+              message: '请填完必填信息',
+              type: 'warning'
+            })
+          }
+        } else {
+          this.$message({
+            message: '请填完必填信息',
+            type: 'warning'
+          })
+          return false
+        }
+      })
+    },
+    tagList() {
+      api.tagList(this.tagParams).then(res => {
+        this.allTags = res.data.records
+        this.allTags.map(item => {
+          item.checkedArr = []
+        })
+      })
+    },
+    // 添加标签
+    addLabel() {
+      this.dialogVisible = true
+      this.diaDynamicTags = JSON.parse(JSON.stringify(this.dynamicTags))
+      if (this.diaDynamicTags.length == 0) {
+        this.firstTag.map(item => {
+          item.checkedArr = []
+          this.computedSecondTag(item.id).map(its => {
+            its.checked = false
+          })
+        })
+      } else {
+        this.firstTag.map(items => {
+          items.checkedArr = []
+          this.computedSecondTag(items.id).map(its => {
+            its.checked = false
+          })
+        })
+        this.diaDynamicTags.map(item => {
+          let obj = this.firstTag.find(it => it.id == item.parentId)
+          obj.checkedArr.push(item)
+          this.computedSecondTag(obj.id).map(its => {
+            if (its.id == item.id) {
+              its.checked = true
+            }
+          })
+        })
+      }
+    },
+    //
+    spliceFunction(tag) {
+      let spliceIndex = this.allTags.findIndex(item => item.id == tag.id)
+      this.$set(this.allTags[spliceIndex], 'checked', false)
+      let spliceObj = this.firstTag.find(item => item.id == tag.parentId)
+      let spliceObjIndex = spliceObj.checkedArr.findIndex(item => item.id == tag.id)
+      spliceObj.checkedArr.splice(spliceObjIndex, 1)
+    },
+    handleClose(tag) {
+      this.spliceFunction(tag)
+      this.dynamicTags.splice(this.dynamicTags.indexOf(tag), 1)
+
+      console.log(this.dynamicTags, 'this.dynamicTags')
+    },
+    // 弹框内删除标签
+    handleCloseDia(tag) {
+      this.spliceFunction(tag)
+      this.diaDynamicTags.splice(this.diaDynamicTags.indexOf(tag), 1)
+    },
+    // 选择第一级
+    changeFirst(item, index) {
+      this.activeIndex = index
+    },
+    // 选择第二级
+    changeSecond(its, ins) {
+      if (this.diaDynamicTags.length >= 5) {
+        if (its.checked) {
+          this.$set(its, 'checked', !its.checked)
+          this.firstTag[this.activeIndex].checkedArr = this.computedSecondTag(this.firstTag[this.activeIndex].id).filter(item => item.checked)
+          this.diaDynamicTags.splice(
+            this.diaDynamicTags.findIndex(item => item.id == its.id),
+            1
+          )
+        }
+      } else {
+        this.$set(its, 'checked', !its.checked)
+        this.firstTag[this.activeIndex].checkedArr = this.computedSecondTag(this.firstTag[this.activeIndex].id).filter(item => item.checked)
+        if (its.checked) {
+          this.diaDynamicTags.push(this.allTags.find(item => item.id == its.id))
+          this.diaDynamicTags.map(item => {
+            let parenteEle = this.allTags.find(i => i.id == item.parentId)
+            item.parentTagName = parenteEle.tagName
+          })
+        } else {
+          this.diaDynamicTags.splice(
+            this.diaDynamicTags.findIndex(item => item.id == its.id),
+            1
+          )
+        }
+      }
+    },
+    // 确定标签
+    sureLabel() {
+      if (this.diaDynamicTags.length > 0) {
+        this.dynamicTags = JSON.parse(JSON.stringify(this.diaDynamicTags))
+        this.dialogVisible = false
+      }
+    }
+  },
+  mounted() {
+    this.tagList()
+    if (this.$route.query.id) {
+      this.questionDetails()
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.ask-question {
+  height: calc(100vh - 170px);
+  margin: 21px 0 29px 0;
+  background: #fff;
+  border-radius: 10px;
+  position: relative;
+  .label-list {
+    margin-top: 10px;
+    /deep/.el-tag {
+      height: 30px;
+      line-height: 30px;
+      border: none;
+      border-radius: 2px;
+      background: #f3f3f3;
+      color: #333333;
+      margin-right: 10px;
+      margin-bottom: 10px;
+      .el-tag__close {
+        color: #e23732;
+      }
+      .el-tag__close:hover {
+        background-color: #e23732;
+        color: #fff;
+      }
+    }
+  }
+  .titles {
+    padding: 22px 0 11px 20px;
+    height: 17px;
+    line-height: 17px;
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(74, 74, 74, 1);
+    border-bottom: 1px solid #dddddd;
+  }
+  .ask-contents {
+    width: 740px;
+    margin: 0 auto;
+    height: calc(100vh - 272px);
+    overflow: auto;
+    .ask-ruleForm {
+      .title-item {
+        /deep/.el-form-item__label {
+          width: 100%;
+          text-align: left;
+          line-height: 14px;
+          padding-top: 21px;
+          padding-bottom: 11px;
+        }
+        /deep/.el-form-item__label:before {
+          margin-right: 0px;
+        }
+        /deep/.el-form-item__content {
+          line-height: 30px;
+        }
+        /deep/.el-input {
+          width: 560px;
+          .el-input__inner {
+            height: 30px;
+          }
+        }
+      }
+    }
+    .ask-Label {
+      margin-top: 20px;
+      margin-bottom: 11px;
+      .label-title {
+        span:nth-child(1) {
+          color: #f56c6c;
+        }
+        span:nth-child(2) {
+          font-size: 14px;
+          color: #4a4a4a;
+        }
+        span:nth-child(3) {
+          margin-left: 10px;
+          font-size: 12px;
+          color: #999999;
+        }
+      }
+      .label-add {
+        margin-top: 13px;
+        vertical-align: middle;
+        display: inline-block;
+        cursor: pointer;
+        img {
+          width: 16px;
+          height: 16px;
+          vertical-align: middle;
+        }
+        span {
+          display: inline-block;
+          vertical-align: middle;
+          margin-left: 4px;
+          height: 16px;
+          line-height: 16px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(226, 55, 50, 1);
+        }
+      }
+    }
+    .ask-describe {
+      .describe-title {
+        height: 15px;
+        line-height: 15px;
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(74, 74, 74, 1);
+        margin: 23px 0 10px 0;
+      }
+      .quill-box {
+        /deep/.ql-editor {
+          height: 350px;
+          min-height: 200px;
+        }
+      }
+    }
+  }
+  .ask-contents::-webkit-scrollbar {
+    display: none;
+  }
+  .footer {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    text-align: center;
+    height: 50px;
+    line-height: 50px;
+    border-top: 1px solid #dddddd;
+    button {
+      width: 90px;
+      height: 34px;
+      line-height: 34px;
+      border-radius: 5px;
+      background: #e23732;
+      font-size: 14px;
+      color: #fff;
+      cursor: pointer;
+    }
+  }
+  .label-dialog {
+    /deep/.el-dialog__header {
+      padding: 22px 0 12px 20px;
+      border: 1px solid #dddddd;
+      .el-dialog__title {
+        line-height: 16px;
+        font-size: 16px;
+        color: #4a4a4a;
+      }
+    }
+    /deep/.el-dialog__body {
+      padding: 0;
+    }
+    /deep/.el-dialog__footer {
+      padding: 9px 0 7px 0;
+      text-align: center !important;
+      border: 1px solid #ddd;
+      .dialog-footer {
+        .el-button {
+          width: 89px;
+        }
+      }
+    }
+    .dialog-content {
+      padding: 0 20px;
+      padding-top: 10px;
+      .dialog-title {
+        margin-bottom: 12px;
+        span {
+          display: inline-block;
+          vertical-align: middle;
+        }
+        span:nth-child(1) {
+          width: 4px;
+          height: 14px;
+          background: #f33535;
+          margin-right: 6px;
+        }
+        span:nth-child(2) {
+          height: 14px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          line-height: 14px;
+          margin-right: 10px;
+        }
+        span:nth-child(3) {
+          height: 14px;
+          font-size: 14px;
+          line-height: 14px;
+          font-weight: 400;
+          color: rgba(153, 153, 153, 1);
+        }
+      }
+      .label-list {
+        margin-bottom: 10px;
+      }
+      .all-label {
+        .label-box {
+          width: 740px;
+          height: 449px;
+          background: rgba(255, 255, 255, 1);
+          border: 1px solid rgba(153, 153, 153, 1);
+          margin-bottom: 70px;
+          .left-frist {
+            width: 120px;
+            background: #f7f6fb;
+            float: left;
+            padding-top: 10px;
+            height: calc(100% - 10px);
+            li {
+              height: 40px;
+              line-height: 40px;
+              text-align: center;
+              font-size: 14px;
+              color: rgba(102, 102, 102, 1);
+              cursor: pointer;
+              .red-label {
+                width: 4px;
+                height: 14px;
+                background: #f33535;
+                border-radius: 1px;
+                margin-top: 13px;
+                display: none;
+                position: absolute;
+              }
+              .frist-name {
+                position: relative;
+                .frist-name-have {
+                  position: absolute;
+                  top: -7px;
+                  padding: 0 7px;
+                  height: 15px;
+                  line-height: 15px;
+                  background: #fd4040;
+                  border-radius: 7px;
+                  color: #fff;
+                }
+              }
+            }
+            li:hover {
+              color: #f33535;
+              .red-label {
+                display: block;
+              }
+            }
+            .active-style {
+              color: #f33535;
+              .red-label {
+                display: block;
+              }
+            }
+          }
+          .right-second {
+            float: left;
+            display: flex;
+            padding: 12px;
+            width: 596px;
+            flex-wrap: wrap;
+            align-content: flex-start;
+            justify-content: flex-start;
+            li {
+              width: 120px;
+              text-align: center;
+              height: 40px;
+              line-height: 40px;
+              background: #f3f3f5;
+              border-radius: 2px;
+              font-size: 14px;
+              font-weight: 400;
+              color: rgba(51, 51, 51, 1);
+              margin-right: 10px;
+              cursor: pointer;
+              margin-top: 10px;
+            }
+            li:nth-child(1),
+            li:nth-child(2),
+            li:nth-child(3),
+            li:nth-child(4) {
+              margin-top: 0;
+            }
+            .checked-style {
+              color: #f33535;
+              background-color: #fbf0f1;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</style>

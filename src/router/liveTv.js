@@ -1,0 +1,23 @@
+/**
+ * 直播
+ */
+export default [
+  {
+    path: '/layout',
+    component: () => import('../views/layout/layout.vue'),
+    children: [
+      {
+        path: '/livetv',
+        component: () => import('../views/liveTv/liveTv.vue')
+      },
+      {
+        path: '/livetv/:id',
+        component: () => import('../views/liveTv/liveTvDetails.vue')
+      }
+    ]
+  },
+  {
+    path: '/liveBox/:id',
+    component: () => import('../views/liveTv/liveBox.vue'),
+  }
+]

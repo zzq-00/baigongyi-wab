@@ -1,0 +1,514 @@
+<template>
+  <div class="hotspot-box clearfix">
+    <div class='hot-news fl'>
+      <div class="news-titles">
+        <ul>
+          <li :class="[newActiveIndex==index?'newActive-color':'']" v-for="(item,index) in hotnewsTitleList" :key="index" @click="newActiveIndex=index">{{item}}</li>
+        </ul>
+        <span @click="gotoMoreNews('hot')">更多资讯>></span>
+      </div>
+      <div class="news-list">
+        <div class="headlines">
+          <ul>
+            <li class="clearfix" v-for="(item,index) in headLinesList[newActiveIndex]" :key="index">
+              <a :href="`/hotmessage/${item.id}?currentIndex=${newActiveIndex}`" target="_blank" rel="noopener noreferrer">
+                <img :src="$store.state.imageDomain + item.image" alt="">
+              </a>
+              <div class="news-introduce">
+                <p class="introduce-titles">
+                  <a :href="`/hotmessage/${item.id}?currentIndex=${newActiveIndex}`" target="_blank" rel="noopener noreferrer">{{item.title}}</a>
+                </p>
+                <div class="introduce-word">
+                  <a :href="`/hotmessage/${item.id}?currentIndex=${newActiveIndex}`" target="_blank" rel="noopener noreferrer">
+                    {{item.roundup}}
+                  </a>
+                </div>
+                <p class="news-components">
+                  <span>{{item.likeCount | formatNumbers}}赞</span>
+                  <span>{{item.commentCount | formatNumbers}}评论</span>
+                  <span>{{item.publishTime | DateIndex}}</span>
+                </p>
+              </div>
+            </li>
+          </ul>
+        </div>
+        <div class="general-news">
+          <ul>
+            <li v-for="(item,index) in newsList[newActiveIndex]" :key="index">
+              <span class="news-title-title"><a :href="`/hotmessage/${item.id}?currentIndex=${newActiveIndex}`" target="_blank">{{item.title}}</a></span>
+              <span>{{item.publishTime | DateIndex}}</span>
+            </li>
+          </ul>
+        </div>
+        <div class="news-picture">
+          <img src="@/assets/images/picture1.png" alt="">
+          <img src="@/assets/images/picture2.png" alt="">
+        </div>
+      </div>
+    </div>
+    <div class="curriculum fr">
+      <div class="curriculum-title">
+        <span class="newActive-color">新上好课</span>
+        <span @click="gotoMoreNews('curriculum')">
+          <a href="/lectureRoom" target="_blank" rel="noopener noreferrer">进入讲堂>></a>
+        </span>
+      </div>
+      <div class="curriculum-hot">
+        <a :href="`/courseDetail/${newGoodLessonsFrist.id}`" target="_blank" rel="noopener noreferrer">
+          <img :src="newGoodLessonsFrist.image?$store.state.imageDomain + newGoodLessonsFrist.image:''" alt="">
+        </a>
+        <p class="titles">
+          <a :href="`/courseDetail/${newGoodLessonsFrist.id}`" target="_blank" rel="noopener noreferrer">
+            {{newGoodLessonsFrist.name}}
+          </a>
+        </p>
+        <p class="introduce">
+          <a :href="`/courseDetail/${newGoodLessonsFrist.id}`" target="_blank" rel="noopener noreferrer">
+            <!-- {{newGoodLessonsFrist.courseDescription}} -->
+          </a>
+        </p>
+        <p class="curriculum-teacher clearfix">
+          <span class="fl">{{newGoodLessonsFrist.realName}}</span>
+          <span class="fr" v-if="newGoodLessonsFrist.price">{{newGoodLessonsFrist.price=='0.00'?'免费':'￥'+newGoodLessonsFrist.price}}</span>
+        </p>
+      </div>
+      <div class="curriculum-list">
+        <ul>
+          <li v-for="(item,index) in newGoodLessons" :key="index" v-if="index==0||index==1">
+            <a :href="`/courseDetail/${item.id}`" target="_blank" rel="noopener noreferrer">
+              <img :src="$store.state.imageDomain + item.image" alt="">
+            </a>
+            <p class="titles">
+              <a :href="`/courseDetail/${item.id}`" target="_blank" rel="noopener noreferrer">
+                {{item.name}}
+              </a>
+            </p>
+            <p class="curriculum-teacher clearfix">
+              <span class="fl">{{item.realName}}</span>
+              <span class="fr">{{item.price=='0.00'?'免费':'￥'+item.price}}</span>
+            </p>
+          </li>
+        </ul>
+      </div>
+      <div class="curriculum-footer">
+        <a href="/lectureRoom" target="_blank" rel="noopener noreferrer">
+          <button>查看更多好课>></button>
+        </a>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  components: {},
+  data() {
+    return {
+      hotnewsTitleList: ['新闻热点', '建筑前沿', '资质热点'],
+      newActiveIndex: 0,
+      newGoodLessonsFrist: {
+        image: '',
+        name: '',
+        courseDescription: '',
+        realName: '',
+        price: ''
+      },
+      headLinesList: {
+        0: [],
+        1: [],
+        2: []
+      },
+      newsList: {
+        0: {},
+        1: {},
+        2: {}
+      },
+      newGoodLessons: []
+    }
+  },
+
+  props: {
+    newHotObj: Object,
+    hotColumns: Array
+  },
+  watch: {
+    hotColumns: {
+      handler(newVal, oldVal) {
+        if (newVal.length > 0) {
+          this.newGoodLessons = [newVal[1], newVal[2]]
+          this.newGoodLessonsFrist = newVal[0]
+          this.newGoodLessons.map(item => {
+            if (item.name) {
+              if (item.name.length > 11) {
+                item.name = item.name.substring(0, 9) + '...'
+              }
+            }
+          })
+        }
+      },
+      // immediate: true,
+      deep: true // 深度监听
+    },
+    newHotObj: {
+      //深度监听，可监听到对象、数组的变化
+      handler(newV, oldV) {
+        // do something, 可使用this
+        if (newV) {
+          let arrIndex
+          for (var a in newV) {
+            newV[a].map(item => {
+              if (item.roundup) {
+                if (item.roundup.length > 100) {
+                  item.roundup = item.roundup.substring(0, 100) + '...'
+                }
+              }
+            })
+            switch (a) {
+              case 'hot_news':
+                arrIndex = 0
+                break
+              case 'architectural_frontier':
+                arrIndex = 1
+                break
+              case 'qualification_hotspot':
+                arrIndex = 2
+                break
+              default:
+                break
+            }
+            // 新闻热点
+            let newArr = newV[a].slice(0)
+            if (newV[a].length > 2) {
+              this.newsList[arrIndex] = newArr
+              this.headLinesList[arrIndex] = newV[a].slice(0, 2)
+              this.newsList[arrIndex].splice(0, 2)
+            } else {
+              this.headLinesList[arrIndex] = newV[a]
+              this.newsList[arrIndex] = []
+            }
+          }
+        }
+      },
+      deep: true
+      // immediate:true,
+    }
+  },
+  computed: {},
+  methods: {
+    // 更多资讯
+    gotoMoreNews(val) {
+      let routeUrl
+      if (val == 'hot') {
+        routeUrl = this.$router.resolve({ path: 'hotmessage', query: { indexs: this.newActiveIndex } })
+      }
+      window.open(routeUrl.href, '_blank')
+    }
+  },
+  mounted() {}
+}
+</script>
+<style lang="less" scoped>
+.hotspot-box {
+  margin-top: 44px;
+  .hot-news {
+    width: 726px;
+    .news-titles {
+      border-bottom: 1px solid #f8e7e6;
+      padding-bottom: 12px;
+      ul {
+        display: inline-block;
+        height: 25px;
+        li {
+          display: inline-block;
+          font-size: 16px;
+          height: 25px;
+          line-height: 25px;
+          cursor: pointer;
+        }
+        li:nth-child(2) {
+          margin-left: 30px;
+          margin-right: 41px;
+          position: relative;
+        }
+        li:nth-child(3) {
+          position: relative;
+        }
+        li:nth-child(2):after,
+        li:nth-child(3):after {
+          content: '';
+          display: block;
+          height: 24px;
+          width: 1px;
+          position: absolute;
+          bottom: 0px;
+          left: -15px;
+          background-color: #e8e8e8;
+        }
+        .newActive-color {
+          font-size: 24px;
+          font-weight: bold;
+          color: rgba(228, 61, 48, 1);
+          padding-top: 0;
+          padding-bottom: 0;
+          position: relative;
+        }
+        .newActive-color::before {
+          content: '';
+          display: block;
+          height: 3px;
+          width: 100%;
+          position: absolute;
+          bottom: -13px;
+          left: 0;
+          background-color: rgba(228, 61, 48, 1);
+        }
+      }
+      > span {
+        float: right;
+        margin-top: 6px;
+        height: 14px;
+        line-height: 14px;
+        font-size: 14px;
+
+        color: rgba(140, 140, 140, 1);
+      }
+      > span:hover {
+        color: #e43d30;
+        cursor: pointer;
+      }
+    }
+    .news-list {
+      .headlines {
+        margin-top: 24px;
+        ul {
+          li {
+            margin-bottom: 40px;
+            img {
+              width: 179px;
+              height: 101px;
+              border-radius: 4px 4px 4px 4px;
+            }
+            .news-introduce {
+              float: right;
+              margin-left: 18px;
+              .introduce-titles {
+                width: 529px;
+                height: 19px;
+                line-height: 19px;
+                font-size: 18px;
+                font-weight: bold;
+                color: rgba(38, 38, 38, 1);
+                overflow: hidden;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+              }
+              .introduce-word {
+                width: 529px;
+                height: 48px;
+                font-size: 14px;
+
+                color: rgba(140, 140, 140, 1);
+                margin-top: 14px;
+                margin-bottom: 8px;
+                line-height: 16px;
+              }
+              .news-components {
+                height: 12px;
+                line-height: 12px;
+                font-size: 12px;
+                color: rgba(140, 140, 140, 1);
+                span:nth-child(1) {
+                  margin-right: 15px;
+                }
+                span:nth-child(3) {
+                  float: right;
+                }
+              }
+            }
+          }
+        }
+      }
+      .general-news {
+        ul {
+          display: flex;
+          flex-wrap: wrap;
+          justify-content: space-between;
+          align-content: flex-start;
+          height: 153px;
+          li {
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            margin-bottom: 23.25px;
+            display: inline-block;
+            width: 349px;
+            span {
+              display: inline-block;
+              color: rgba(38, 38, 38, 1);
+            }
+            .news-title-title {
+              width: 275px;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+            span:nth-child(2) {
+              float: right;
+              height: 10px;
+              line-height: 15px;
+              font-size: 12px;
+              font-weight: 300;
+              color: rgba(140, 140, 140, 1);
+            }
+          }
+          li:nth-child(1),
+          li:nth-child(2) {
+            .news-title-title {
+              font-weight: bold;
+            }
+          }
+        }
+      }
+      .news-picture {
+        img {
+          width: 351px;
+          height: 88px;
+        }
+        img:nth-child(1) {
+          margin-right: 24px;
+        }
+      }
+    }
+  }
+  .curriculum {
+    width: 340px;
+    .curriculum-title {
+      padding-bottom: 12px;
+      border-bottom: 1px solid #f8e7e6;
+      .newActive-color {
+        display: inline-block;
+        height: 25px;
+        line-height: 25px;
+        font-size: 24px;
+        font-weight: bold;
+        color: rgba(228, 61, 48, 1);
+        padding-top: 0;
+        padding-bottom: 0;
+        position: relative;
+      }
+      .newActive-color::before {
+        content: '';
+        display: block;
+        height: 3px;
+        width: 100%;
+        position: absolute;
+        bottom: -13px;
+        left: 0;
+        background-color: rgba(228, 61, 48, 1);
+      }
+      span:nth-child(2) {
+        float: right;
+        height: 14px;
+        line-height: 14px;
+        font-size: 14px;
+        color: rgba(140, 140, 140, 1);
+        margin-top: 6px;
+      }
+    }
+    .curriculum-hot {
+      margin-top: 24px;
+      img {
+        display: block;
+        width: 340px;
+        height: 181px;
+        border-radius: 4px;
+      }
+      .titles {
+        width: 340px;
+        height: 17px;
+        line-height: 17px;
+        font-size: 16px;
+        font-weight: bold;
+        color: rgba(38, 38, 38, 1);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        margin: 12px 0 6px 0;
+      }
+      .introduce {
+        width: 333px;
+        height: 15px;
+        font-size: 14px;
+        color: rgba(140, 140, 140, 1);
+        line-height: 15px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+    }
+    .curriculum-teacher {
+      margin-top: 17px;
+      height: 14px;
+      line-height: 14px;
+      font-size: 14px;
+      color: rgba(140, 140, 140, 1);
+      span:nth-child(1) {
+        max-width: 240px;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      span:nth-child(2) {
+        color: #e43d30;
+      }
+    }
+    .curriculum-list {
+      margin-top: 47px;
+      ul {
+        display: flex;
+        justify-content: space-between;
+        width: 340px;
+        li {
+          width: 161px;
+          img {
+            display: block;
+            width: 161px;
+            height: 84px;
+            border-radius: 4px;
+          }
+          .titles {
+            height: 31px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(38, 38, 38, 1);
+            line-height: 17px;
+            margin-top: 9px;
+          }
+          .curriculum-teacher {
+            margin-top: 14px;
+            span:nth-child(1) {
+              max-width: 100px;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+          }
+        }
+      }
+    }
+    .curriculum-footer {
+      margin-top: 20px;
+      button {
+        color: #fff;
+        cursor: pointer;
+        width: 340px;
+        height: 42px;
+        line-height: 42px;
+        text-align: center;
+        background: rgba(228, 61, 48, 1);
+        border-radius: 4px;
+      }
+    }
+  }
+}
+</style>

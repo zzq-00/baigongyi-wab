@@ -1,0 +1,93 @@
+<template>
+  <div class="Live">
+    <div class="hint">提示：直播回放不支持编辑和下架</div>
+    <div class="list">
+      <img src="@/assets/images/live.png" style="width:200px;height:118px;">
+      <div class="text">
+        <div class="headline">
+          <h3>1Z203030建设工程项目进度计划的编制和调整方法（一）</h3>
+          <p>2019-20-20</p>
+        </div>
+        <div class="video">视频</div>
+        <div class="price">免费</div>
+      </div>
+    </div>
+    <div class="list">
+      <img src="@/assets/images/live.png" style="width:200px;height:118px;">
+      <div class="text">
+        <div class="headline">
+          <h3>1Z203030建设工程项目进度计划的编制和调整方法（一）</h3>
+          <p>2019-20-20</p>
+        </div>
+        <div class="video">视频</div>
+        <div class="price">免费</div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style lang="less"  scipe>
+  .Live {
+    height: 100vh;
+    padding: 10px  20px 0;
+    .hint {
+      color:#E23732;
+      font-size: 12px;
+    }
+    .list:after{
+      position: absolute;
+      content: '';
+      display: block;
+      height: 1px;
+      width:360px;
+      background-color: #ddd;
+      right: -20px;
+      bottom: 0px;
+    }
+    .list{
+      position: relative;
+      height: 146px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      .text {
+        height: 100%;
+        padding: 20px 0 12px 20px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .headline {
+          h3 {
+            font-size: 16px;
+            color:#333;
+            font-weight:bold;
+          }
+          p {
+            margin-top:5px;
+            color:#999;
+            font-size: 14px;
+          }
+        }
+        .video {
+          padding: 3px 10px;
+          border-radius: 6px;
+          background-color: #F2F2F2;
+          font-size: 12px;
+        }
+        .price {
+          color:#7355F6;
+          font-size: 16px;
+        }
+      }
+
+    }
+  }
+</style>

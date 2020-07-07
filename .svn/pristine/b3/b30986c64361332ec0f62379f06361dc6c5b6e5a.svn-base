@@ -1,0 +1,311 @@
+<template>
+  <div class='myTeacher'>
+    <div class='myTeacher_nav'>
+      <p>讲师信息</p>
+      <button v-if='!editingInformation && data.length!=0 && data.status!=1000' @click='dialogTableVisible = true'>{{buttonText}}</button>
+      <div v-if='!agreementFlag || editingInformation'>
+        <p>
+          <em>1</em>
+          <span>签订入驻协议</span>
+        </p>
+        <span></span>
+        <p :class='{"redBorder" : !agreementFlag}'>
+          <em>2</em>
+          <span>填写资料并提交审核</span>
+        </p>
+      </div>
+    </div>
+    <div class='myTeacher_main'>
+      <!-- <seeInformation :data='data' v-if='data && !editingInformation && !agreementFlag && data.status != 1000'></seeInformation>
+              <fillInMessage :data='data' v-if='editingInformation && !agreementFlag &&  data.status != 1000' @childByChild='childByChild' @subMitClickChild='subMitClickChild'></fillInMessage> -->
+      <!-- 审核中 status = 1000-->
+      <!-- <examineIng v-if='data.status === 1000'></examineIng> 
+              <agreement v-if='!data && agreementFlag &&  data.status != 1000' @nextClickChild='nextClickChild'></agreement> -->
+      <div v-if='data.length==0'>
+        <agreement v-if='agreementFlag' @nextClickChild='nextClickChild'></agreement>
+        <fillInMessage v-if='!agreementFlag' @childByChild='childByChild' @subMitClickChild='subMitClickChild'></fillInMessage>
+      </div>
+      <div v-else>
+        <div v-if='data.status!=1000'>
+          <seeInformation :data='data' v-if='!editingInformation'></seeInformation>
+          <messageSbmit :data='data' v-if='editingInformation' @childByChild='childByChild' @subMitClickChild='subMitClickChild'></messageSbmit>
+        </div>
+        <div v-if='data.status==1000'>
+          <examineIng></examineIng>
+        </div>
+      </div>
+    </div>
+    <div class='Visible'>
+      <el-dialog title="验证身份" :visible.sync="dialogTableVisible">
+        <div class='el-dialog_mian'>
+          <div>
+            <p>您已绑定手机号：{{$store.state.user.mobile.replace(/^(\d{3})\d{4}(\d+)/,"$1****$2")}}</p>
+            <button @click='getCode'>获取验证码</button>
+          </div>
+          <el-input v-model="value" placeholder="请输入手机验证码"></el-input>
+          <slide-verify :verifyVal='verifyVal' @getVerify="getVerify"></slide-verify>
+        </div>
+        <div class='el-dialog_footer'>
+          <button @click='dialogTableVisible = false'>取消</button>
+          <button @click='editSubmitFn'>确认</button>
+        </div>
+      </el-dialog>
+    </div>
+
+  </div>
+</template>
+<script>
+import api from '@/fetch'
+import seeInformation from './seeInformation.vue';//已提交信息 查看
+import fillInMessage from './fillInMessage.vue';//提交
+import slideVerify from '../../../components/slideVerify';//滑动验证
+import examineIng from './examineIng.vue';//等待
+import agreement from './agreement.vue';//协议
+import messageSbmit from './messageSbmit.vue'//更改
+export default {
+  components: {
+    seeInformation,
+    fillInMessage,
+    slideVerify,
+    examineIng,
+    agreement,
+    messageSbmit
+  },
+  data() {
+    return {
+      editingInformation: false,
+      dialogTableVisible: false,
+      agreementFlag: true,
+      value: '',
+      moveVerify: false,
+      flag: true,
+      buttonText: '修改讲师信息',
+      data: [],
+      verifyVal: {
+        width: 460,
+        height: 30
+      }
+    }
+  },
+  mounted() {
+    this.getMessage();
+  },
+  methods: {
+    getMessage() {
+      api.lecturerId(this.$store.state.user.accountId).then(res => {
+        if(res.data){
+           this.data = res.data;
+           this.data.status = 1
+        }else{
+          this.data = []
+        }
+      }).catch(err=>{
+        console.log(err);
+      })
+    },
+    //上一步
+    childByChild(val) {
+      this.agreementFlag = val
+    },
+    //下一步
+    nextClickChild(val) {
+      console.log(val, 'kkk');
+      this.agreementFlag = val
+    },
+    subMitClickChild(val) {
+      this.editingInformation = val;
+    },
+    // 滑块验证
+    getVerify(resVerify) {
+      console.log(resVerify)
+      this.moveVerify = resVerify;
+    },
+    //获取验证码
+    getCode() {
+      api.getSmsCode({ mobile: this.$store.state.user.mobile }).then(res => {
+        if (res.code === 200) {
+          if (res.code === 200) {
+            let time = 6
+            this.buttonText = '发送验证码'
+            if (this.flag) {
+              this.flag = false
+              const timer = setInterval(() => {
+                time--
+                this.buttonText = `发送中${time}秒`
+                if (time === 0) {
+                  clearInterval(timer)
+                  this.buttonText = '获取验证码'
+                  this.flag = true
+                }
+              }, 1000)
+            }
+          }
+        }
+      })
+    },
+    editSubmitFn() {
+      // this.editingInformation = true;
+      // this.dialogTableVisible = false
+      if (this.value && this.moveVerify) {
+        api.verifySmsCode({
+          mobile: this.$store.state.user.mobile,
+          smsVerifyCode: this.value
+        }).then(res => {
+          this.editingInformation = true;
+          this.dialogTableVisible = false
+        }).catch(err => {
+          this.$message.error(err.message);
+        })
+      } else {
+        this.$message({
+          message: '请输入验证码或拖到验证',
+        })
+      }
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.myTeacher {
+  // width:100%;
+  overflow: hidden; // border-radius: 10px;
+}
+
+.Visible {
+  /deep/ .el-dialog {
+    width: 500px;
+    height: 300px;
+    position: relative;
+    .el-dialog__header {
+      border-bottom: 1px solid #ddd;
+    }
+    .el-dialog__body {
+      padding-top: 20px;
+    }
+    .el-dialog_mian {
+      >div {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 10px;
+        >p {
+          color: #4A4A4A;
+        }
+        >button {
+          background: #fff;
+          border: none;
+          color: #E23732;
+          &:hover {
+            cursor: pointer;
+          }
+        }
+      }
+      .el-input__inner {
+        height: 30px;
+      }
+    }
+    .el-dialog_footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 50px;
+      border-top: 1px solid #DDDDDD;
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      >button {
+        box-sizing: bordre-box;
+        width: 90px;
+        height: 34px;
+        border: 1px solid #DDDDDD;
+        border-radius: 5px;
+        color: #4A4A4A;
+        background: #fff;
+        &:nth-child(1) {
+          margin-right: 5px;
+        }
+        &:nth-child(2) {
+          margin-left: 5px;
+          background: #E23732;
+          color: #fff;
+          border-color: #E23732;
+        }
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
+
+.myTeacher_nav {
+  width: 100%;
+  height: 50px;
+  line-height: 50px;
+  display: flex;
+  justify-content: space-between;
+  padding: 0 20px;
+  box-sizing: border-box;
+  border-bottom: 1px solid #DDDDDD;
+  >p {
+    color: #4A4A4A;
+    font-size: 16px;
+  }
+  >button {
+    width: 120px;
+    height: 34px;
+    background: #E23732;
+    color: #fff;
+    margin-top: 8px;
+    border-radius: 5px;
+    &:hover {
+      cursor: pointer;
+    }
+  }
+  >div {
+    display: flex;
+    box-sizing: border-box;
+    >p {
+      >em {
+        width: 21px;
+        height: 21px;
+        border: 1px solid #E23732;
+        border-radius: 50%;
+        color: #FFFFFF;
+        display: inline-block;
+        background: #E23732;
+        margin-top: 14px;
+        line-height: 22px;
+        text-align: center;
+      }
+      >span {
+        font-weight: 500;
+        color: #333333;
+        padding-left: 10px;
+        display: inline-block;
+        margin-top: 14px;
+        line-height: 22px;
+      }
+    }
+    .redBorder {
+      em {
+        border: 1px solid #E23732;
+        color: #E23732;
+        background: #fff;
+      }
+    }
+    >span {
+      display: inline-block;
+      height: 2px;
+      width: 40px;
+      background: #666666;
+      margin: 24px 10px 0;
+    }
+  }
+}
+
+.myTeacher_main {
+  flex: 1;
+  background: #fff;
+}
+</style>

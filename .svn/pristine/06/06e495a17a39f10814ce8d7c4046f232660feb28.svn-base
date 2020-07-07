@@ -1,0 +1,45 @@
+<template>
+  <div class="myArticle">
+    <div class="title font-12">
+      <router-link :to="isOwn?'/myHome/myArticle/publishArt':'/myHome/myArticle/publishArt?id='+$route.query.id">已发布</router-link>
+      <router-link to='/myHome/myArticle/draftArt' v-if="isOwn">草稿箱</router-link>
+    </div>
+    <router-view />
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'myArticle',
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  data() {
+    return {}
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.myArticle {
+  .title {
+    padding: 0px 20px;
+    height: 30px;
+    line-height: 30px;
+    font-size: 12px;
+    background-color: #fff3f3;
+    display: flex;
+    > a + a {
+      margin-left: 16px;
+    }
+    .router-link-active {
+      color: #e23732;
+    }
+  }
+}
+</style>

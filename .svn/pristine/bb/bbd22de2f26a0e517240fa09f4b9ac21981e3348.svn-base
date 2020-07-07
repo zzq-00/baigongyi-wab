@@ -1,0 +1,15 @@
+/**
+ * 工程圈
+ */
+export default [
+  {
+    path: '/layout',
+    component: () => import('../views/layout/layout.vue'),
+    children: [
+      {
+        path: '/engineering',
+        component: () => import('../views/engineeringCircle/engineering.vue')
+      }
+    ]
+  }
+]

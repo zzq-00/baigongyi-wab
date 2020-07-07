@@ -1,0 +1,444 @@
+<template>
+    <div class='fillInMessage'>
+        <div class='fillInMessage_main'>
+            <el-form ref="ruleForm" :model="ruleForm" label-width="80px" label-position="top" :inline='true' size="small">
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师姓名" required prop="realName">
+                            <el-input v-model="ruleForm.realName"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师头像" required>
+                            <div class="recommed">请上传本人真实照片。照片jpg/jpeg/png/bmp格式图片，最大4M，要求居中晰。</div>
+                            <div class="upload-tx">
+                                <label for="TX">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>上传头像</p>
+                                    <input id="TX" accept="image/*" type="file" @change="onFileChangeTX($event)" />
+                                </label>
+                                <img v-if='false' :src='ruleForm.avatar' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="身份证明" required prop="certificateType">
+                            <el-select v-model="ruleForm.certificateType" placeholder="请选择">
+                                <el-option label="中国居民身份证" value="1"></el-option>
+                                <el-option label="护照" value="2"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="手持证件正面照" required>
+                            <div class="recommed recommedRinght">
+                                请确保证件姓名、证件号码清晰可见 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M
+                            </div>
+                            <div class="upload-tx upload-sfz">
+                                <label for="TX">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件正面照</p>
+                                    <input id="TX" type="file" @change="onFileChangeface($event)" />
+                                </label>
+                                <img v-if='false' :src='ruleForm.certificateFacade' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="手持证件反面照" required>
+                            <div class="recommed recommedRinght">
+                                请确保证件姓名、证件号码清晰可见 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M
+                            </div>
+                            <div class="upload-tx upload-sfz">
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件反面照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCard($event)" />
+                                </label>
+                                <img v-if='false' :src='ruleForm.certificateBack' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="资格证书" required prop="qualification">
+                            <el-input v-model="ruleForm.qualification"></el-input>
+                            <div class="recommed recommedRinght" style='top:90px;'>
+                                请提交教学能力或专业能力证明，如职称证书、考级证书等（需包含官方证书等有效信息）。 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M，要求居中清晰。
+                            </div>
+                            <div class="upload-tx upload-sfz" style='margin-top:11px;'>
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>上传证书照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCardbook($event)" />
+                                </label>
+                                <img v-if='false' src='https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=216605226,3652567530&fm=111&gp=0.jpg' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师简介" required prop="introduction">
+                            <div class="recommed" style='margin-left:0;margin-top:-10px;'>请清晰、准确、真实地描述您的教学理念、目标服务群体、主要课程方向等，简介内容将会展示在你的课程/专栏主页以供学员参考，100字以内。</div>
+                            <el-input type="textarea" placeholder="请输入内容" v-model="ruleForm.introduction" maxlength="100" show-word-limit></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
+        </div>
+
+        <div class='fillInMessage_footer'>
+            <button>上一步</button>
+            <button @click="submitForm('ruleForm')">提交审核</button>
+        </div>
+    </div>
+</template>
+<script>
+import api from '@/fetch'
+import axios from 'axios'
+// import upload from '@/assets/js/upload.js'
+export default {
+  data () {
+    return {
+      ruleForm: {
+        avatar: '',
+        certificateBack: '',
+        certificateFacade: '',
+        certificateType: '',
+        introduction: '',
+        qualification: '',
+        realName: ''
+      },
+      rules: {
+        realName: [
+          { required: true, message: '请输入', trigger: 'blur' }
+        ],
+        certificateType: [
+          { required: true, message: '请选择', trigger: 'change' }
+        ],
+        introduction: [
+          { required: true, message: '请输入', trigger: 'blur' }
+        ],
+        qualification: [
+          { required: true, message: '请输入', trigger: 'blur' }
+        ]
+      },
+      files: '',
+      dataKey: {}
+    }
+  },
+  mounted () {
+    // this.getAliyunKey();
+    // console.log(upload.get_signature(),'upload');
+
+  },
+  methods: {
+    // 获取阿里云的授权码
+    getAliyunKey (up, filename, ret) {
+      api.aliyunConfig().then(res => {
+        this.dataKey = res.data
+      })
+    },
+    // 头像上传图片
+    onFileChangeTX (e) {
+      const files = e.target.files || e.dataTransfer.files
+      // //获取阿里云的授权码
+      api.aliyunConfig().then(res => {
+        const ossUrl = res.data.host
+        const sendData = new FormData()
+
+        sendData.append('key', '文件名')
+        sendData.append('OSSAccessKeyId', res.data.accessKeyId)
+        sendData.append('signature', res.data.accessKeySecret)
+        sendData.append('x-oss-security-token', res.data.securityToken)
+        sendData.append('policy', res.data.expiration)
+
+        // sendData.append('key', '文件名')
+        // sendData.append('accessid', res.data.accessKeyId)
+        // sendData.append('accesskey', res.data.accessKeySecret)
+        // sendData.append('STS_ROLE', res.data.expiration)
+        // sendData.append('STSToken', res.data.securityToken)
+        sendData.append('success_action_status', 200) // 指定返回的状态码
+        sendData.append('file', files)
+        // let config = {
+        //     headers:{
+        //         'Content-Type': 'multipart/form-data'
+        //     }
+        // }
+        // axios.defaults.withCredentials = true
+        axios.post(ossUrl, sendData).then((res) => {
+          console.log('得到上传到阿里云的图片地址')
+          console.log(res)
+        }).catch(error => {
+          console.log(error)
+        })
+        // const files = e.target.files[0];
+        // console.log(files,'files');
+        // const { name, size } = files;
+        // const type = name.split('.')[1];
+        // if (type !== 'jpg' && type !== 'jpeg' && type !== 'jpeg' && type !== 'png' && type !== 'bmp') {
+        //     this.$message({
+        //         message: '照片jpg/jpeg/png/bmp格式图片!',
+        //     });
+        //     return false;
+        // }
+        // if (size / 1024 / 1024 > 4) {
+        //     this.$message({
+        //         message: '照片最大4M!',
+        //     });
+        //     return false;
+        // }
+        // let param = new FormData();
+        // param.append('OSSAccessKeyId', this.dataKey.accessId);
+        // param.append('policy', this.dataKey.policy);
+        // param.append('signature', this.dataKey.signature);
+        // param.append('key', this.dataKey.dir+'tupian');
+        // param.append('success_action_status', 200);
+        // param.append('file', files);
+        // axios({
+        //     url: 'https://bgy-resource-test.oss-cn-beijing.aliyuncs.com',
+        //     method: 'post',
+        //     headerType: { 'Content-Type': 'multipart/form-data' },
+        //     data: param
+        // }).then(res => {
+        //     console.log(res, 'nnnn');
+        // })
+      })
+    },
+    // 上传资格证书
+    onFileChangeCardbook (e) {
+      const files = e.target.files[0]
+      const { name, size } = files
+      const type = name.split('.')[1]
+      if (type !== 'jpg' && type !== 'jpeg' && type !== 'jpeg' && type !== 'png' && type !== 'bmp') {
+        this.$message({
+          message: '照片jpg/jpeg/png/bmp格式图片!'
+        })
+        return false
+      }
+      if (size / 1024 / 1024 > 4) {
+        this.$message({
+          message: '照片最大4M!'
+        })
+        return false
+      }
+      console.log('资格证书')
+    },
+    // 上传身份证 正面
+    onFileChangeface (e) {
+      const files = e.target.files[0]
+      const { name, size } = files
+      const type = name.split('.')[1]
+      if (type !== 'jpg' && type !== 'jpeg' && type !== 'jpeg' && type !== 'png' && type !== 'bmp') {
+        this.$message({
+          message: '照片jpg/jpeg/png/bmp格式图片!'
+        })
+        return false
+      }
+      if (size / 1024 / 1024 > 4) {
+        this.$message({
+          message: '照片最大4M!'
+        })
+        return false
+      }
+      console.log('上传身份证 正面')
+    },
+    // 上传身份证 反面
+    onFileChangeCard (e) {
+      const files = e.target.files[0]
+      const { name, size } = files
+      const type = name.split('.')[1]
+      if (type !== 'jpg' && type !== 'jpeg' && type !== 'jpeg' && type !== 'png' && type !== 'bmp') {
+        this.$message({
+          message: '照片jpg/jpeg/png/bmp格式图片!'
+        })
+        return false
+      }
+      if (size / 1024 / 1024 > 4) {
+        this.$message({
+          message: '照片最大4M!'
+        })
+        return false
+      }
+      console.log('上传身份证 反面')
+    },
+    submitForm (formName) {
+      this.$refs[formName].validate((valid) => {
+        if (valid) {
+          api.lecturerData(this.ruleForm).then(res => {
+            if (res.data.code == 200) {
+              this.$message({
+                message: '讲师入驻成功!',
+                type: 'success'
+              })
+            }
+          })
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.fillInMessage {
+    overflow-x: hidden;
+    padding: 12px 32px;
+    display: flex;
+    flex-direction: column;
+    /deep/ .el-form {
+        .el-form-item__label {
+            line-height: 14px;
+            padding-bottom: 12px!important;
+        }
+        .el-form-item__label:before {
+            margin-right: 2px;
+            color: #E23732;
+        }
+        .el-input {
+            width: 260px;
+            height: 30px;
+        }
+        .el-input__inner {
+            border-radius: 0;
+        }
+        .el-form-item {
+            position: relative;
+            width: 100%;
+        }
+        .el-textarea__inner {
+            height: 150px;
+        }
+        .recommed {
+            font-size: 12px;
+            color: #999999;
+            margin-top: -35px;
+            margin-left: 80px;
+        }
+        .recommedRinght {
+            position: absolute;
+            left: 150px;
+            top: 50px;
+            width: 280px;
+            line-height: 24px;
+        }
+        .upload-tx {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            >label {
+                display: block;
+                width: 100%;
+                height: 120px;
+                background: #DDDDDD;
+                border: 1px solid #EEEEEE;
+                border-radius: 10px;
+                position: relative;
+                >.iconTx {
+                    display: inline-block;
+                    width: 28px;
+                    height: 28px;
+                    background: #E23732;
+                    color: #fff;
+                    border-radius: 50%;
+                    text-align: center;
+                    line-height: 28px;
+                    position: absolute;
+                    left: 50%;
+                    margin-left: -14px;
+                    top: 42px;
+                }
+                >input {
+                    width: 100%;
+                    height: 120px;
+                    background: red;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    opacity: 0;
+                    z-index: 99;
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+                >p {
+                    position: absolute;
+                    color: #4A4A4A;
+                    top: 80px;
+                    left: 32px;
+                }
+            }
+            >img {
+                width: 100%;
+                height: 120px;
+                border-radius: 10px;
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+        .upload-sfz {
+            width: 200px;
+            >label {
+                >p {
+                    left: 51px;
+                }
+            }
+        }
+    }
+}
+
+.fillInMessage_main {
+    flex: 1;
+}
+
+.fillInMessage_footer {
+    width: 100%;
+    height: 50px;
+    border-top: 1px solid #DDDDDD;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    button {
+        width: 90px;
+        height: 34px;
+        color: #fff;
+        background: #E23732;
+        border-radius: 5px;
+        box-sizing: border-box;
+        border: 1px solid #E23732;
+        &:nth-child(1) {
+            background: #fff;
+            border: 1px solid #DDDDDD;
+            color: #4A4A4A;
+            margin-right: 5px;
+        }
+        &:nth-child(2) {
+            margin-left: 5px;
+        }
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}
+</style>

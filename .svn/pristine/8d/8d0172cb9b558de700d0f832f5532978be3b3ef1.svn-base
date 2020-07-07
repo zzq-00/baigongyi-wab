@@ -1,0 +1,34 @@
+import Vue from 'vue'
+import Vuex from 'vuex'
+import { setItem, getItem } from '@/store/storage'
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+  state: {
+    user: getItem('user'),
+    courseDetail: {},
+    columnDetail: {},
+    tabActive:-1
+  },
+  mutations: {
+    setUser (state, userData) {
+      state.user = userData
+      // 存放到本地
+      setItem('user', state.user)
+    },
+    setTab(state,val){
+      state.tabActive = val
+    },
+    previewCourse (state, previewCourse) {
+      state.courseDetail = previewCourse
+    },
+    previewColumn (state, previewColumn) {
+      state.columnDetail = previewColumn
+    }
+  },
+  actions: {
+  },
+  modules: {
+  }
+})

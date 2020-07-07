@@ -1,0 +1,40 @@
+<template>
+  <div class="questionsDetails-page">
+    <div class="questions-main-descrtion">
+
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      questionDetailsObj:{},
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    questionDetails(){
+      api.questionDetails(this.$route.params.id).then(res=>{
+        this.questionDetailsObj = res.data.question
+      })
+    },
+  },
+  mounted() {
+    this.questionDetails()
+  }
+}
+</script>
+<style lang="less" scoped>
+.questionsDetails-page {
+  .questions-main-descrtion {
+    margin-top: 21px;
+    background: #fff;
+    padding: 21px 0 26px 20px;
+  }
+}
+</style>

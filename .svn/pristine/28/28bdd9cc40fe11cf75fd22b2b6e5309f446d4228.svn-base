@@ -1,0 +1,45 @@
+import { post, get, delete as deleteMethod } from 'axios'
+
+/**
+ * 讲堂
+ */
+export default {
+  // 讲堂--课程
+  getCourse (params) {
+    return post('/course/list', params)
+  },
+
+  // 我购买的--课程
+  getMybuyCourse (params) {
+    return post('/course/myPurchaseCourse/list', params)
+  },
+
+  // 我的讲堂--课程
+  getMyclassCourse (params) {
+    return post('/course/mycourse/list', params)
+  },
+
+  // 课程详情
+  getCourseDetail (id) {
+    return get('/course/' + id)
+  },
+  // 保存课程
+  saveCourse (params) {
+    return post('/course/save', params)
+  },
+  // 发布课程
+  publishCourse (params) {
+    return post('/course/publish', params)
+  },
+  // 发布专栏下的课程
+  publishforColumn (params) {
+    return post('/course/publishForColumn', params)
+  },
+  delCourse (id) {
+    return deleteMethod(`/course/${id}`)
+  },
+  // 下架课程
+  downCourse (id) {
+    return get(`/course/undercarriageCourse/${id}`)
+  }
+}

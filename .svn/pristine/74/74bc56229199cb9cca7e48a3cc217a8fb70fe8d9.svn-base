@@ -1,0 +1,251 @@
+<template>
+  <div class="container clearfix">
+    <div class="left-content fl">
+      <div class="clearfix user-info">
+        <img class="fl header-img" :src="articleData.avatar" alt="" width="40px" height="40px">
+        <div class="fl">
+          <span>{{articleData.userName}}</span>
+          <br>
+          <span>{{articleData.convertTime}}</span>
+          <span><i class="el-icon-view"></i> {{articleData.watchCount}}</span>
+        </div>
+      </div>
+      <div class="article-detail">
+        <h5>{{articleData.title}}</h5>
+        <p>摘要：{{articleData.description}}</p>
+        <p v-html="articleData.content"></p>
+      </div>
+      <div class="article-comment">
+        <div>评论（{{commentList.length}}）</div>
+        <div class="user-comment">
+          <div>
+            <!-- TODO -->
+            <img class="header-img" :src="userInfo.avatar" alt="" width="40px" height="40px">
+            <el-input type="textarea" rows="6" placeholder="请输入内容" v-model="commentParams.comment">
+            </el-input>
+          </div>
+          <div>
+            <el-button style="width: 90px;" @click="addComment">评论</el-button>
+          </div>
+        </div>
+        <ul class="comment-list">
+          <li v-for="(item, index) in commentList" :key="index">
+            <img class="header-img" :src="item.avatar" alt="" width="40px" height="40px">
+            <div>
+              <div class="clearfix">
+                <span class="fl">{{item.nickName}}</span>
+                <span class="fr time">{{item.commentsTime}}</span>
+              </div>
+              <p>{{item.comment}}</p>
+            </div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="right-content fr">
+      <div class="about-author">
+        <div class="font-16">关于作者</div>
+        <div>
+          <img class="header-img cursor-pointer" :src="authorData.avatar" alt="" width="60px" height="60px">
+          <div>
+            <p class="ellipsis font-bold cursor-pointer">{{authorData.userName}}</p>
+            <p class="gray ellipsis">{{authorData.introduction}}</p>
+          </div>
+          <template v-if="userInfo.accountId !== articleData.accountId">
+            <!-- 1 已关注 2 无关注 3互相关注 -->
+            <el-button @click="addAttention" type="danger" v-if="authorData.concernStatus===2">关注</el-button>
+            <el-button @click="delAttention" type="info" v-else>{{authorData.concernStatus===1?'已关注':'互相关注'}}</el-button>
+          </template>
+        </div>
+        <div>
+          <span>
+            <span class="font-16 font-bold">{{authorData.likeCount}}</span>
+            <br>
+            <span class="font-12 gray">获赞</span>
+          </span>
+          <span>
+            <span class="font-16 font-bold">{{authorData.watchCount}}</span>
+            <br>
+            <span class="font-12 gray">文章被阅读</span>
+          </span>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+
+export default {
+  data() {
+    return {
+      articleData: {},
+      authorData: {},
+      commentList: [],
+      commentParams: {
+        comment: '',
+        objId: this.$route.params.id,
+        objType: 3
+      },
+      listParams: {
+        asc: true,
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          objId: this.$route.params.id,
+          objType: 3
+        }
+      },
+      userInfo: JSON.parse(localStorage.user || '{}')
+    }
+  },
+  methods: {
+    // 文章详情
+    async viewArticle() {
+      let { data: articleData } = await api.viewArticle(this.$route.params.id)
+      this.articleData = articleData
+      this.getAuthorDetails()
+    },
+    async getAuthorDetails() {
+      // 作者详情
+      let { data: authorData } = await api.getAuthorDetails(this.articleData.accountId)
+      this.authorData = authorData
+    },
+    // 添加评论
+    addComment() {
+      api.addComment(this.commentParams).then(res => {})
+    },
+    // 评论列表
+    getCommentList() {
+      api.getCommentList(this.listParams).then(res => {
+        this.commentList = res.data.records
+      })
+    },
+    addAttention() {
+      api.addAttention({ objId: this.articleData.accountId, objType: 6 }).then(res => {this.getAuthorDetails()})
+    },
+    delAttention() {
+      api.delAttention({ objId: this.articleData.accountId, objType: 6 }).then(res => (this.getAuthorDetails()))
+    }
+  },
+  mounted() {
+    this.viewArticle()
+    this.getCommentList()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.container {
+  margin: 21px auto 29px;
+  min-height: 910px;
+  .left-content {
+    width: 780px;
+    background-color: #fff;
+    border-radius: 10px;
+    min-height: 700px;
+    padding: 20px 70px 20px 80px;
+    box-sizing: border-box;
+    .user-info {
+      > div {
+        margin-top: 5px;
+        > span:not(:first-child) {
+          color: #99999999;
+          font-size: 12px;
+          margin-right: 30px;
+        }
+      }
+    }
+    .article-detail {
+      min-height: 300px;
+      > h5 {
+        font-size: 18px;
+        margin: 10px 0 15px;
+      }
+      > p {
+        margin-bottom: 15px;
+      }
+    }
+    .article-comment {
+      > div:first-child {
+        line-height: 30px;
+        border-bottom: 1px solid #dddddd;
+      }
+      .user-comment {
+        margin-top: 20px;
+        > div:first-child {
+          display: flex;
+          .header-img {
+            margin-right: 10px;
+          }
+        }
+        > div:last-child {
+          text-align: right;
+          margin-top: 10px;
+        }
+      }
+    }
+    .comment-list {
+      margin-top: 20px;
+      > li {
+        display: flex;
+        .header-img {
+          margin-top: 7px;
+        }
+        > div {
+          padding: 15px 0;
+          border-top: 1px solid #dddddd;
+          flex: 1;
+          .time {
+            color: #999;
+            font-size: 12px;
+          }
+          > p {
+            margin-top: 7px;
+          }
+        }
+      }
+    }
+  }
+  .right-content {
+    width: 300px;
+    .about-author {
+      width: 100%;
+      box-sizing: border-box;
+      background-color: #fff;
+      border-radius: 10px;
+      padding: 15px 20px;
+      > div {
+        &:nth-child(2) {
+          margin-top: 7px;
+          display: flex;
+          align-items: center;
+          > div {
+            flex: 1;
+            overflow: hidden;
+            > p + p {
+              width: 95%;
+              margin-top: 10px;
+            }
+          }
+        }
+        &:last-child {
+          display: flex;
+          align-items: center;
+          justify-content: space-around;
+          border-top: 1px solid #ddd;
+          margin-top: 10px;
+          padding-top: 18px;
+          text-align: center;
+        }
+      }
+    }
+  }
+  .header-img {
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+}
+</style>
+

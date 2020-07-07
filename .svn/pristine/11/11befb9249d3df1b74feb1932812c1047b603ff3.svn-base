@@ -1,0 +1,106 @@
+<template>
+  <div class="upload-content">
+    <div class="title-tips" :class="{'flex': type!=='hasButton'}">
+      <h5><span>*</span> {{description.title}}</h5>
+      <p>{{description.desc}}</p>
+    </div>
+    <label for="img-upload" class="input-wrap">
+      <div class="img-box">
+        <div class="icon-holder" v-if="!imageUrl">
+          <i :class="[type==='hasButton'?'el-icon-plus gray':'el-icon-circle-plus red']"></i>
+          <p v-show="type!=='hasButton'">上传{{type==='course'?'课程':'专栏'}}主页图</p>
+        </div>
+        <img v-else :src="$store.state.imageDomain + imageUrl" alt="" width="100%" height="100%">
+      </div>
+      <span class="el-button el-button--danger el-button--small" v-show="type==='hasButton'" type="danger" style="width: 100%;">上传</span>
+    </label>
+    <input type="file" ref="file-input" accept="image/*" id="img-upload" @change="uploadFile" v-show="false">
+  </div>
+</template>
+
+<script>
+import uploadImg from '@/mixins/uploadImg.js'
+
+export default {
+  props: {
+    type: String,
+    value: String,
+    description: Object
+  },
+  data() {
+    return {}
+  },
+  watch: {
+    value: function(val) {
+      this.imageUrl = val
+    }
+  },
+  mixins: [uploadImg],
+  methods: {},
+  mounted() {}
+}
+</script>
+
+<style lang="less" scoped>
+.upload-content {
+  width: 100%;
+  box-sizing: border-box;
+  .title-tips {
+    &.flex {
+      display: flex;
+      align-items: center;
+      > p {
+        margin-top: 0;
+        margin-left: 10px;
+      }
+    }
+    > h5 {
+      font-weight: normal;
+      > span {
+        color: #e23732;
+      }
+      & + p {
+        color: #999;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+    }
+  }
+  .input-wrap {
+    display: block;
+    width: 278px;
+  }
+  .img-box {
+    width: 100%;
+    height: 208px;
+    border: 1px solid #ddd;
+    background-color: #eeeeee;
+    border-radius: 10px;
+    box-sizing: border-box;
+    margin: 10px 0;
+    text-align: center;
+    position: relative;
+    .icon-holder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      > p {
+        margin-top: 10px;
+      }
+      > i {
+        font-size: 30px;
+      }
+    }
+    & + p {
+      width: 280px;
+      height: 34px;
+      line-height: 34px;
+      color: #fff;
+      background-color: #e23732;
+      border-radius: 5px;
+      text-align: center;
+    }
+  }
+}
+</style>

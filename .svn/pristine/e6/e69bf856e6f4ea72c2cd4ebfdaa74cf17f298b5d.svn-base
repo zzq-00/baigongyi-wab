@@ -1,0 +1,48 @@
+import Vue from 'vue'
+import Vuex from 'vuex'
+import { setItem, getItem } from '@/store/storage'
+
+Vue.use(Vuex)
+
+export default new Vuex.Store({
+  state: {
+    userInfo: getItem('userInfo'),
+    courseDetail: getItem('courseDetail'),
+    columnDetail: {},
+    tabActive: -1,
+    commentNum: 0, // 评论数量
+    hotmessageData: {},
+    cancelStatus:false,//个人中心 取消关注的操作 为了右侧边栏收藏的课程 收藏的专栏等等在点击取消收藏之后实时变化
+  },
+  mutations: {
+    setFollow (state, val) {
+      state.cancelStatus = val
+    },
+    setUser (state, userData) {
+      state.userInfo = userData
+      // 存放到本地
+      setItem('userInfo', state.userInfo)
+    },
+    setTab (state, val) {
+      state.tabActive = val
+    },
+    previewCourse (state, previewCourse) {
+      state.courseDetail = previewCourse
+      // 存放到本地
+      setItem('courseDetail', state.courseDetail)
+    },
+    previewColumn (state, previewColumn) {
+      state.columnDetail = previewColumn
+    },
+    getCommentNum (state, num) {
+      state.commentNum = num
+    },
+    getHotmessageData (state, val) {
+      state.hotmessageData = val
+    }
+  },
+  actions: {
+  },
+  modules: {
+  }
+})

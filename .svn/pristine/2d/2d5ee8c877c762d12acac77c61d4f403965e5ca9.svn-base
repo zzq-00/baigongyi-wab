@@ -1,0 +1,241 @@
+<template>
+  <div class="myLecture">
+    <div class="content">
+      <div class="tabChange clearfix">
+        <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)"
+            :class="{active:index==nowIndex}">{{item}}
+        </span>
+      </div>
+
+      <course-list  :dataList=dataList @getCurrentPage="getCurrentPage" @courseDetail="courseDetail" @downCourse='downCourse' @onDelete="onDeleteCourse" v-show="nowIndex===0"></course-list>
+      <column-list  :dataList=dataList @getCurrentPage="getCurrentPage" @columnDetail="columnDetail" @downColumn='downColumn' @onDelete="onDeleteColumn" v-show="nowIndex===1"></column-list>
+
+      <!-- 创建 -->
+      <div class="create" v-show="nowIndex===0">
+        <el-button type="danger" @click="$router.push('/createCourse')">创建课程</el-button>
+      </div>
+      <div class="create" v-show="nowIndex===1">
+        <el-button type="danger" @click="$router.push('/createColumn')">创建专栏</el-button>
+      </div>
+    </div>
+    <!-- <classes-column :dataList=dataList></classes-column> -->
+  </div>
+</template>
+
+<script>
+import CourseList from '@/components/courseList'
+import ColumnList from '@/components/columnList'
+// import classesColumn from '@/components/classesColumn'
+import api from '@/fetch'
+export default {
+  name: 'MyLecture',
+  components: {
+    // classesColumn
+    CourseList,
+    ColumnList
+  },
+  data () {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['课堂', '专栏'],
+      dataList: {
+        course: {},
+        column: {}
+      },
+      // 课程参数
+      courseParams: {
+        asc: true,
+        pageNum: 1,
+        pageSize: 8
+      },
+      // 专栏参数
+      columnParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8,
+        paramObject: {}
+      }
+    }
+  },
+  created () {
+    this.getMyclassCourse()
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.getMyclassCourse()
+      } else {
+        this.getMyclassColumn()
+      }
+    })
+  },
+  watch: {
+    courseParams: {
+      handler: 'getCourse',
+      deep: true
+    },
+    columnParams: {
+      handler: 'getColumn',
+      deep: true
+    }
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs (index) {
+      this.nowIndex = index
+    },
+    // 课程
+    async getMyclassCourse () {
+      const res = await api.getMyclassCourse(this.courseParams)
+      console.log(res)
+      this.dataList.course = res.data
+    },
+    // 专栏
+    async getMyclassColumn () {
+      const res = await api.getMyclassColumn(this.columnParams)
+      console.log(res)
+      this.dataList.column = res.data
+    },
+    // 翻页
+    getCurrentPage (currentPage) {
+      console.log(currentPage)
+      if (this.nowIndex === 0) {
+        this.courseParams.pageNum = currentPage
+      } else {
+        this.columnParams.pageNum = currentPage
+      }
+    },
+    // 跳转到---课程详情页--我的讲堂
+    courseDetail (courseItem) {
+      this.$router.push(`/myLecture/course/${courseItem.id}`)
+    },
+    // 跳转到---专栏详情页--我的讲堂
+    columnDetail (columnItem) {
+      this.$router.push(`/myLecture/column/${columnItem.id}`)
+    },
+    // 下架专栏
+    downColumn (id) {
+      this.$confirm('确定下架该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.downColumn(id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '下架成功!'
+          })
+          this.getMyclassColumn()
+        })
+      })
+    },
+    // 删除专栏
+    onDeleteColumn (id) {
+      this.$confirm('确定删除该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.delColumn(id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+          this.getMyclassColumn()
+        })
+      })
+    },
+    // 下架课程
+    downCourse (id) {
+      this.$confirm('确定下架该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.downCourse(id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '下架成功!'
+          })
+          this.getMyclassCourse()
+        })
+      })
+    },
+    // 删除课程
+    onDeleteCourse (id) {
+      this.$confirm('确定删除该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.delCourse(id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+          this.getMyclassCourse()
+        })
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .myLecture {
+    width: 860px;
+    padding-left: 20px;
+    box-sizing: border-box;
+    .content {
+      position: relative;
+      .tabChange {
+        font-size: 16px;
+        margin: 20px 20px 26px 0;
+        cursor: pointer;
+        span:first-child {
+          margin-right: 20px;
+        }
+        .active{
+
+          position: relative;
+          color: #e43c31;
+        }
+        .active::after{
+          content: "";
+          display: inline-block;
+          position: absolute;
+          bottom:-10px;
+          left: 5px;
+          height: 3px;
+          width:24px;
+          background-color: #e43c31;
+        }
+      }
+      // 创建
+      .create{
+        position: absolute;
+        top:-12px;
+        right:20px;
+        .el-button {
+          width: 90px;
+          height: 34px;
+          line-height: 34px;
+          padding:0;
+          span{
+            margin:0;
+            font-size: 14px;
+          }
+        }
+      }
+      .create::after {
+        content: '';
+        display: block;
+        width: 860px;
+        height: 2px;
+        background-color: #F4F4F4;
+        position: absolute;
+        bottom: -10px;
+        right:-20px;
+      }
+    }
+  }
+</style>

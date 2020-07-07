@@ -1,0 +1,196 @@
+<template>
+  <div class="comment">
+    <div class="commentText">
+      <img :src="$store.state.user.avatar" alt="">
+      <div class="textarea">
+        <el-input type="textarea" v-model="addcommentParams.comment"></el-input>
+        <el-button @click="publishComment">评论</el-button>
+      </div>
+    </div>
+    <ul class="commentlist">
+      <li class="list" v-if="CommentList.lenght!==0" v-for="(item,index) in CommentList" :key="index">
+        <img :src="item.avatar" alt="">
+        <div class="userPublish">
+          <div class="username">
+            <span>{{item.nickName}}</span>
+            <span>{{item.commentsTime}}</span>
+          </div>
+          <p>{{item.comment}}</p>
+        </div>
+      </li>
+
+      <li style="height:300px" v-else>
+        <div class="userPublish">
+          <p>暂无评论</p>
+        </div>
+      </li>
+    </ul>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination background @current-change="handleCurrentChange" :hide-on-single-page="true" :current-page.sync="getcommentParams.pageNum " :page-size.sync="getcommentParams.pageSize" layout="prev,slot, next,total" :total="totalElement">
+        <slot>
+          <span>第
+            <i>{{getcommentParams.pageNum}}/{{totalPages}}</i>页</span>
+        </slot>
+      </el-pagination>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  name: 'CommentCom',
+  props: {
+    num: Number
+  },
+  data () {
+    return {
+      CommentList: [], // 评论列表
+      totalPages: 0, // 总页数
+      totalElement: 10, // 总条数
+      // 评论列表
+      getcommentParams: {
+        asc: true,
+        pageNum: 1,
+        pageSize: 20,
+        paramObject: {
+          objId: this.$route.params.id,
+          objType: 1
+        }
+      },
+      // 新增评论
+      addcommentParams: {
+        comment: '', // 评论内容
+        objId: this.$route.params.id, // 对象id
+        objType: 1 // 1.课程2。专栏 5.直播
+      }
+    }
+  },
+  created () {
+    // console.log(this.$route.params)
+    this.getCommentList()
+    console.log(this.num, 'mmm')
+    this.num ? this.addcommentParams.objType = this.num : this.addcommentParams.objType = 1
+    this.num ? this.getcommentParams.paramObject.objType = this.num : this.getcommentParams.paramObject.objType = 1
+    this.getCommentList()
+  },
+  methods: {
+    // 发布评论
+    async publishComment () {
+      // 新增评论
+      if (this.addcommentParams.comment) {
+        const res = await api.addComment(this.addcommentParams)
+        console.log(res)
+        this.getCommentList()
+        this.addcommentParams.comment = ''
+        this.$emit('getTotal', this.totalElement)
+      } else {
+        this.$message('请先输入评论内容！')
+      }
+    },
+    // 评论
+    async getCommentList () {
+      const res = await api.getCommentList(this.getcommentParams)
+      console.log(res.data.total)
+      this.CommentList = res.data.records
+      this.getcommentParams.pageNum = res.data.current
+      this.getcommentParams.pageSize = res.data.size
+      this.totalPages = res.data.pages
+      this.totalElement = res.data.total
+      this.$store.commit('getCommentNum', res.data.total)
+    },
+    // 翻页
+    handleCurrentChange (val) {
+      console.log(val)
+      this.getcommentParams.pageNum = val
+      this.getCommentList()
+    }
+  }
+
+}
+</script>
+
+<style lang="less" scope>
+  .comment {
+    padding: 20px 20px 0 20px;
+    .commentText {
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: none;
+      }
+      .textarea {
+        .el-button {
+          margin-top: 10px;
+        }
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-start;
+        align-items: flex-end;
+        .el-textarea {
+          .el-textarea__inner {
+            margin-left: 10px;
+            width: 670px;
+            height: 120px;
+          }
+        }
+      }
+
+    }
+    .commentlist {
+      li {
+        display: flex;
+        justify-content: flex-start;
+        align-items: flex-start;
+        margin-bottom: 20px;
+        img {
+          margin-top: 10px;
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+        }
+        .userPublish {
+          display: flex;
+          flex-direction: column;
+          justify-content: flex-start;
+          align-items: flex-start;
+          margin-left:10px;
+          padding: 20px 0 0 10px;
+          width:100%;
+          border-top: 1px solid #ddd;
+          p {
+              color: #666
+            }
+          .username {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom:10px;
+            span:first-child{
+              color:#4a4a4a;
+            }
+            span:last-child{
+              color:#999;
+            }
+          }
+        }
+      }
+    }
+    .pagination {
+      margin:100px 0 80px 0;
+      text-align: center;
+      .el-pagination button, .el-pagination span:not([class*=suffix]) {
+        font-size: 16px;
+        color: #606266;
+      }
+    }
+  }
+</style>

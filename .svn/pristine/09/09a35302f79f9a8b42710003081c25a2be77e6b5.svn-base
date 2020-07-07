@@ -1,0 +1,33 @@
+<template>
+  <div class="hisIdea">
+    <div class="title">他的想法</div>
+    <div class="content">
+      想法的内容
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  props: {
+    hisUserId: String
+  },
+  mounted () {
+    console.log(this.hisUserId)
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .hisIdea {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

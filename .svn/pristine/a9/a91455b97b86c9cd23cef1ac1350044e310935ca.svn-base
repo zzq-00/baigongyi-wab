@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="">
+    <title>文章</title>
+
+    <style type="text/css">
+
+    </style>
+    <link href="../stylesheets/base.css" rel="stylesheet">
+    <!-- 分享sdk -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+   	<script src="https://g.alicdn.com/dingding/open-develop/1.9.0/dingtalk.js"></script>
+    <!-- vue -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- lib-flexible -->
+    <script src="../javascripts/lib-flexible/index.min.js"></script>
+    <!-- common.js -->
+    <script src="../javascripts/common.js"></script>
+</head>
+
+<body>
+    <div id="hotnews" class="main" v-cloak>
+        <div class="title">{{hotNews.title}}</div>
+        <div class="desc">
+            <div>
+                <span>{{hotNews.sourceName}}</span>
+                <span>丨</span>
+                <span>{{convertDate(hotNews.publishTime)}}</span>
+            </div>
+            <div class="flex-align-center">
+                <i class="eye-icon"></i>
+                <span>&nbsp;{{hotNews.watchCount}}&nbsp;&nbsp;&nbsp;</span>
+            </div>
+        </div>
+        <div class="content" v-html="hotNews.content"></div>
+        <div class="separate-line"></div>
+        <div class="comment">
+            <div class="comm-label">评论（{{hotNews.commentCount}}条）</div>
+            <input type="text" placeholder="写评论...">
+            <ul>
+                <li v-for="(comment, index) in comments">
+                    <div class="avatar" :style="{backgroundImage: 'url('+ (comment.avatar ? avatarUrlHost + comment.avatar : '') +')'}"></div>
+                    <div class="comm-box" :class="{'comm-box_line' : index != comments.length - 1}">
+                        <div class="comm-author">
+                            <span>{{comment.nickName}}</span>
+                            <span class="comm-date">{{convertDate(comment.commentsTime)}}</span>
+                        </div>
+                        <div class="comm-content">{{comment.comment}}</div>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        <div class="app-open">
+            <div class="app-open-btn" @click="openApp">App内打开</div>
+        </div>
+        <div class="separate-line"></div>
+        <div class="like-comm-count">
+            <div class="like-comm-count_box">
+                <i class="like-icon"></i>
+                <span>{{hotNews.likeCount}}</span>
+            </div>
+            <div class="like-comm-count_box">
+                <i class="comm-icon"></i>
+                <span>{{hotNews.commentCount}}</span>
+            </div>
+        </div>
+    </div>
+</body>
+<script type="text/javascript">
+
+var vm = new Vue({
+    el: "#hotnews",
+    data: {
+        hotNews: {},
+        comments: [],
+        commentParam: {
+            pageNum: 1,
+            pageSize: 3,
+            paramObject: {
+                objId: "",
+                objType: 7
+            }
+        },
+        shareConfig: {},
+        avatarUrlHost: "https://bgy-resource-test.oss-cn-beijing.aliyuncs.com/"
+    },
+    created() {
+        var _this = this;
+        var id = common.getParameterByName("id");
+        _this.commentParam.paramObject.objId = id;
+        common.refreshToken()
+        .then(response => {
+            if(response.code = 200) {
+                token = response.data;
+                _this.getHotNews.call(_this, id, token);
+                _this.getComments.call(_this, token);
+                _this.getShareConfig.call(_this, token);
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+    methods: {
+        getHotNews(id, token) {
+            axios.get("/hotNews/"+ id,
+            {
+                headers: {
+                    "Authentication": token
+                }
+            }
+            ).then(response => {
+                if(response.code = 200) {
+                    this.hotNews = response.data;
+                    this.shareConfig.wechat_title = response.data.title;
+                    this.shareConfig.wechat_desc = "_来自百工驿的分享";
+                    this.shareConfig.wechat_images0 = response.data.image ? this.avatarUrlHost + response.data.image : '../images/baigongyi.png';
+                    
+                    //修改meta
+                    document.querySelector('meta[name="description"]').content = "_来自百工驿的分享";
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            })
+        },
+        getComments(token) {
+            axios.post("/commentRecord/list", this.commentParam,
+            {
+                headers: {
+                    "Authentication": token
+                },
+            }
+            ).then(response => {
+                if(response.code = 200) {
+                    this.comments = response.data.records;
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            })
+        },
+        openApp() {
+            common.openApp();
+        },
+        getShareConfig(token) {
+            // 获取分享参数
+            common.shareConfig(token)
+            .then(response => {
+                if(response.code = 200) {
+                    this.shareConfig.url = response.data.url;
+                    this.shareConfig.appId = response.data.appId;
+                    this.shareConfig.timestamp = response.data.timestamp;
+                    this.shareConfig.nonceStr = response.data.nonceStr;
+                    this.shareConfig.signature = response.data.signature;
+                    common.share(this.shareConfig);
+                }
+            })
+            .catch(err => {
+                console.log(err);
+            });
+        },
+        convertDate(datetime) {
+            return common.convertDate(datetime);
+        }
+    }
+});
+    
+</script>
+</html>

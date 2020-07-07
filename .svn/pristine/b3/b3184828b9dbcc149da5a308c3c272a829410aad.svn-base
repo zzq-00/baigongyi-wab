@@ -1,0 +1,723 @@
+<template>
+  <div class='engineering'>
+    <ul class='engineering_left'>
+      <li v-for='(item,index) in menuList' :key='index' :class="{active:currentIndex==index}" @click='currentIndexFn(index)'>
+        {{item}}
+      </li>
+    </ul>
+    <div class='engineering_right'>
+      <div class='engineering_box_left'>
+        <div class='engineering_box_left_top'>
+          <!-- <el-input type="textarea" :rows="2" placeholder="说出你的想法..." v-model="textarea"></el-input> -->
+          <VueEmoji @input="onInput" :value="myText" />
+          <div class='engineering_box_left_bottom'>
+            <div>
+              <span><img src='@/assets/images/biaoqing.png'>
+                <span>表情</span>
+              </span>
+              <el-popover placement="bottom-start" width="285" trigger="click">
+                <span slot="reference"><img src='@/assets/images/tupian.png'>
+                  <span style='padding-top:3px;'>图片</span>
+                </span>
+                <div class='upload'>
+                  <p>本地上传</p>
+                  <el-upload :action="serverUrl" list-type="picture-card" :on-preview="handlePictureCardPreview" :on-remove="handleRemove" accept="image/*" :data='formData' :limit='9' :before-upload="beforeUpload">
+                    <i class="el-icon-plus"></i>
+                  </el-upload>
+                  <el-dialog :visible.sync="dialogVisible">
+                    <img width="100%" :src="dialogImageUrl" alt="">
+                  </el-dialog>
+                </div>
+              </el-popover>
+            </div>
+            <button @click='pushData'>发布</button>
+          </div>
+
+        </div>
+        <div class='engineering_box_bottom' infinite-scroll-disabled='fablousStatus' v-infinite-scroll="fabulousLoad" infinite-scroll-immediate='false' infinite-scroll-distance='10'>
+          <div v-for='(item,index) in listData' :key='index'>
+            <div class='title'>
+              <img :src='item.avatar'>
+              <div>
+                <p>
+                  <span>{{item.nickName}}</span>
+                  <span>{{item.createTime}}</span>
+                </p>
+                <button>关注</button>
+              </div>
+            </div>
+            <div class='content'>
+              <p v-if='!item.show'>
+                {{item.content}}
+              </p>
+              <span class="all" v-if='!item.show && item.content.length>300'>
+                ...
+                <label @click='item.show = true'>展开全部</label>
+              </span>
+              <span v-if='item.show'>{{item.content}}</span>
+
+            </div>
+            <div class='images'>
+              <img v-for='(ite,ind) in item.ideaImgs' :src='ite.url'>
+            </div>
+            <div class='footer'>
+              <div class='footer_top'>
+                <p @click="likeOperate(item)">
+                  <img v-if="item.whetherLike" src="@/assets/images/yizan.png" alt="">
+                  <img v-else src="@/assets/images/zan.png" alt="">
+                  <span>{{item.likeCount}}</span>
+                </p>
+                <p @click='item.comment = !item.comment'>
+                  <img src="@/assets/images/pinglun.png" alt="">
+                  <span>{{item.commentCount}}</span>
+                </p>
+                <p>
+                  <img src="@/assets/images/fenxiang.png" alt="" />
+                  <span>{{item.shareCount}}</span>
+                </p>
+              </div>
+              <div class='footer_bottom' v-if='item.comment'>
+                <div class='newsHotDetails_comment'>
+                  <p>评论(0)</p>
+                  <div class='add_comment'>
+                    <div>
+                      <img :src="$store.state.userInfo.avatar" alt="">
+                      <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea">
+                      </el-input>
+                    </div>
+                    <p>
+                      <button @click='commentFn()'>评论</button>
+                    </p>
+                  </div>
+                  <ul>
+                    <li>
+                      <dl>
+                        <dt>
+                          <img src="" alt="">
+                        </dt>
+                        <dd>
+                          <div>
+                            <p>1111</p>
+                            <p>
+                              <em>1111</em>
+                            </p>
+                          </div>
+                          <p>11111</p>
+                        </dd>
+                      </dl>
+                    </li>
+                    <li style="height:100px">
+                      <div>
+                        <p style='text-align:center; padding-top:30px; color:#333;'>暂无评论</p>
+                      </div>
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class='engineering_box_right'>
+        <p>最赞用户</p>
+        <ul>
+          <li v-for='(item,index) in bestLikePeople' :key='index'>
+            <dl>
+              <dt>
+                <img :src='item.avatar'>
+              </dt>
+              <dd>
+                <p>
+                  <b>{{item.nickName}}</b>
+                  <span>了解更多</span>
+                </p>
+                <div>{{item.introduction}}</div>
+              </dd>
+            </dl>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import VueEmoji from 'emoji-vue'
+import api from '@/fetch'
+export default {
+  components: {
+    VueEmoji
+  },
+  data() {
+    return {
+      currentIndex: 0,
+      menuList: ['最新', '热门', '关注'],
+      textarea: '',
+      flag: false,
+      dialogImageUrl: '',
+      myText: '',
+      dialogVisible: false,
+      formData: {},
+      listData: [],
+      serverUrl: '', // 这里写你要上传的图片服务器地址
+      fileUrl: '',
+      fablousStatus: false,
+      bestLikePeople: [],//最赞用户
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+        "paramObject": {
+        }
+      }
+    }
+  },
+  mounted() {
+    //设置文本框的placeholder值
+    document.getElementsByClassName('emoji-vue-textarea')[0].setAttribute("placeholder", "说出你的想法...");
+    this.getDataFn();
+    this.ideaBestLikePeople();
+  },
+  methods: {
+    getDataFn() {
+      api.ideaList(this.params).then(res => {
+        res.data.records.forEach((item, index) => {
+          item.show = false;
+          item.comment = false;
+        })
+        this.listData = res.data.records;
+      })
+    },
+    //最赞用户
+    ideaBestLikePeople() {
+      api.ideaBestLikePeople().then(res => {
+        this.bestLikePeople = res.data;
+      })
+    },
+    currentIndexFn(index) {
+      this.currentIndex = index;
+    },
+    //点赞
+    likeOperate (data) {
+      console.log(data,'mmm');
+    },
+    // 随机生成32位数字 字母组合的字符串
+    generateUUID() {
+      let d = new Date().getTime()
+      let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        let r = (d + Math.random() * 16) % 16 | 0
+        d = Math.floor(d / 16)
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+      })
+      return uuid
+    },
+    // 获取日期
+    getDateFn() {
+      let date = new Date()
+      let Y = date.getFullYear()
+      let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
+      let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+      this.dateNow = Y + M + D
+    },
+    // 获取后缀名
+    get_suffix(filename) {
+      let pos = filename.lastIndexOf('.')
+      return pos != -1 ? filename.substring(pos) : ''
+    },
+    // 富文本图片上传前
+    async beforeUpload(file) {
+      // 显示loading动画
+      this.quillUpdateImg = true
+      try {
+        let fileType = this.get_suffix(file.name)
+        if (!this.fileSuffix.includes(fileType)) return this.$message.warning('仅支持jpg/jpeg/png/bmp格式图片')
+        if (file.size / 1024 / 1024 > 4) return this.$message.warning('照片最大4M')
+        // 获取阿里云数据
+        let { data: dataKey } = await api.aliyunConfig()
+        this.serverUrl = dataKey.host
+        let policyText = {
+          expiration: dataKey.expiration, // 设置该Policy的失效时间，超过这个失效时间之后，就没有办法通过这个policy上传文件了
+          conditions: [
+            ['content-length-range', 0, 1048576000] // 设置上传文件的大小限制
+          ]
+        }
+        let Base64 = require('js-base64').Base64
+        let policyBase64 = Base64.encode(JSON.stringify(policyText))
+        let bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, dataKey.accessKeySecret, { asBytes: true })
+        let signature = Crypto.util.bytesToBase64(bytes)
+        let renderNum = this.generateUUID()
+        this.formData['key'] = `images/${this.dateNow}/${renderNum}${fileType}`
+        this.formData['OSSAccessKeyId'] = dataKey.accessKeyId
+        this.formData['signature'] = signature
+        this.formData['x-oss-security-token'] = dataKey.securityToken
+        this.formData['policy'] = policyBase64
+        this.formData['success_action_status'] = 200 // 指定返回的状态码
+        this.fileUrl = `${this.serverUrl}/images/${this.dateNow}/${renderNum}${fileType}`
+        console.log(this.fileUrl, 'this.fileUrl');
+      } catch (error) {
+        return false
+      }
+    },
+    pushData() {
+      let data = {
+        accountId: this.$store.state.userInfo.accountId,
+        content: this.textarea,
+        ideaImgs: []
+      }
+      api.ideaAdd(data).then(res => {
+        console.log(res, 'mm');
+      })
+      // console.log(this.$store.state.userInfo.accountId, 'dialogImageUrl');
+    },
+    onInput(event) {
+      this.textarea = event.data;
+    },
+    handleRemove(file, fileList) {
+      console.log(file, fileList);
+    },
+    handlePictureCardPreview(file) {
+      this.dialogImageUrl = file.url;
+      this.dialogVisible = true;
+    },
+    fabulousLoad() {
+      this.fablousStatus = true
+      this.params.pageNum += 1
+      this.getDataFn();
+      console.log('乡音');
+    },
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.engineering {
+  width: 100%;
+  position: relative;
+  padding-top: 20px;
+  overflow: hidden;
+}
+
+.engineering_left {
+  position: absolute;
+  left: 0;
+  top: 20px;
+  li {
+    width: 100px;
+    height: 40px;
+    background: #FFFFFF;
+    border-radius: 6px;
+    color: #333333;
+    margin-bottom: 6px;
+    line-height: 40px;
+    text-align: center;
+    &:hover {
+      cursor: pointer;
+    }
+  }
+  .active {
+    background: #E23732;
+    color: #fff;
+  }
+}
+
+.engineering_right {
+  margin-left: 120px;
+  display: flex;
+}
+
+.engineering_box_left {
+  flex: 1;
+}
+
+.engineering_box_left_top {
+  border-radius: 10px;
+  background: #fff;
+  padding: 20px;
+  /deep/ .emoji-vue-wraper {
+    width: 100%;
+    box-sizing: border-box;
+  }
+  /deep/ .emoji-picker-container {
+    width: 100%!important;
+    box-sizing: border-box;
+    height: 68px!important;
+    border: none;
+  }
+  /deep/ .emoji-vue-textarea {
+    height: 68px!important;
+    background: #F6F6F7;
+    border-color: #fff;
+    border-radius: 5px;
+  }
+  /deep/ .emoji-wysiwyg-editor {
+    width: 100%!important;
+    box-sizing: border-box;
+    padding-right: 0px;
+  }
+  /deep/ .emoji-picker-icon {
+    left: 0px!important;
+    top: 92px!important;
+  }
+  /deep/.emoji-picker {
+    width: 60px;
+    opacity: 0;
+  }
+}
+
+.engineering_box_left_bottom {
+  display: flex;
+  justify-content: space-between;
+  padding-top: 20px;
+  >div {
+    line-height: 34px;
+    >span {
+      vertical-align: middle;
+      line-height: 34px;
+      img {
+        padding-right: 5px;
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+        vertical-align: middle;
+      }
+      >span {
+        color: #E23732;
+        vertical-align: middle;
+      }
+      &:nth-child(2) {
+        padding-left: 30px;
+      }
+    }
+  }
+  >button {
+    width: 60px;
+    height: 34px;
+    border-color: none;
+    border-radius: 5px;
+    background: #E23732;
+    color: #fff;
+  }
+}
+
+.engineering_box_bottom {
+  width: 100%;
+  overflow: auto;
+  height: calc(100vh - 320px);
+  .title {
+    width: 100%;
+    margin-top: 10px;
+    background: #fff;
+    padding: 20px;
+    padding-bottom: 15px;
+    position: relative;
+    box-sizing: border-box;
+    border-radius: 10px 10px 0 0;
+    img {
+      display: inline-block;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      position: absolute;
+      left: 20px;
+      top: 20px;
+    }
+    >div {
+      margin-left: 50px;
+      display: flex;
+      justify-content: space-between;
+      box-sizing: border-box;
+      >p {
+        span {
+          display: block;
+          color: #4A4A4A;
+          &:nth-child(1) {
+            font-weight: 500;
+          }
+          &:nth-child(2) {
+            color: #999999;
+            font-size: 12px;
+            padding-top: 8px;
+          }
+        }
+      }
+      >button {
+        color: #E23732;
+        width: 60px;
+        height: 34px;
+        box-sizing: border-box;
+        border: 1px solid #E23732;
+        background: #fff;
+        border-radius: 5px;
+      }
+    }
+  }
+  .content {
+    width: 100%;
+    background: #fff;
+    padding: 0 20px;
+    box-sizing: border-box;
+    position: relative;
+    min-height: 20px;
+    p {
+      box-sizing: border-box;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: -webkit-box;
+      -webkit-line-clamp: 6;
+      line-clamp: 6;
+      -webkit-box-orient: vertical;
+      line-height: 20px;
+      color: #666666;
+    }
+    span {
+      line-height: 20px;
+      color: #666666;
+    }
+    .all {
+      /* display: none; */
+      position: absolute;
+      bottom: -5px;
+      right: 23px;
+      background-color: #fff;
+      line-height: 20px;
+      z-index: 100;
+      color: #666666;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    .all label {
+      color: #E23732;
+    }
+  }
+  .images {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    background: #fff;
+    padding: 0 20px 20px;
+    box-sizing: border-box;
+    img {
+      display: block;
+      width: 120px;
+      height: 120px;
+      margin-right: 10px;
+      padding-top: 10px;
+    }
+  }
+  .footer {
+    background: #fff;
+    border-radius: 0px 0px 10px 10px;
+  }
+  .footer_top {
+    border-top: 1px solid #DDDDDD;
+    display: flex;
+    justify-content: center;
+    >P {
+      width: 33.3%;
+      margin: 15px auto;
+      height: 20px;
+      border-right: 1px solid #DDDDDD;
+      text-align: center;
+      img {
+        display: inline-block;
+        width: 16px;
+        height: 16px;
+      }
+      span {
+        color: #999999;
+        padding-left: 5px;
+        vertical-align: middle;
+      }
+      &:last-child {
+        border: none;
+      }
+    }
+  }
+}
+
+.upload {
+  >p {
+    font-weight: 700px;
+    padding: 10px 0;
+  }
+  /deep/ .el-upload {
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+    img {
+      width: 80px;
+      height: 80px;
+      line-height: 80px;
+      display: inline-block;
+    }
+  }
+  /deep/ .el-upload-list__item {
+    width: 80px;
+    height: 80px;
+  }
+  /deep/ .el-upload-list__item-actions {
+    width: 80px;
+    height: 80px;
+    line-height: 80px;
+  }
+}
+
+.engineering_box_right {
+  width: 300px;
+  height: 450px;
+  background: #fff;
+  margin-left: 20px;
+  border-radius: 10px;
+  padding: 20px 10px 50px 20px;
+  >P {
+    font-size: 16px;
+    color: #4A4A4A;
+  }
+  >ul {
+    padding-top: 10px;
+    >li {
+      padding-top: 10px;
+      dl {
+        position: relative;
+        dt {
+          position: absolute;
+          left: 0;
+          top: 0;
+          img {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: #ccc;
+          }
+        }
+        dd {
+          margin-left: 70px;
+          >P {
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            b {
+              color: #4A4A4A;
+            }
+            span {
+              color: #999999;
+              &:hover {
+                color: #E23732;
+                cursor: pointer;
+                &:after {
+                  background: url('../../assets/images/morehover.png') no-repeat;
+                }
+              }
+              &:after {
+                content: " ";
+                display: inline-block;
+                margin-left: 5px;
+                height: 13px;
+                width: 7px;
+                background: url('../../assets/images/more.png') no-repeat;
+                background-size: 100%;
+              }
+            }
+          }
+          >div {
+            padding-top: 10px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #DDDDDD;
+          }
+        }
+      }
+    }
+  }
+}
+
+.newsHotDetails_comment {
+  width: 100%;
+  padding-left: 20px;
+  box-sizing: border-box;
+  >p {
+    padding-top: 10px;
+    padding-bottom: 10px;
+    border-top: 1px solid #DDDDDD;
+    color: #4A4A4A;
+    font-weight: 500;
+  }
+  >.add_comment {
+    padding-right: 20px;
+    >div {
+      display: flex;
+      img {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        padding-right: 10px;
+      }
+      /deep/ .el-textarea__inner {
+        height: 120px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+      }
+    }
+    p {
+      padding-top: 10px;
+      display: flex;
+      justify-content: flex-end;
+      button {
+        background: #E23732;
+        width: 90px;
+        height: 34px;
+        border: 1px solid #DDDDDD;
+        border-radius: 5px;
+        color: #fff;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  >ul {
+    padding-top: 20px;
+    padding-bottom: 50px;
+    padding-right: 20px;
+    >li {
+      border-top: 1px solid #DDDDDD;
+      dl {
+        display: flex;
+        padding-top: 10px;
+        padding-bottom: 20px;
+        dt {
+          img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #ccc;
+          }
+        }
+        dd {
+          padding-left: 10px;
+          flex: 1;
+          >div {
+            padding-top: 10px;
+            display: flex;
+            justify-content: space-between;
+            p {
+              color: #4A4A4A;
+              em {
+                color: #999999;
+                &:nth-child(2) {
+                  padding-left: 8px;
+                }
+              }
+            }
+          }
+          >p {
+            padding-top: 12px;
+            color: #666666;
+          }
+        }
+      }
+    }
+  }
+}
+</style>
+

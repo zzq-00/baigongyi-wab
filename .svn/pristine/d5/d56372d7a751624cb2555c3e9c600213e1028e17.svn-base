@@ -1,0 +1,397 @@
+<template>
+  <div class="clearfix column-live">
+    <div class="index-hot-column fl">
+      <div class="column-live-title">
+        <span class="column-livetive-color">热门专栏</span>
+        <span>
+          <a href="/lectureRoom?activeTab=column" target="_blank" rel="noopener noreferrer">查看更多>></a>
+        </span>
+      </div>
+      <ul class="hot-column-list">
+        <li v-for="(i,index) in hotColumnHeaderList" :key="index">
+          <a :href="`/columnDetail/${i.id}`" target="_blank" rel="noopener noreferrer">
+            <img :src="$store.state.imageDomain + i.image" alt="" srcset="">
+          </a>
+          <div>
+            <a :href="`/columnDetail/${i.id}`" target="_blank" rel="noopener noreferrer">
+              {{i.name}}
+            </a>
+          </div>
+          <p class="clearfix">
+            <span class="fl teacher-name">{{i.lecturerInfo?i.lecturerInfo.realName:''}}</span>
+            <span class="fr">{{i.price==0?'免费':"￥"+i.price}}</span>
+          </p>
+        </li>
+      </ul>
+      <div class="column-FreeAndCharge clearfix">
+        <ul class="fl">
+          <p>
+            <span>热门免费专栏</span>
+            <img src="@/assets/images/freecolumn-icon.png" alt="" srcset="">
+          </p>
+          <li class="clearfix" v-for="(i,index) in hotFreeColumns" :key="index">
+            <span class="fl" :class=" { 'one-color': index==0, 'two-color': index==1,'three-color': index==2, 'four-color': index==3,'five-color': index==4  }">0{{index+1}}</span>
+            <span class="fl">
+              <a :href="`/columnDetail/${i.id}`" target="_blank" rel="noopener noreferrer">{{i.name}}</a>
+            </span>
+            <span class="fr">{{i.collectCount | formatNumbers}}收藏</span>
+          </li>
+        </ul>
+        <ul class="fr">
+          <p>
+            <span>热门付费专栏</span>
+            <img src="@/assets/images/paycolumn-icon.png" alt="" srcset="">
+          </p>
+          <li class="clearfix" v-for="(i,index) in hotPayColumns" :key="index">
+            <span class="fl" :class=" { 'one-color': index==0, 'two-color': index==1,'three-color': index==2, 'four-color': index==3,'five-color': index==4  }">0{{index+1}}</span>
+            <span class="fl">
+              <a :href="`/columnDetail/${i.id}`" target="_blank" rel="noopener noreferrer">{{i.name}}</a>
+            </span>
+            <span class="fr">{{i.payCount | formatNumbers}}购买</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="index-live-playback fr">
+      <div class="column-live-title">
+        <span class="column-livetive-color">直播回放</span>
+        <span>
+          <a href="/livetv" target="_blank" rel="noopener noreferrer">查看更多>></a>
+        </span>
+      </div>
+      <div class="live-playback-first" v-for="(item,index) in hotLivesList" :key="index">
+        <a :href="`/livetv/${item.id}`" target="_blank" rel="noopener noreferrer">
+          <img :src="$store.state.imageDomain + item.homeImage" alt="" class="background-img">
+          <p class="live-play-name">{{item.title}}</p>
+          <span class="live-play-btn">{{item.nickName}}</span>
+          <span class="live-play-length">{{item.watchCount | formatNumbers}}播放</span>
+        </a>
+      </div>
+      <ul class="live-playback-list">
+        <li v-for="(i,index) in hotLives" :key="index">
+          <a :href="`/livetv/${i.id}`" target="_blank" rel="noopener noreferrer">
+            <img :src="$store.state.imageDomain + i.homeImage" alt="" class="live-list-img fl">
+          </a>
+          <div class="live-playback-introduce">
+            <p>
+              <a :href="`/livetv/${i.id}`" target="_blank" rel="noopener noreferrer">{{i.title}}</a>
+            </p>
+            <p class="clearfix">
+              <span class="fl">{{i.nickName}}</span>
+              <span class="fr">{{i.collectCount | formatNumbers}}收藏</span>
+              <span class="fr">{{i.watchCount | formatNumbers}}观看</span>
+            </p>
+          </div>
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  components: {},
+  props: {
+    dataObj: Object
+  },
+  data() {
+    return {
+      hotColumnHeaderList: [],
+      hotFreeColumns: [], //热门免费专栏
+      hotPayColumns: [], //热门付费专栏
+      hotLives: [], //直播回放
+      hotLivesList: [] //第一个直播回放
+    }
+  },
+  watch: {
+    dataObj: {
+      //深度监听，可监听到对象、数组的变化
+      handler(newV, oldV) {
+        this.hotColumnHeaderList = newV.hotColumns
+        this.hotColumnHeaderList.map(item => {
+          if (item.name.length > 20) {
+            item.name = item.name.substring(0, 17) + '...'
+          }
+        })
+        this.hotFreeColumns = newV.hotFreeColumns
+        this.hotPayColumns = newV.hotPayColumns
+        let newArr = newV.hotLives.slice(0)
+        this.hotLives = newArr
+        this.hotLivesList = newV.hotLives.slice(0, 1)
+        this.hotLives.splice(0, 1)
+        this.hotLives.map(item => {
+          if (item.title.length > 32) {
+            item.title = item.title.substring(0, 32) + '...'
+          }
+        })
+      },
+      deep: true
+      // immediate: true
+    }
+  },
+  computed: {},
+  methods: {},
+  mounted() {}
+}
+</script>
+<style lang="less" scoped>
+.column-live {
+  margin-top: 46px;
+  .column-live-title {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f8e7e6;
+    .column-livetive-color {
+      display: inline-block;
+      height: 25px;
+      line-height: 25px;
+      font-size: 24px;
+      font-weight: bold;
+      color: rgba(228, 61, 48, 1);
+      padding-top: 0;
+      padding-bottom: 0;
+      position: relative;
+    }
+    .column-livetive-color::before {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 100%;
+      position: absolute;
+      bottom: -13px;
+      left: 0;
+      background-color: rgba(228, 61, 48, 1);
+    }
+    span:nth-child(2) {
+      float: right;
+      height: 14px;
+      line-height: 14px;
+      font-size: 14px;
+      color: rgba(140, 140, 140, 1);
+      margin-top: 6px;
+    }
+  }
+  .index-hot-column {
+    width: 726px;
+    .hot-column-list {
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      li {
+        display: inline-block;
+        width: 165px;
+        img {
+          width: 165px;
+          height: 102px;
+          border-radius: 7px;
+        }
+        div {
+          height: 36px;
+          line-height: 18px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(38, 38, 38, 1);
+          margin: 10px 0 7px 0;
+        }
+        p {
+          margin-top: 7px;
+          height: 15px;
+          line-height: 14px;
+          font-size: 14px;
+          color: rgba(140, 140, 140, 1);
+          .teacher-name {
+            max-width: 115px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            height: inherit;
+            font-size: 14px;
+            line-height: 14px;
+          }
+          span:nth-child(2) {
+            color: #e43d30;
+          }
+        }
+      }
+    }
+    .column-FreeAndCharge {
+      margin-top: 43px;
+      height: 224px;
+      ul {
+        width: 351px;
+        p {
+          height: 18px;
+          line-height: 18px;
+          font-size: 18px;
+          font-weight: bold;
+          color: rgba(228, 61, 48, 1);
+          vertical-align: middle;
+          img {
+            vertical-align: middle;
+            margin-left: 7px;
+          }
+          span {
+            vertical-align: middle;
+          }
+        }
+        li {
+          margin-top: 27px;
+          height: 14px;
+          span:nth-child(1) {
+            height: 14px;
+            line-height: 14px;
+            font-size: 14px;
+            margin-right: 11px;
+            font-weight: bold;
+          }
+          span:nth-child(2) {
+            width: 249px;
+            height: 14px;
+            line-height: 14px;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+          }
+          span:nth-child(3) {
+            height: 12px;
+            line-height: 12px;
+            font-size: 12px;
+            color: #8c8c8c;
+          }
+          .one-color {
+            color: #e43d30;
+          }
+          .two-color {
+            color: #c8c9a4;
+          }
+          .three-color {
+            color: #d4830a;
+          }
+          .four-color {
+            color: #262626;
+          }
+          .five-color {
+            color: #262626;
+          }
+        }
+      }
+      ul:nth-child(2) {
+        p {
+          color: #ff7b37;
+        }
+      }
+    }
+  }
+  .index-live-playback {
+    width: 340px;
+    .live-playback-first {
+      margin-top: 24px;
+      width: 340px;
+      height: 168px;
+      border-radius: 4px;
+      position: relative;
+      .background-img {
+        width: 100%;
+        height: 100%;
+        border-radius: 4px;
+        cursor: pointer;
+      }
+      .live-play-name {
+        position: absolute;
+        left: 9px;
+        bottom: 41px;
+        width: 330px;
+        height: 16px;
+        font-size: 16px;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 1);
+        line-height: 16px;
+        text-shadow: 0px 3px 7px rgba(0, 0, 0, 0.6);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .live-play-btn {
+        height: 17px;
+        position: absolute;
+        left: 7px;
+        bottom: 14px;
+        cursor: pointer;
+        color: #ffffff;
+      }
+      .live-play-length {
+        position: absolute;
+        right: 13px;
+        bottom: 16px;
+        height: 12px;
+        line-height: 12px;
+        font-size: 12px;
+        color: rgba(255, 255, 255, 1);
+        text-shadow: 0px 3px 7px rgba(0, 0, 0, 0.6);
+      }
+    }
+    .live-playback-list {
+      margin-top: 23px;
+      li {
+        position: relative;
+        .live-list-img {
+          width: 94px;
+          height: 62px;
+          border: 1px solid rgba(112, 112, 112, 1);
+          border-radius: 4px 4px 4px 4px;
+          margin-right: 12px;
+        }
+        .live-play-length {
+          position: absolute;
+          left: 18px;
+          bottom: 9px;
+          height: 8px;
+          line-height: 8px;
+          font-size: 10px;
+          font-weight: bold;
+          color: rgba(255, 255, 255, 1);
+          text-shadow: 0px 3px 7px rgba(0, 0, 0, 0.6);
+        }
+        .live-playback-introduce {
+          display: inline-block;
+          width: 232px;
+          p:nth-child(1) {
+            height: 33px;
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(38, 38, 38, 1);
+            line-height: 18px;
+            margin-bottom: 18px;
+          }
+          p:nth-child(2) {
+            height: 14px;
+            line-height: 14px;
+            color: #8c8c8c;
+            span:nth-child(1) {
+              font-size: 14px;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+              width: 110px;
+            }
+            span:nth-child(2),
+            span:nth-child(3) {
+              font-size: 12px;
+            }
+            span:nth-child(3) {
+              margin-right: 5px;
+            }
+          }
+        }
+      }
+      li:nth-child(2) {
+        margin: 26px 0 25px 0;
+      }
+      li:nth-child(3) {
+        img {
+          margin-top: 0.5px;
+        }
+      }
+    }
+  }
+}
+</style>

@@ -1,0 +1,397 @@
+<template>
+  <el-container class='section'>
+    <el-header>
+      <div class="layoutHeader">
+        <div class="header clearfix">
+          <a href="javascript:;" class="fl"><img src="../../assets/images/logo214-49.png" alt=""></a>
+          <el-input class="fl" placeholder="搜索你感兴趣的内容" prefix-icon="el-icon-search" v-model="searchTxt"></el-input>
+          <div class="link fr">
+            <a href="javascript:;" class="fl app">百公驿App</a>
+
+            <!-- 已登录 -->
+            <div class="fl user" v-if="$store.state.userInfo">
+              <el-dropdown trigger="click" @command="handleCommand">
+                <!-- 头像 -->
+                <img src="@/assets/images/pic.png" alt="" style="width:30px;height:30px">
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item command='/userCenter'>用户中心</el-dropdown-item>
+                  <el-dropdown-item command='/myHome' divided>我的主页</el-dropdown-item>
+                  <el-dropdown-item command='/myWallet'>我的钱包</el-dropdown-item>
+                  <el-dropdown-item command='/personalData'>账号管理</el-dropdown-item>
+                  <el-dropdown-item divided @click.native='onLogout'>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
+            <!-- 未登录 -->
+            <div class="fl" v-else>
+              <router-link to="/login">去登录</router-link>
+              <span>|</span>
+              <router-link to="/register" class="red">免费注册</router-link>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="nav fl">
+          <el-menu router index="" :default-active="activeIndex" active-text-color="#f00" class="el-menu-demo" mode="horizontal" @select="handleSelect" @mouseleave="activeIndex='/'">
+            <el-menu-item :index="item.links" v-for="(item,index) in navList" :key="index" >
+              <span @mouseover="current=index">{{item.name}}</span>
+              <ul class="child-box" v-if="current==3&&item.childMenu" @mouseleave="current=0">
+                <li v-for="(i,is) in item.childMenu" :key="is">
+                  <span @click="goto(i.id)">{{i.tagName}}</span>
+                </li>
+              </ul>
+            </el-menu-item>
+          </el-menu>
+        </div>
+        <div class="publish fr">
+          <router-link to="/article/publishArticle">
+            <i class="el-icon-tickets"></i>发文章</router-link>
+          <router-link to="/askingQuestions">
+            <i class='icon iconfont'>&#xe60a;</i>提问题</router-link>
+          <router-link to="/">
+            <i class='icon iconfont'>&#xe63a;</i>写想法</router-link>
+        </div>
+      </div>
+    </el-header>
+    <el-main>
+      <router-view />
+    </el-main>
+  </el-container>
+</template>
+
+<script>
+import footerComponents from '@/components/footerComponents.vue'
+import api from '@/fetch'
+export default {
+  components: {
+    footerComponents
+  },
+  data() {
+    return {
+      activeIndex: this.$route.path,
+      current:0,
+      searchTxt: null,
+      flag: false,
+      activeTag: null,
+      user: {
+        name: '', // 用户昵称
+        photo: '' // 用户头像
+      },
+      nowHover: 0,
+      navList: [
+        { name: '首页', links: '/' },
+        { name: '讲堂', links: '/lectureRoom' },
+        { name: '直播', links: '/livetv' },
+        {
+          name: '百工社区',
+          links: null,
+          menu: true,
+          childMenu: []
+        },
+        { name: '热点资讯', links: '/hotmessage' },
+        { name: '工程圈', links: '/engineering' },
+        { name: '文章', links: '/article/list' },
+        { name: '问答', links: '/questions' }
+      ]
+    }
+  },
+  created() { },
+  watch: {
+    activeIndex() {
+      return this.$route.path
+    },
+    tasList: {
+      handler(val, oldVal) {
+        if (val) {
+          this.newtasList = val
+        }
+      },
+      deep: true
+    }
+  },
+  mounted() {
+    this.getTagsList();
+  },
+  methods: {
+    handleSelect(key, keyPath) {
+      this.activeIndex = keyPath[0]
+    },
+    goto(val) {
+      let routeUrl = this.$router.resolve({ path: `/community`, query: { id: val } })
+      window.open(routeUrl.href, '_blank')
+    },
+    getTagsList() {
+      let arr = [];
+      api.tagList().then(res => {
+        res.data.records.forEach((item, index) => {
+          if (!item.parentId) {
+            arr.push(item)
+          }
+        })
+      })
+      this.navList[3].childMenu = arr;
+    },
+    menuListFn() {
+      this.dialogTableVisible = true;
+    },
+    checkTag(index, item) {
+      this.$router.push({ path: '/community', query: { id: item.id } });
+    },
+    // 退出登录
+    onLogout() {
+      this.$confirm('确定退出?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      })
+        .then(() => {
+          this.$store.commit('setUser', null)
+          window.localStorage.clear()
+          window.location.href = '/index'
+          this.$message({
+            type: 'success',
+            message: '退出成功!'
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消退出'
+          })
+        })
+    },
+    // 切换路径
+    handleCommand(command) {
+      this.$router.push(command)
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.el-container {
+  position: relative;
+  .el-header {
+    height: 120px !important;
+    padding: 0;
+    background-color: #fff;
+    .layoutHeader {
+      width: 1100px;
+      margin: 0 auto;
+      .header {
+        height: 50px;
+        padding-top: 16px;
+        overflow: hidden;
+        line-height: 50px;
+        a {
+          display: inline-block;
+        }
+        /deep/.el-input {
+          width: 450px;
+          margin-left: 30px;
+          float: left;
+          .el-input__inner {
+            height: 36px;
+            border-radius: 18px;
+            border: 0;
+            background-color: #f4f4f4ff;
+          }
+          .el-input__prefix {
+            left: 14px !important;
+            top: 1px;
+          }
+        }
+        /deep/.el-input--prefix .el-input__inner {
+          padding-left: 40px !important;
+        }
+        .link {
+          .app {
+            margin-right: 30px;
+          }
+          span {
+            margin: 0 10px;
+          }
+        }
+      }
+      .nav {
+        width: 650px;
+        /deep/.el-menu--horizontal>.el-menu-item {
+          height: auto;
+          line-height: 0;
+          border: none;
+        }
+        /deep/.el-menu-item {
+          padding: 34px 30px 20px 0;
+          color: #4a4a4a;
+        }
+        /deep/.el-menu-item,
+        /deep/.el-submenu__title {
+          height: auto;
+          line-height: auto !important;
+          font-size: 16px;
+        }
+        /deep/.el-menu--horizontal>.el-menu-item.is-active {
+          border: none;
+        }
+        .child-box {
+          position: absolute;
+          left: -10px;
+          margin-top: 20px;
+          z-index: 3;
+          width: 194px;
+          height: 134px;
+          background: rgba(255, 255, 255, 1);
+          box-shadow: 0px 0px 10px 0px rgba(166, 171, 167, 0.35);
+          padding: 27px 33px;
+          display: flex;
+          flex-wrap: wrap;
+          li {
+            margin-bottom: 15px;
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(51, 51, 51, 1);
+            >span:hover {
+              cursor: pointer;
+              color: rgba(228, 61, 48, 1);
+            }
+          }
+          li:nth-child(1),
+          li:nth-child(3),
+          li:nth-child(5),
+          li:nth-child(7),
+          li:nth-child(9) {
+            width: 62px;
+            margin-right: 59px;
+          }
+        } // .nav-main {
+        //   width: 100%;
+        //   ul {
+        //     position: relative;
+        //     >li {
+        //       padding: 0 13px;
+        //       display: inline-block;
+        //       line-height: 60px;
+        //       font-size: 16px;
+        //       color: #333333;
+        //       height: 100%;
+        //       position: relative;
+        //       >span {
+        //         >img {
+        //           display: inline-block;
+        //           padding-left: 10px;
+        //           vertical-align: middle;
+        //         }
+        //       }
+        //       a:hover {
+        //         cursor: pointer;
+        //       }
+        //       &:nth-child(1) {
+        //         color: #ff584b;
+        //       }
+        //       &:nth-child(4):hover {
+        //         .child_list {
+        //           display: block;
+        //         }
+        //       }
+        //       .child_list {
+        //         display: none;
+        //         background: #fff;
+        //         position: absolute;
+        //         width: 250px;
+        //         left: 0;
+        //         top: 54px;
+        //         z-index: 999;
+        //         border: 1px solid #e8e8e8;
+        //         >ol {
+        //           width: 100%;
+        //           padding: 20px 0;
+        //           display: flex;
+        //           justify-content: space-around;
+        //           flex-wrap: wrap;
+        //           >li {
+        //             width: 50%;
+        //             line-height: 30px;
+        //             font-weight: 400;
+        //             text-align: center;
+        //             color: #333333;
+        //             &:hover {
+        //               background: #fff;
+        //               color: #ff584b;
+        //               cursor: pointer;
+        //             }
+        //           }
+        //         }
+        //       }
+        //     }
+        //     li:hover {
+        //       color: #ff584b;
+        //     } // .active-color {
+        //     //   background-color: #ff584b;
+        //     // }
+        //   }
+        // }
+      }
+      .publish {
+        font-size: 16px;
+        margin-top: 22px;
+        >a {
+          margin-left: 30px;
+          i {
+            margin-right: 5px;
+          }
+        }
+      }
+    }
+  }
+  /deep/.el-main {
+    width: 1100px;
+    padding: 0;
+    margin: 0 auto;
+    overflow: initial;
+  }
+}
+
+// 下拉菜单样式
+/deep/.el-dropdown-menu {
+  padding: 0 !important;
+  .el-dropdown-menu__item--divided {
+    margin-top: auto;
+  }
+  .el-dropdown-menu__item--divided:before {
+    height: auto !important;
+  }
+}
+
+// .mask {
+//   /deep/ .el-dialog {
+//     width: 740px;
+//   }
+//   ul {
+//     display: flex;
+//     justify-content: center;
+//     flex-wrap: wrap;
+//     li {
+//       width: 120px;
+//       text-align: center;
+//       height: 40px;
+//       line-height: 40px;
+//       background: #f3f3f5;
+//       border-radius: 2px;
+//       font-size: 14px;
+//       font-weight: 400;
+//       color: #333333;
+//       margin-right: 10px;
+//       margin-bottom: 10px;
+//       cursor: pointer;
+//     }
+//     .check{
+//       color: #f33535;
+//       background-color: #fbf0f1;
+//     }
+//   }
+// }
+</style>

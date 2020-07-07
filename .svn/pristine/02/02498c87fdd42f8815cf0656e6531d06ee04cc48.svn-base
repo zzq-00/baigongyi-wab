@@ -1,0 +1,188 @@
+var browser = {
+    isAndroid: function() {
+        return navigator.userAgent.match(/Android/i) ? true : false;
+    },
+    isMobileQQ: function() {
+        var ua = navigator.userAgent;
+        return /(iPad|iPhone|iPod).*? (IPad)?QQ\/([\d\.]+)/.test(ua) || /\bV1_AND_SQI?_([\d\.]+)(.*? QQ\/([\d\.]+))?/.test(ua);
+    },
+    isIOS: function() {
+        return navigator.userAgent.match(/iPhone|iPad|iPod/i) ? true : false;
+    },
+    isWx: function() {
+        return navigator.userAgent.match(/micromessenger/i) ? true : false;
+    },
+    isChrome: function(){
+        return (navigator.userAgent.match(/Chrome\/([\d.]+)/) || navigator.userAgent.match(/CriOS\/([\d.]+)/)) ? true : false;
+    },
+    isBaidu: function(){
+        return navigator.userAgent.match(/baidubrowser/i) ? true : false;
+    },
+    isUC: function(){
+        return navigator.userAgent.match(/UCBrowser/i) ? true : false;
+    },
+    isSafari: function(){
+        return navigator.userAgent.match(/safari/i) ? true : false;
+    },
+    isQQBrowser: function(){
+        return navigator.userAgent.match(/MQQBrowser/i) ? true : false;
+    },
+    isWeibo: function(){
+        return navigator.userAgent.match(/weibo/i) ? true : false;
+    },
+    isAlipay: function(){
+        return navigator.userAgent.match(/Alipay/i) ? true : false;
+    }
+}
+
+
+// app内打开
+export function openApp() {
+    // Android 微信不支持schema唤醒，必须提前加入腾讯的白名单
+    // 百度浏览器会拦截schema，所以直接跳下载页
+    // QQ,weobo 内也直接跳转下载页
+    var schemaStr = "start";
+    var protocal = "bgy";
+    var failBack = "http://android.myapp.com/myapp/detail.htm?apkName=com.tztech.peer&ADTAG=mobile";
+    if(browser.isWx() || browser.isBaidu() || (browser.isIOS() && browser.isMobileQQ())
+        || (browser.isIOS() && browser.isAlipay()) || browser.isWeibo() || browser.isQQBrowser()){
+        // alert("is wx or do not support schema");
+        schemaStr = failBack;
+    }else if (browser.isChrome() && browser.isAndroid() && browser.isUC() === false && browser.isQQBrowser() === false) {
+        // 如果是安卓chrome浏览器，则通过intent方式打开；UC/QQ浏览器被识别为chrome，排除之
+        // alert("is chrome or support intent");
+        schemaStr = 'intent://' + schemaStr +'#Intent;'  +
+            'scheme='   + protocal          + ';'+
+            'package='+';'+
+            'category=' + 'android.intent.category.DEFAULT' + ';'+
+            'action=' + 'android.intent.action.VIEW' + ';'+
+            'S.browser_fallback_url=' + encodeURIComponent(failBack) + ';' +
+            'end';
+    } else {
+        // alert("is support schema");
+        schemaStr = protocal + '://' + schemaStr;
+        var t = Date.now();
+        setTimeout(function(){
+            if (Date.now() - t < 2200) {
+                // alert("is browser and not install");
+                schemaStr = failBack;
+                window.location.href = schemaStr;
+            }
+        }, 500);
+    }
+    window.location.href = schemaStr;
+}
+
+export function share(conf) {
+    wx.config({
+        debug: false, // 开启调试模式,调用的所有api的返回值会在客户端alert出来
+        appId: conf.appId, // 必填，公众号的唯一标识
+        timestamp: conf.timestamp, // 必填，生成签名的时间戳
+        nonceStr: conf.nonceStr, // 必填，生成签名的随机串
+        signature: conf.signature,// 必填，签名，见附录1
+        jsApiList: [
+            "onMenuShareTimeline",//分享朋友圈接口
+            "onMenuShareAppMessage",//分享给朋友接口
+            "hideMenuItems"//隐藏右上角部分菜单
+        ] // 必填，需要使用的JS接口列表，所有JS接口列表见附录2
+    });
+    wx.ready(function (res) {
+        wx.onMenuShareAppMessage({//朋友
+            title: conf.wechat_title,
+            desc: conf.wechat_desc,
+            link: conf.url,
+            imgUrl: conf.wechat_images0,
+            success: function (res) {
+            },
+            cancel: function (res) {
+            },
+            fail: function (res) {
+            }
+        });
+        wx.onMenuShareTimeline({ //朋友圈
+            title: conf.wechat_title,
+            desc: conf.wechat_desc,
+            link: conf.url,
+            imgUrl: conf.wechat_images0,
+            trigger: function (res) {
+            },
+            success: function (res) {
+            },
+            cancel: function (res) {
+            },
+            fail: function (res) {
+            }
+        });
+        wx.onMenuShareQQ({ //QQ
+            title: conf.wechat_title,
+            desc: conf.wechat_desc,
+            link: conf.url,
+            imgUrl: conf.wechat_images0,
+            trigger: function (res) {
+            },
+            success: function (res) {
+            },
+            cancel: function (res) {
+            },
+            fail: function (res) {
+            }
+        });
+        wx.onMenuShareQZone({ //QQ空间
+            title: conf.wechat_title,
+            desc: conf.wechat_desc,
+            link: conf.url,
+            imgUrl: conf.wechat_images0,
+            trigger: function (res) {
+            },
+            success: function (res) {
+            },
+            cancel: function (res) {
+            },
+            fail: function (res) {
+            }
+        });
+        wx.onMenuShareWeibo({ //腾讯微博
+            title: conf.wechat_title,
+            desc: conf.wechat_desc,
+            link: conf.url,
+            imgUrl: conf.wechat_images0,
+            trigger: function (res) {
+            },
+            success: function (res) {
+            },
+            cancel: function (res) {
+            },
+            fail: function (res) {
+            }
+        });
+    });
+    wx.error(function (res) {
+        // config信息验证失败会执行error函数，如签名过期导致验证失败，具体错误信息可以打开config的debug模式查看，也可以在返回的res参数中查看，对于SPA可以在这里更新签名。
+    });
+
+    /*钉钉分享*/
+    dd.ready(function () {
+        dd.biz.navigation.setRight({
+            show: true,       //控制按钮显示， true 显示， false 隐藏， 默认true
+            control: true,    //是否控制点击事件，true 控制，false 不控制， 默认false
+            text: '更多',       //控制显示文本，空字符串表示显示默认文本
+            onSuccess: function (result) {
+                //如果control为true，则onSuccess将在发生按钮点击事件被回调
+                dd.biz.util.share({
+                    type: 0,    //分享类型，  0:全部组件 默认； 1:只能分享到钉钉； 2:不能分享，只有刷新按钮
+                    url: conf.url,
+                    title: conf.wechat_title,
+                    content: conf.wechat_desc,
+                    image: conf.wechat_images0,
+                    onSuccess: function () {
+                    },
+                    onFail: function (err) {
+                    }
+                })
+            },
+            onFail: function (err) {
+                //失败时会执行此函数
+            }
+        });
+    });
+}

@@ -1,0 +1,160 @@
+<template>
+  <ul class="article-operate">
+    <li @click="likeOperate">
+      <img v-if="propData.whetherLike" src="@/assets/images/article-yizan.png" alt="">
+      <img v-else src="@/assets/images/article-zan.png" alt="">
+      <span class="badge">{{propData.likeCount}}</span>
+    </li>
+    <li @click="$emit('gotoComment')">
+      <img src="@/assets/images/article-pinglun.png" alt="">
+      <span class="badge">{{propData.commentCount}}</span>
+    </li>
+    <li @click="collectOperate" v-if='shoucang != true'>
+      <img v-if="propData.whetherToCollect" src="@/assets/images/article-yishoucang.png" alt="">
+      <img v-else src="@/assets/images/article-shoucang.png" alt="">
+    </li>
+    <li @click="copyText">
+      <div style="color: #999999;text-align: center;margin-top: 7px;">分享</div>
+      <img src="@/assets/images/article-lianjie.png" alt="">
+      <div id="NewsToolBox"></div>
+    </li>
+    <li>
+      <img src="@/assets/images/article-weixin.png" alt="">
+      <div class="canvas-wrapper">
+        <canvas ref="wxcanvas" style="max-width: 74px;max-height: 74px;display: block;margin: 9px auto;"></canvas>
+      </div>
+    </li>
+  </ul>
+</template>
+
+<script>
+import api from '@/fetch'
+import QRCode from 'qrcode'
+
+export default {
+  props: {
+    propData: Object,
+    objType: Number,
+    shoucang:Boolean,
+    weixinShareLink:String
+  },
+  data() {
+    return {
+      operating: false
+      // objType: 3
+    }
+  },
+  methods: {
+    // 点赞
+    likeOperate() {
+      if (this.operating) return
+      this.operating = true
+      let item = this.propData
+      if (item.whetherLike) {
+        api
+          .likeDelete(this.objType, item.id)
+          .then(res => {
+            item.whetherLike = false
+            item.likeCount--
+            // 重新获取作者信息
+            this.$emit('getNewCount')
+          })
+          .finally(() => (this.operating = false))
+      } else {
+        api
+          .likeAdd({ objType: this.objType, objId: item.id })
+          .then(res => {
+            item.whetherLike = true
+            item.likeCount++
+            // 重新获取作者信息
+            this.$emit('getNewCount')
+          })
+          .finally(() => (this.operating = false))
+      }
+    },
+    // 收藏
+    collectOperate() {
+      let item = this.propData
+      if (item.whetherToCollect) {
+        api.cancelCollect({ objType: this.objType, objId: item.id }).then(res => {
+          item.whetherToCollect = false
+        })
+      } else {
+        api.addCollect({ objType: this.objType, objId: item.id }).then(res => {
+          item.whetherToCollect = true
+        })
+      }
+    },
+    // 复制链接
+    copyText() {
+      let text = window.location.href
+      var textarea = document.createElement('textarea') //创建input对象
+      var currentFocus = document.activeElement //当前获得焦点的元素
+      var toolBoxwrap = document.getElementById('NewsToolBox') //将文本框插入到NewsToolBox这个之后
+      toolBoxwrap.appendChild(textarea) //添加元素
+      textarea.value = text
+      textarea.focus()
+      if (textarea.setSelectionRange) {
+        textarea.setSelectionRange(0, textarea.value.length) //获取光标起始位置到结束位置
+      } else {
+        textarea.select()
+      }
+      try {
+        var flag = document.execCommand('copy') //执行复制
+      } catch (eo) {
+        var flag = false
+      }
+      toolBoxwrap.removeChild(textarea) //删除元素
+      currentFocus.focus()
+      return flag ? this.$message.success('链接复制成功') : this.$message.warning('链接复制失败，请手动复制地址栏T_T')
+    },
+    // 微信分享
+    wxShare() {
+      QRCode.toCanvas(this.$refs['wxcanvas'], this.weixinShareLink, error => {
+        if (error) console.error(error)
+      })
+    }
+  },
+  mounted() {
+    this.wxShare()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.article-operate {
+  position: absolute;
+  left: -57px;
+  top: 73px;
+  > li {
+    cursor: pointer;
+    position: relative;
+    &:hover {
+      > .canvas-wrapper {
+        display: block;
+      }
+    }
+    .canvas-wrapper {
+      display: none;
+      position: absolute;
+      width: 92px;
+      height: 92px;
+      background-color: #fff;
+      top: 10px;
+      left: 95%;
+      box-shadow: 0px 0px 4px 0px rgba(57, 63, 58, 0.35);
+    }
+    .badge {
+      font-size: 12px;
+      color: #fff;
+      background-color: #fd4040;
+      padding: 0 6px;
+      border-radius: 7px;
+      position: absolute;
+      top: 5px;
+      left: 35px;
+    }
+  }
+}
+</style>
+

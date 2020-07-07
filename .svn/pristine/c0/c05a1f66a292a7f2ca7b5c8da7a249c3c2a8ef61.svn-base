@@ -1,0 +1,211 @@
+<!-- myHome/myLive -->
+<template>
+  <div class="collect-answers-page">
+    <p class="info-tips">提示：直播回放暂不支持编辑及下架</p>
+    <ul v-loading="answerLoading" element-loading-text="正在加载" infinite-scroll-disabled='loadStatus' v-infinite-scroll="answerlistLoad" infinite-scroll-immediate='false' infinite-scroll-distance='67'>
+      <li v-for="(item,index) in collectLivesList" :key="index" class="clearfix">
+        <div>
+          <div class="fl clearfix qa-info" :class="[manageStatus?'check-answer':'normal-answer']">
+            <img :src="item.homeImage" alt="" class="lives-img fl">
+            <div class="fl live-info" :class="{'live-infoOthers':!isOwn,'live-infoManage':manageStatus&&isOwn,'live-infoNor':(!manageStatus)&&isOwn}">
+              <p class="list-title" style="cursor:pointer" @click="gotoDetails(item)">{{item.title}}</p>
+              <p class="lives-time">{{item.publishTime}}</p>
+              <p class="lives-type">{{item.type==1?'视频':''}}</p>
+              <div class="live-btn clearfix">
+                <p class="lives-price fl">{{item.price==0?'免费':item.price}}</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      answerLoading: true,
+      loadStatus: false,
+      manageStatus: false,
+      checkAll: false, //全选
+      params: {
+        condition: {
+          accountId: '',
+          sortType: 1,
+          status: 1
+        },
+        pageNum: 1,
+        pageSize: 10
+      },
+      collectLivesList: [], //收藏的回答
+      loginaccountId: '',
+      selectArr: []
+    }
+  },
+  watch: {},
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  methods: {
+    gotoDetails(item) {
+      // answerWhetherItExists false是回答不存在 true是可以点击
+      if (item.status != 0) {
+        let routeUrl = this.$router.resolve(`/livetv/${item.id}`)
+        window.open(routeUrl.href, '_blank')
+      }
+    },
+    // 最赞回答
+    answerlistLoad() {
+      this.loadStatus = true
+      this.params.pageNum += 1
+      this.liveHomeList()
+    },
+    liveHomeList() {
+      if (!this.isOwn) {
+        this.params.condition.accountId = this.$route.query.id
+      } else {
+        this.params.condition.accountId = this.loginaccountId
+      }
+      api.liveHomeList(this.params).then(res => {
+        this.collectLivesList = this.collectLivesList.concat(res.data.records)
+        // if (res.data.records.length == 0) {
+        //   this.newloadText = '暂无更多数据'
+        // } else {
+        //   this.newloadText = ''
+        // }
+        this.answerLoading = false //加载状态
+        this.loadStatus = false
+      })
+    }
+  },
+  mounted() {
+    console.log(this.isOwn);
+    this.loginaccountId = JSON.parse(window.localStorage.getItem('userInfo')).accountId
+    this.liveHomeList()
+  }
+}
+</script>
+<style lang="less" scoped>
+.collect-answers-page {
+  .info-tips {
+    height: 13px;
+    line-height: 13px;
+    font-size: 12px;
+    font-weight: 400;
+    color: rgba(226, 55, 50, 1);
+    padding: 11px 0 8px 22px;
+  }
+  ul {
+    width: 100%;
+    min-height: 50px;
+    height: calc(100vh - 540px);
+    overflow: auto;
+    padding-bottom: 67px;
+    li {
+      padding: 10px 20px;
+      position: relative;
+      /deep/.el-checkbox {
+        position: absolute;
+        top: 50%;
+        transform: translate(0, -50%);
+      }
+      .qa-info {
+        .lives-img {
+          width: 200px;
+          height: 118px;
+          border-radius: 5px;
+          margin-right: 21px;
+        }
+        .live-info {
+          .list-title {
+            width: 100%;
+            height: 17px;
+            font-size: 16px;
+            font-weight: bold;
+            color: rgba(51, 51, 51, 1);
+            line-height: 17px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            margin-top: 9px;
+          }
+          .lives-time {
+            height: 11px;
+            line-height: 11px;
+            font-size: 14px;
+            color: rgba(153, 153, 153, 1);
+            margin-top: 11px;
+          }
+          .lives-type {
+            width: 44px;
+            height: 20px;
+            background: rgba(255, 255, 255, 1);
+            border-radius: 3px;
+            background: #f2f2f2;
+            margin-top: 11px;
+            text-align: center;
+          }
+          .live-btn {
+            margin-top: 9px;
+            .lives-price {
+              height: 17px;
+              line-height: 17px;
+              font-size: 16px;
+              font-weight: 400;
+              color: rgba(115, 85, 246, 1);
+              margin-top: 13px;
+            }
+          }
+        }
+        .live-info::after {
+          content: '';
+          display: inline-block;
+          position: absolute;
+          bottom: 0px;
+          right: 0px;
+          height: 1px;
+          background-color: #dddddd;
+        }
+        .live-infoOthers {
+          width: 518px;
+        }
+        .live-infoOthers::after {
+          width: 539px;
+        }
+        .live-infoManage {
+          width: 327px;
+        }
+        .live-infoManage::after {
+          width: 353px;
+        }
+        .live-infoNor {
+          width: 362px;
+        }
+        .live-infoNor::after {
+          width: 499px;
+        }
+      }
+      .check-answer {
+        margin-left: 30px;
+        width: 94%;
+      }
+      .normal-answer {
+        width: 100%;
+      }
+    }
+  }
+  ul::-webkit-scrollbar {
+    display: none;
+    overflow: hidden;
+  }
+}
+</style>

@@ -1,0 +1,133 @@
+<template>
+  <div class='article'>
+    <div class='article_main'>
+      <ul class='article_main_left'>
+        <li :class="{active:currentIndex==index}" v-for='(item,index) in leftNavData' :key='index' @click='currentIndex = index'>
+          <i class="icon iconfont" v-if='index==0'>&#xe614;</i>
+          <span>{{item.name}}</span>
+        </li>
+      </ul>
+      <div class='article_main_right'>
+        <newsHot v-if='currentIndex===0' @toFatherData="sendSonData" ref='mychild'></newsHot>
+      </div>
+    </div>
+    <div class="pagination">
+      <el-pagination @current-change="handleCurrentChange" :current-page.sync="listData.current " :page-size.sync="listData.size" layout="prev,slot, next, total" :total="listData.total">
+        <slot>
+          <span>第
+            <i>{{listData.current}}/{{listData.pages}}</i>页</span>
+        </slot>
+      </el-pagination>
+    </div>
+  </div>
+</template>
+<script>
+import newsHot from './newsHot.vue'
+export default {
+  components: {
+    newsHot,
+  },
+  data() {
+    return {
+      currentIndex: 0,
+      listData: {},
+      leftNavData: [{ name: '新闻热点' }, { name: '建筑前沿' }, { name: '资质热点' }],
+    }
+  },
+  methods: {
+    sendSonData(data) {
+      this.listData = data;
+    },
+    handleCurrentChange(val) {
+      //调用子组件的查询分页 获取数据
+      this.$refs.mychild.getDataListFn(val);
+    },
+  }
+}
+</script>
+<style lang="less" scope>
+.article_main {
+  width: 100%;
+  height: calc(100vh - 260px);
+  background: #fff;
+  border-radius: 10px;
+  padding-top: 32px;
+  display: flex;
+}
+
+.article_main_left {
+  border-right: 1px solid #DDDDDD;
+  height: 200px;
+  width: 178px;
+  li {
+    position: relative;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    >span {
+      font-size: 16px;
+      color: #4A4A4A;
+      padding-left: 46px;
+      font-weight: 500;
+    }
+    >i {
+      font-size: 16px;
+      position: absolute;
+      left: 20px;
+    }
+    &:hover {
+      cursor: pointer;
+      span,
+      i {
+        color: #E23732;
+      }
+    }
+  }
+  .active {
+    span,
+    i {
+      color: #E23732;
+    }
+  }
+}
+
+.article_main_right {
+  padding-left: 20px;
+  flex: 1;
+  padding-right: 280px;
+  overflow-y: scroll;
+  position: relative;
+}
+
+.pagination {
+  margin-top: 10px;
+  text-align: center;
+  /deep/ .el-pagination .btn-next,
+  .el-pagination .btn-prev {
+    width: 40px;
+    height: 40px;
+    padding-right: auto;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    .el-icon-arrow-left:before,
+    .el-icon-arrow-right:before {
+      font-size: 20px;
+    }
+  }
+  /deep/ .el-pagination {
+    slot {
+      span {
+        font-size: 20px;
+        margin: 6px 20px 0;
+        color: #999;
+        font-weight: normal;
+      }
+    }
+    /deep/ .el-pagination__total {
+      margin: 6px 0 0 20px;
+      font-size: 20px;
+      color: #999;
+      font-weight: normal;
+    }
+  }
+}
+</style>

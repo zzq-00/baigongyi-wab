@@ -1,0 +1,13 @@
+import { put, post } from 'axios'
+
+export default {
+  // 获取用户头像
+  getAvatar (avatar) {
+    return put(`/user/account/uploadAvatar/${avatar}`)
+  },
+  // 个人信息
+  userInfo (params) {
+    return post('/homePage/userInfo', params)
+  }
+
+}

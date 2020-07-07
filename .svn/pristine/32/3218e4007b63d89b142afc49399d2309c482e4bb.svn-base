@@ -1,0 +1,112 @@
+<template>
+  <div id="app">
+    <router-view />
+    <el-dialog class="idea-dialog" :visible.sync="ideaDialogVisible" width="660px" :before-close="handleClose" :close-on-click-modal='false'>
+      <h4 slot="title" class="idea-title">写想法</h4>
+      <el-input type="textarea" :rows="5" placeholder="说出你的想法..." v-model="textarea" maxlength="1000" show-word-limit>
+      </el-input>
+      <div slot="footer" class="dialog-footer">
+        <div class="emoji-img">
+          <span class="red">
+            表情
+          </span>
+          <span class="red" @click="$refs['file-input'].click()">
+            图片
+            <input type="file" ref="file-input" accept="image/*" id="img-upload" @change="uploadFile" v-show="false">
+          </span>
+        </div>
+        <el-button type="primary" @click="ideaDialogVisible = false">发 布</el-button>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import VueEmoji from 'emoji-vue'
+import uploadImg from '@/mixins/uploadImg.js'
+
+export default {
+  components: {
+    VueEmoji
+  },
+  data() {
+    return {
+      ideaDialogVisible: false,
+      textarea: '',
+      myText: '',
+      imageUrl: '',
+    }
+  },
+  watch: {
+    imageUrl: function (val) {
+      console.log(val);
+    }
+  },
+  mixins: [uploadImg],
+  methods: {
+    onInput(event) {
+      this.textarea = event.data
+      //event.data contains the value of the textarea
+    },
+    clearTextarea() {
+      this.$refs.emoji.clear()
+    },
+    showEmoji() {
+      // this.$refs.emoji.$el.children[0].children[2].click
+    },
+    handleClose() {}
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.idea-dialog {
+  .idea-title {
+    font-size: 16px;
+    text-align: center;
+  }
+  .dialog-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    .emoji-img {
+      > span {
+        padding-left: 21px;
+        margin-right: 30px;
+        position: relative;
+        &:first-child {
+          background: url(~@/assets/images/biaoqing.png) no-repeat left/16px auto;
+        }
+        &:last-child {
+          background: url(~@/assets/images/tupian.png) no-repeat left/16px auto;
+        }
+      }
+    }
+  }
+  /deep/ .el-textarea__inner,
+  /deep/ .el-textarea .el-input__count {
+    background-color: #f6f6f7;
+  }
+  /deep/ .el-dialog__body {
+    padding: 0 20px 8px;
+  }
+  // /* 把原版的emoji样式隐藏在下面😂 */
+  // /deep/ .emoji-vue-wraper {
+  //   width: 100%;
+  //   height: 100%;
+  //   overflow: hidden;
+  //   position: absolute;
+  //   top: 0;
+  //   left: 0;
+  //   opacity: 0;
+  //   .emoji-picker-container,
+  //   i.emoji-picker-icon.emoji-picker {
+  //     width: 100%;
+  //     height: 100%;
+  //     position: absolute;
+  //     top: 0;
+  //     left: 0;
+  //   }
+  // }
+}
+</style>

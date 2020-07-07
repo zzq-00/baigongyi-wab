@@ -1,0 +1,26 @@
+import { post, get } from 'axios'
+
+/**
+ * 专栏
+ */
+export default {
+  // 讲堂--专栏列表
+  getColumn (params) {
+    return post('/column/list', params)
+  },
+
+  // 我购买的--专栏
+  getMybuyColumn (params) {
+    return post('/homePage/bought/column', params)
+  },
+
+  // 我的讲堂--专栏
+  getMyclassColumn (params) {
+    return post('/homePage/myColumnList', params)
+  },
+
+  // 专栏详情
+  getColumnDetail (id) {
+    return get('/column/' + id)
+  }
+}

@@ -1,0 +1,141 @@
+<template>
+  <div class="myBuy">
+    <div class="content">
+      <div class="tabChange clearfix">
+        <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)" :class="{active:index==nowIndex}">{{item}}
+        </span>
+      </div>
+      <div class="list-box">
+        <course-list :dataList=dataList @getCurrentPage="getCurrentPage" @courseDetail="courseDetail" v-show="nowIndex===0"></course-list>
+        <column-list :dataList=dataList @getCurrentPage="getCurrentPage" @columnDetail="columnDetail" v-show="nowIndex===1"></column-list>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import CourseList from '@/components/courseList'
+import ColumnList from '@/components/columnList'
+import api from '@/fetch'
+export default {
+  name: 'MyBuy',
+  components: {
+    CourseList,
+    ColumnList
+  },
+  data() {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['课堂', '专栏'],
+      dataList: {
+        course: {},
+        column: {}
+      },
+      // 课程参数
+      courseParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8
+      },
+      // 专栏参数
+      columnParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8,
+        paramObject: {}
+      }
+    }
+  },
+  created() {
+    this.getMybuyCourse()
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.getMybuyCourse()
+      } else {
+        this.getMybuyColumn()
+      }
+    })
+  },
+  watch: {
+    courseParams: {
+      handler: 'getCourse',
+      deep: true
+    },
+    columnParams: {
+      handler: 'getColumn',
+      deep: true
+    }
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs(index) {
+      this.nowIndex = index
+    },
+    // 课程--我购买的
+    async getMybuyCourse() {
+      const res = await api.getMybuyCourse(this.courseParams)
+      this.dataList.course = res.data
+    },
+    // 专栏--我购买的
+    async getMybuyColumn() {
+      const res = await api.getMybuyColumn(this.columnParams)
+      this.dataList.column = res.data
+    },
+    // 翻页
+    getCurrentPage(currentPage) {
+      if (this.nowIndex === 0) {
+        this.courseParams.pageNum = currentPage
+      } else {
+        this.columnParams.pageNum = currentPage
+      }
+    },
+    // 跳转到---课程详情页--购买
+    courseDetail(courseItem) {
+      this.$router.push(`/courseDetail/${courseItem.id}`)
+    },
+    // 跳转到---专栏详情页--购买
+    columnDetail(columnItem) {
+      this.$router.push(`/columnDetail/${columnItem.id}`)
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.myBuy {
+  box-sizing: border-box;
+  min-height: 500px;
+  background: #fff;
+  .tabChange {
+    font-size: 16px;
+    padding: 20px 20px 9px 20px;
+    border-bottom: 1px solid #dddddd;
+    cursor: pointer;
+    margin-bottom: 20px;
+    span:first-child {
+      margin-right: 20px;
+    }
+    .active {
+      position: relative;
+      color: #e43c31;
+    }
+    .active::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      bottom: -10px;
+      left: 5px;
+      height: 3px;
+      width: 24px;
+      background-color: #e43c31;
+      border-radius: 2px;
+    }
+  }
+  .list-box {
+    margin-top: 20px;
+    padding: 0 20px;
+  }
+}
+</style>

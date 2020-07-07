@@ -1,0 +1,336 @@
+<!--创建课程-->
+<template>
+  <div class="creatCourse">
+    <div class="header">
+      <div class="title">创建课程</div>
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px" label-position="top" :inline='true' size="small">
+        <div class="content">
+          <div class="left">
+            <el-form-item label="课程主页图" required>
+              <div class="ask">可上传jpg/jpeg/png/bmp格式图片，建议分辨率为900*506，最大4M</div>
+              <upload-pic @getPicUrl="getPicUrl"></upload-pic>
+            </el-form-item>
+          </div>
+          <div class="right">
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="发布课程角色" required>
+                  <el-select disabled v-model="form.accountIdentity">
+                    <el-option value="1" label="讲师"></el-option>
+                  </el-select>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="课程名称" required>
+                  <el-input v-model="form.name" class="columnName" maxlength="30" show-word-limit></el-input>
+                </el-form-item>
+              </el-col>
+            </el-row>
+            <el-form-item label="课程价格(元)" required>
+              <el-input v-model="form.price"></el-input>
+            </el-form-item>
+
+            <el-form-item label="选择课程类型" required class="coursetype">
+              <el-select v-model="form.type">
+                <el-option value="1" label="音频"></el-option>
+                <el-option value="2" label="视频"></el-option>
+              </el-select>
+            </el-form-item>
+
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="选择视频文件" v-model="form.url" required>
+                  <div class="recommed">建议上传视频大小不超过2g，视频类型为：'FLV','MOV','MP4'</div>
+                  <upload-video @getVideoUrl="getVideoUrl"></upload-video>
+
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-row :gutter="20">
+              <el-col :span="24">
+                <el-form-item label="专栏标签" required>
+                  <div v-for="(item,index) in tagItems" :key="index" class="addTag">
+                    <el-select placeholder="请选择一级标签" class="tag1" v-model="tagItems[index].tag1" @change="tagItems[index].tag2 = ''">
+                      <el-option v-for="tag in firstTag" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                    </el-select>
+                    <el-select placeholder="请选择二级标签" class="tag2" v-model="tagItems[index].tag2" v-if="computedSecondTag(tagItems[index].tag1).length">
+                      <el-option v-for="tag in computedSecondTag(tagItems[index].tag1)" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                    </el-select>
+                    <i class="el-icon-circle-plus-outline" @click.prevent="onAdd" v-show="index===tagItems.length-1"></i>
+                    <i class="el-icon-circle-close" @click.prevent="onReduce(index)" v-show="tagItems.length>1" style='color:#E23732;'></i>
+                  </div>
+                </el-form-item>
+              </el-col>
+            </el-row>
+
+            <el-form-item label="课程内容" required>
+              <Editor v-model="form.description" />
+            </el-form-item>
+
+            <el-form-item class="button">
+              <el-button @click="preview">预览</el-button>
+              <el-button @click="saveSraft">存为草稿</el-button>
+              <el-button type="danger" @click="onSubmit">提交审核</el-button>
+            </el-form-item>
+          </div>
+        </div>
+      </el-form>
+
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import UploadVideo from '@/utils/upLoadVideo'
+import UploadPic from '@/utils/upLoadPic'
+import Editor from '@/components/Editor.vue'
+
+export default {
+  name: 'creatCourse',
+  components: {
+    UploadVideo,
+    UploadPic,
+    Editor
+  },
+  data() {
+    return {
+      rules: {
+        image: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        accountIdentity: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        name: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        price: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        upToTime: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        tagIds: [{ required: true, message: '必填项不能为空', trigger: 'blur' }],
+        description: [{ required: true, message: '必填项不能为空', trigger: 'blur' }]
+      },
+      tagItems: [{ tag1: '', tag2: '' }],
+      headers: {
+        Authorization: JSON.parse(window.localStorage.getItem('user')).token
+      },
+      form: {
+        image: '',
+        accountIdentity: '1', // 发布者身份
+        name: '',
+        price: '',
+        type: '', // 类型--音频视频
+        url: '', // 音频视频地址
+        id: '',
+        tagIds: '',
+        description: ''
+      },
+      imgData: {
+        accept: 'image/jpg, image/jpeg, image/png, imgagebmp'
+      },
+      videoData: {
+        accept: 'video/FLV video/MOV, video/MP4,video/MP3'
+      },
+      fileList: [],
+      tagParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 20,
+        paramObject: {}
+      },
+      allTags: []
+    }
+  },
+  computed: {
+    firstTag() {
+      return this.allTags.filter(item => !item.parentId)
+    }
+  },
+  watch: {},
+  methods: {
+    computedSecondTag(id) {
+      return this.allTags.filter(item => item.parentId === id)
+    },
+    onAdd() {
+      this.tagItems.push({ tag1: '', tag2: '' })
+    },
+    onReduce(index) {
+      this.$confirm('确定要删除？', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.tagItems.splice(index, 1)
+      })
+    },
+    // 上传封面图，
+    getPicUrl(pciUrl) {
+      this.form.image = pciUrl
+    },
+    // 上传视频
+    handleExceed(files, fileList) {
+      this.$message.warning('当前限制选择 1 个文件,先删除上一个文件重新上传')
+    },
+    beforeRemove(file, fileList) {
+      // return this.$confirm(`确定移除 ${file.name}？`)
+      this.form.url = ''
+      return file.name
+    },
+    getVideoUrl(videoUrl) {
+      console.log(videoUrl);
+      this.form.url = videoUrl
+    },
+    // 标签
+    async getTaglist1() {
+      const { data } = await api.tagList(this.tagParams)
+      this.allTags = data.records
+    },
+
+    // 预览
+    preview() {
+      this.$store.commit('previewCourse', this.form)
+      this.$router.push('/previewCourse')
+    },
+    // 存为草稿
+    async saveSraft() {
+      const tagIds = this.tagItems.map(item => item.tag2)
+      if (tagIds.includes('')) return this.$message('请选中专栏二级标签')
+      this.form.tagIds = tagIds.join(',')
+
+      this.$refs.form.validate(async isOk => {
+        if (isOk) {
+          const res = await api.saveCourse(this.form)
+          this.$router.push('/myLecture')
+        }
+      })
+    },
+    // 提交审核
+    async onSubmit() {
+      const tagIds = this.tagItems.map(item => item.tag2)
+      if (tagIds.includes('')) return this.$message('请选中专栏二级标签')
+      this.form.tagIds = tagIds.join(',')
+
+      this.$refs.form.validate(async isOk => {
+        if (isOk) {
+          const res = await api.publishCourse(this.form)
+          this.$router.push('/myLecture')
+        }
+      })
+    }
+  },
+  created() {
+    this.getTaglist1()
+  }
+}
+</script>
+
+<style lang="less" scope>
+.creatCourse {
+  margin-top: 20px;
+  .header {
+    width: 1100px;
+    background-color: #fff;
+    border-radius: 10px;
+    .title {
+      height: 50px;
+      line-height: 50px;
+      padding-left: 20px;
+      border-bottom: 1px solid #ddd;
+      box-sizing: border-box;
+    }
+  }
+  .content {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    .left {
+      padding: 20px 20px 0 10px;
+      .ask {
+        font-size: 12px;
+        color: #ccc;
+        line-height: 18px;
+      }
+    }
+    .right {
+      padding-left: 20px;
+      border-left: 1px solid #ddd;
+    }
+  }
+  .el-form {
+    margin-left: 20px;
+    .el-form-item {
+      margin-bottom: 18px;
+      .el-form-item__content {
+        .el-input {
+          width: auto;
+          width: 260px;
+        }
+        .columnName {
+          width: 560px;
+        }
+        .tag1 + .tag2 {
+          margin-left: 40px;
+        }
+        .recommed {
+          font-size: 12px;
+          color: #ccc;
+          margin-top: -30px;
+          margin-left: 100px;
+        }
+      }
+      .addTag {
+        margin-bottom: 22px; // position: relative;
+        // img {
+        //   margin-left: 10px;
+        // }
+        i {
+          font-size: 16px;
+          padding-left: 10px;
+        }
+      }
+    }
+    .update {
+      margin-left: 28px;
+    }
+    .button {
+      margin-left: 230px;
+      .el-button {
+        width: 90px;
+        height: 34px;
+      }
+    }
+    .coursetype {
+      margin-left: 24px;
+      .el-input {
+        width: 120px;
+      }
+    }
+  }
+  .el-form--label-top {
+    .el-form-item__label {
+      padding: 0px !important;
+      line-height: 30px !important;
+    }
+  }
+  .avatar-uploader {
+    position: relative;
+    width: 280px;
+    height: 210px;
+    border: 1px dashed #ccc; // margin-right:30px;
+    font-size: 28px;
+    float: left;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    .el-button {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      width: 100%;
+    }
+    img {
+      width: 280px;
+      height: 210px;
+      border-radius: 10px;
+    }
+  }
+}
+</style>

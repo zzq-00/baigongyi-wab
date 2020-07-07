@@ -1,0 +1,229 @@
+<template>
+    <div id="question" class="main">
+        <template v-if="true">
+            <div class="ques-box">
+                <div class="ques-tags">
+                    <span v-for="(item,index) in questionTagList" :key="index">{{item.tagName1}}-{{item.tagName2}}</span>
+                </div>
+                <div class="ques-title">{{question.title}}</div>
+                <div class="ques-desc-box" v-if="question.questionContent">
+                    <template v-if="!descOpen">
+                        <div class="desc-text">{{question.stripHtmlContent.substr(0, 46) + "..."}}</div>
+                        <span class="desc-btn" @click="descOpen = true">展开描述<i class="open-icon"></i></span>
+                    </template>
+                    <template v-else>
+                        <div v-if="descOpen" class="desc-html" v-html="question.questionContent"></div>
+                        <span class="desc-btn" @click="descOpen = false">收起描述<i class="retract-icon"></i></span>
+                    </template>
+                </div>
+                <div class="more-answer" @click="openApp">{{"查看全部回答"}}<i class="next-icon"></i></div>
+            </div>
+            <div class="separate-box"></div>
+            <div class="answer-box">
+                <div class="author">
+                    <div>
+                        <div class="avatar fl" :style="{backgroundImage: 'url('+ (answer.avatar ? $store.state.imageDomain + answer.avatar : require('@/assets/images/err-header-icon01.png')) +')'}"></div>
+                        <div class="author-name fl">
+                            <span>{{answer.nickName}}</span><br>
+                        </div>
+                    </div>
+                    <div class="watch-btn" @click="openApp">关注</div>
+                </div>
+                <div class="answer-con" v-html="answer.answerContent"></div>
+                <div class="time-protocol">{{"发布于"+ convertDate(answer.createTime) +" · 著作权归作者所有"}}</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="comment">
+                <div class="comm-label">评论（{{answer.commentCount}}条）</div>
+                <div class="comm-write" @click="openApp">写评论...</div>
+                <ul>
+                    <li v-for="(comment, index) in comments" :key="index">
+                        <div class="avatar" :style="{backgroundImage: 'url('+ (comment.avatar ? $store.state.imageDomain + comment.avatar : require('@/assets/images/err-header-icon01.png')) +')'}"></div>
+                        <div class="comm-box" :class="{'comm-box_line' : index != comments.length - 1}">
+                            <div class="comm-author">
+                                <span class="comm-author-name">{{comment.nickName}}</span>
+                                <span class="comm-date">{{convertDate(comment.commentsTime)}}</span>
+                            </div>
+                            <div class="comm-content">{{comment.comment}}</div>
+                        </div>
+                    </li>
+                </ul>
+                <div style="text-align: center;" v-if="commentTotal > 0 && commentTotal != comments.length" >
+                    <span class="more-btn" @click="loadMorecomments">查看更多评论>></span>
+                </div>
+                <div v-else class="noMore">哎呀，没有更多了...</div>
+            </div>
+            <div class="app-open">
+                <div class="app-open-btn" @click="openApp">App内打开</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="like-comm-count">
+                <div class="like-comm-count_box" @click="openApp">
+                    <i class="like-icon"></i>
+                    <span>{{answer.likeCount}}</span>
+                </div>
+                <div class="like-comm-count_box" @click="openApp">
+                    <i class="comm-icon"></i>
+                    <span>{{answer.commentCount}}</span>
+                </div>
+                <div class="like-comm-count_box" @click="openApp">
+                    <i class="collect-icon"></i>
+                    <span>{{answer.whetherToCollect ? '已收藏' : '收藏'}}</span>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+<script>
+require('@/assets/style/share.css')
+require('@/assets/js/lib-flexible/index.min.js')
+
+import api from "@/fetch"
+import { openApp, convertDate, share} from '@/assets/js/shareUtil.js'
+export default {
+    data() {
+        return {
+            loaded: false,
+            answerId: "",
+            question: {},
+            descOpen: false,
+            answer: {},
+            questionTagList: [],
+            commentTotal: 0,
+            comments: [],
+            commentParam: {
+                pageNum: 1,
+                pageSize: 3,
+                paramObject: {
+                    objId: "",
+                    objType: 9
+                }
+            },
+            shareConfig: {}
+        };
+    },
+    async created() {
+        document.title = "百工驿-回答"
+        let _this = this;
+        _this.answerId = _this.$route.query.id;
+        _this.commentParam.paramObject.objId = _this.answerId;
+        let {data: {question: _question, questionAnswerDto: _answer, questionTagList: _questionTagList}} = await api.answerDetails(_this.answerId);
+        _this.question = _question;
+        _this.answer = _answer;
+        _this.questionTags = _questionTagList;
+        _questionTagList.map(item => {
+            item.children.map(items => {
+              _this.questionTagList.push({ tagName1: item.tagName, tagName2: items.tagName })
+            })
+        });
+        if (_this.question.stripHtmlContent.length > 150) {
+            _this.question.stripHtmlContent = _this.question.stripHtmlContent.substring(0, 53) + '...';
+        } else {
+            _this.descOpen = true;
+        }
+        _this.shareConfig.wechat_title = _question.title;
+        _this.shareConfig.wechat_desc = _question.stripHtmlContent ? _question.stripHtmlContent : '';
+        _this.shareConfig.wechat_images0 = _this.$store.state.imageDomain + "images/baigongyi.png";
+
+        // 分享参数
+        let {data: _shareConfig} = await api.getShareConfig();
+        _this.shareConfig.appId = _shareConfig.appId;
+        _this.shareConfig.timestamp = _shareConfig.timestamp;
+        _this.shareConfig.nonceStr = _shareConfig.nonceStr;
+        _this.shareConfig.signature = _shareConfig.signature;
+        _this.shareConfig.url = _shareConfig.url;
+        share(_this.shareConfig);
+        // 评论列表
+        api.getCommentList(_this.commentParam)
+        .then(function(res) {
+            _this.comments = res.data.records;
+            _this.commentTotal = res.data.total;
+            _this.loaded = true;
+        });
+
+    },
+    methods: {
+        loadMorecomments() {
+            if(this.comments.length == this.commentTotal) return;
+            this.commentParam.pageNum++;
+            api.getCommentList(this.commentParam)
+            .then(res => {
+                this.comments = this.comments.concat(res.data.records);
+            })
+        },
+        openApp() {
+            openApp();
+        },
+        convertDate(date) {
+            return convertDate(date);
+        }
+    }
+}
+</script>
+<style lang="less">
+.ques-title{
+    font-size: .4rem;
+    line-height: .56rem;
+    color: #333;
+    margin-bottom: .29rem;
+    font-weight: bold;
+}
+.ques-desc-box{
+    margin-bottom: .28rem;
+    position: relative;
+    .desc-text{
+        font-size: .35rem;
+        line-height: .48rem;
+        color: #666;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        position: relative;
+    }
+    .desc-html{
+        word-wrap: break-word;
+    }
+    .desc-btn{
+        font-size: .35rem;
+        line-height: .48rem;
+        color: #666;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        color: #f33535;
+        cursor: pointer;
+        img{
+            width: .32rem;
+            height: .19rem;
+        }
+    }
+}
+.more-answer{
+    font-size: .35rem;
+    line-height: .48rem;
+    color: #666;
+    text-align: left;
+    margin-bottom: .35rem;
+    display: flex;
+    display: -webkit-flex;
+    align-items: center;
+}
+.answer-box{
+    padding-top: .27rem;
+}
+.answer-con{
+    font-size: .35rem;
+    line-height: .48rem;
+    color: #666;
+    word-wrap: break-word;
+    margin-bottom: .27rem;
+}
+.time-protocol{
+    font-size: .29rem;
+    line-height: .48rem;
+    color: #999;
+    margin-bottom: .43rem;
+}
+</style>

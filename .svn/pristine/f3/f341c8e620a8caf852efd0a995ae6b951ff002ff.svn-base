@@ -1,0 +1,334 @@
+<template>
+  <div style="height: 100%;">
+    <div class="batch-manage" v-if="$route.fullPath==='/myHome/myCollect'&&showBatch">
+      <el-checkbox :indeterminate="isIndeterminate" v-model="checkAll" @change="handleCheckAllChange" style="margin-right: 30px;">全选</el-checkbox>
+      <el-button @click="batchCancelCollect">取消收藏</el-button>
+      <el-button @click="showBatch = false">退出批量管理</el-button>
+    </div>
+    <div class="batch-manage" v-if="$route.fullPath==='/myHome/myCollect'&&!showBatch&&listData.length">
+      <el-button @click="showBatch = true">批量管理</el-button>
+    </div>
+    <el-scrollbar class="scroll-wrap" :class="{'hasbatch': $route.fullPath==='/myHome/myCollect'}" id="NewsToolBox">
+      <ul class="article-list" v-infinite-scroll="getMore" infinite-scroll-disabled="disabled">
+        <li v-for="(item,index) in listData" :key="index">
+          <el-checkbox v-if="$route.fullPath==='/myHome/myCollect'&&showBatch" :key="updateKey" :checked="checkAll" @change="handleCheckedChange(item.id)" style="margin: 45px 10px 0 0;"></el-checkbox>
+          <img :src="$store.state.imageDomain + item.image" alt="" width="200px">
+          <div>
+            <h5 class="ellipsis">
+              <router-link :to="'/article/list/'+item.id" target="_blank">{{item.title}}</router-link>
+            </h5>
+            <p>{{item.description}}</p>
+            <div class="other-info">
+              <!-- 作者 时间 -->
+              <template v-if="!isOwn">
+                <span class="ellipsis">{{item.userName}} </span>
+                <span style="margin: 0 5px;">|</span>
+              </template>
+              <span v-if="$route.path=='/myHome/draftArt'">{{item.updateTime | DateIndex}}</span>
+              <span v-else>{{item.publishTime && item.publishTime.slice(0,10)}}</span>
+              <!-- 草稿箱和收藏的文章不显示点赞 评论 收藏 分享 -->
+              <div class="operational" v-if="$route.path!='/myHome/draftArt' && $route.path!='/myHome/myCollect'">
+                <span @click="likeOperate(item)">
+                  <img v-if="item.whetherLike" src="@/assets/images/yizan.png" alt="">
+                  <img v-else src="@/assets/images/zan.png" alt="">
+                  {{item.likeCount}}
+                </span>
+                <span @click="gotoDetail('/article/list/' + item.id + '#comment')">
+                  <img src="@/assets/images/pinglun.png" alt="">
+                  {{item.commentCount}}
+                </span>
+                <span @click="collectOperate(item)">
+                  <img v-if="item.whetherToCollect" src="@/assets/images/yishoucang.png" alt="">
+                  <img v-else src="@/assets/images/shoucang.png" alt="">
+                  {{item.whetherToCollect?'已收藏':'收藏'}}
+                </span>
+                <el-popover placement="bottom" trigger="click" @show="wxShare(item.id)" width="150">
+                  <ul class="share-list">
+                    <li @click="copyText(item.id)" style="font-size: 12px;border-bottom: 1px solid #DDDDDD;padding-bottom: 9px;">
+                      <img src="@/assets/images/lianjie.png" alt="">
+                      <span style="vertical-align: middle;margin-left: 8px;cursor: pointer;">复制链接</span>
+                    </li>
+                    <li style="font-size: 12px;line-height: 30px">
+                      <img src="@/assets/images/weixin.png" alt="">
+                      <span style="vertical-align: middle;margin-left: 8px;">微信扫一扫</span>
+                      <canvas :ref="'canvas'+item.id" style="max-width: 74px;max-height: 74px;display: block;margin: 0 auto;"></canvas>
+                    </li>
+                  </ul>
+                  <span slot="reference">
+                    <img src="@/assets/images/share.png" alt="">
+                    分享
+                  </span>
+                </el-popover>
+              </div>
+            </div>
+            <div class="edit-button" style="padding-top: 0;border-top: 0;" v-if="$route.fullPath=='/myHome/myCollect'">
+              <el-button @click="collectOperate(item)">取消收藏</el-button>
+            </div>
+            <div class="edit-button" v-if="isOwn">
+              <el-button round @click="reEditArticle(item)">编辑</el-button>
+              <el-button round @click="deleteArticle(item)">删除</el-button>
+            </div>
+          </div>
+        </li>
+      </ul>
+      <p v-if="loading" class="nomore-data">加载中...</p>
+      <p v-if="noMore" class="nomore-data">没有更多了</p>
+    </el-scrollbar>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import QRCode from 'qrcode'
+
+export default {
+  props: {
+    listData: Array,
+    noMore: Boolean,
+    loading: Boolean,
+    isOwn: false
+  },
+  data() {
+    return {
+      objType: 3, // COURSE(1, "课程"),COLUMN(2, "专栏"),ARTICLE(3, "文章"),QUESTION(4, "问答"),LIVE(5, "直播"),PERSON(6, "用户"),HOT_NEWS(7, "热点资讯"),LECTURER(8, "讲师"),ANSWER(9, "回答"),IDEA(10, "想法"),
+      operating: false,
+      showBatch: false,
+      isIndeterminate: false,
+      checkAll: false,
+      checkedArr: [],
+      updateKey: 1 // 用来更新全选时el-checkbox的选中状态
+    }
+  },
+  computed: {
+    disabled() {
+      return this.loading || this.noMore
+    }
+  },
+  methods: {
+    // 全选
+    handleCheckAllChange(val) {
+      this.updateKey++
+      this.checkedArr = []
+      if (val) {
+        this.listData.forEach(item => {
+          this.checkedArr.push({ objId: item.id, objType: this.objType })
+        })
+      }
+      this.isIndeterminate = false
+    },
+    // 单选
+    handleCheckedChange(value) {
+      let obj = { objId: value, objType: this.objType }
+      let index = this.checkedArr.findIndex(item => item.objId === obj.objId)
+      if (index === -1) {
+        this.checkedArr.push(obj)
+      } else {
+        this.checkedArr.splice(index, 1)
+      }
+      let checkedCount = this.checkedArr.length
+      this.checkAll = checkedCount === this.listData.length
+      this.isIndeterminate = checkedCount > 0 && checkedCount < this.listData.length
+    },
+    // 批量取消收藏
+    batchCancelCollect() {
+      if (!this.checkedArr.length) return this.$message.warning('请选中要取消收藏的文章')
+      this.$confirm(`您已勾${this.checkedArr.length}选个文章，是否取消收藏`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          api.batchCancelCollect(this.checkedArr).then(res => {
+            this.$emit('getNewData', this.checkedArr)
+            this.checkAll = false
+            this.isIndeterminate = false
+            this.updateKey++
+            this.checkedArr = []
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消操作'
+          })
+        })
+    },
+    getMore() {
+      this.$emit('getMore')
+    },
+    // 重新编辑
+    reEditArticle(item) {
+      this.$router.push('/article/reEditArticle/' + item.id)
+    },
+    // 删除
+    deleteArticle(item) {
+      this.$confirm(`是否删除该文章，删除后该文章相关的点赞、评论、收藏、分享等相关信息都将被清除且无法恢复！`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          api.deleteArticle(item.id).then(res => {
+            this.$emit('getNewData', item)
+            this.$message.success('删除成功')
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消操作'
+          })
+        })
+    },
+    // 点赞
+    likeOperate(item) {
+      if (this.operating) return
+      this.operating = true
+      if (item.whetherLike) {
+        api
+          .likeDelete(this.objType, item.id)
+          .then(res => {
+            item.whetherLike = false
+            item.likeCount--
+          })
+          .finally(() => (this.operating = false))
+      } else {
+        api
+          .likeAdd({ objType: this.objType, objId: item.id })
+          .then(res => {
+            item.whetherLike = true
+            item.likeCount++
+          })
+          .finally(() => (this.operating = false))
+      }
+    },
+    // 收藏
+    collectOperate(item) {
+      if (item.whetherToCollect) {
+        api.cancelCollect({ objType: this.objType, objId: item.id }).then(res => {
+          this.$emit('getNewData', item) // 我的主页收藏要传过去
+          item.whetherToCollect = false
+          // 防止跟批量管理收藏冲突
+          this.checkedArr = []
+          this.checkAll = false
+          this.updateKey++
+        })
+      } else {
+        api.addCollect({ objType: this.objType, objId: item.id }).then(res => {
+          item.whetherToCollect = true
+        })
+      }
+    },
+    // 复制链接
+    copyText(id) {
+      let text = `${window.location.origin}/article/list/${id}`
+      var textarea = document.createElement('textarea') //创建input对象
+      var currentFocus = document.activeElement //当前获得焦点的元素
+      var toolBoxwrap = document.getElementById('NewsToolBox') //将文本框插入到NewsToolBox这个之后
+      toolBoxwrap.appendChild(textarea) //添加元素
+      textarea.value = text
+      textarea.focus()
+      if (textarea.setSelectionRange) {
+        textarea.setSelectionRange(0, textarea.value.length) //获取光标起始位置到结束位置
+      } else {
+        textarea.select()
+      }
+      try {
+        var flag = document.execCommand('copy') //执行复制
+      } catch (eo) {
+        var flag = false
+      }
+      toolBoxwrap.removeChild(textarea) //删除元素
+      currentFocus.focus()
+      return flag ? this.$message.success('链接复制成功') : this.$message.warning('链接复制失败')
+    },
+    // 微信分享
+    wxShare(id) {
+      var weixinShareLink = location.protocol + "//" + location.host + '/share/article?id=' + id;
+      QRCode.toCanvas(this.$refs['canvas' + id][0], weixinShareLink, error => {
+        if (error) console.error(error)
+      })
+    },
+    gotoDetail(url) {
+      window.open(url)
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.batch-manage {
+  padding: 10px 20px 0;
+}
+.scroll-wrap {
+  height: 100%;
+  &.hasbatch {
+    height: calc(100% - 52px);
+  }
+  /deep/ .el-scrollbar__wrap {
+    overflow-x: hidden;
+  }
+  .article-list {
+    padding: 5px 20px;
+    > li {
+      padding: 10px 0;
+      display: flex;
+      align-items: flex-start;
+      > img {
+        height: 118px;
+        margin-right: 20px;
+        border-radius: 5px;
+      }
+      > div {
+        flex: 1;
+        width: 100px; /* 有这个宽度，h5标题宽度才不继续涨 */
+        overflow: hidden;
+        > h5 {
+          font-size: 16px;
+          margin-bottom: 5px;
+        }
+        > p {
+          color: #666666;
+          line-height: 20px;
+          margin-bottom: 22px;
+          height: 40px;
+          word-wrap: break-word;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+        }
+        > .other-info {
+          color: #999999;
+          display: flex;
+          align-items: center;
+          > span:first-child {
+            max-width: 160px;
+          }
+          .operational {
+            flex: 1;
+            text-align: right;
+            > span {
+              cursor: pointer;
+              vertical-align: middle;
+              margin-left: 25px;
+            }
+          }
+        }
+        .edit-button {
+          margin-top: 15px;
+          padding-top: 10px;
+          border-top: 1px solid #dddddd;
+          text-align: right;
+        }
+      }
+    }
+  }
+}
+.nomore-data {
+  text-align: center;
+  margin: 20px 0 10px;
+  color: #999;
+}
+</style>

@@ -1,0 +1,60 @@
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+import entryInterface from '../views/entryInterface/entryInterface.vue'
+import layout from '../views/layout/layout.vue'
+// import store from '@/store'
+Vue.use(VueRouter)
+
+let routes = [
+  {
+    path: '/index',
+    redirect: '/'
+  },
+  {
+    path: '/',
+    name: 'index',
+    // component: index
+    component: () => import('../views/index.vue')
+  },
+  {
+    path: '/entryInterface',
+    name: 'entryInterface',
+    component: entryInterface,
+    children: [{
+      path: '/login',
+      component: () => import('../views/entryInterface/login.vue')
+    }, {
+      path: '/register',
+      component: () => import('../views/entryInterface/register.vue')
+    }, {
+      path: '/forgetPassword',
+      component: () => import('../views/entryInterface/forgetPassword.vue')
+    }]
+  },
+  {
+    path: '/layout',
+    component: layout,
+    children: [
+      // {
+      //   path: '/index',
+      //   component: () => import('../views/homeManger/index.vue')
+      // }
+    ]
+  }
+]
+
+const routeFiles = require.context('.', false, /\.js$/)
+routeFiles.keys().forEach(key => {
+  if (key === './index.js') return
+  routes = [
+    ...routeFiles(key).default,
+    ...routes
+  ]
+})
+
+const router = new VueRouter({
+  mode: 'history',
+  routes
+})
+
+export default router

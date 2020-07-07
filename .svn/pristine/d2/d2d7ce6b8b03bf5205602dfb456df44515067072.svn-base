@@ -1,0 +1,584 @@
+<template>
+  <div class="container">
+    <h4>创建文章</h4>
+    <div class="clearfix content-area">
+      <div class="left-content fl">
+        <h5><span>*</span> 上传文章题图</h5>
+        <p>可上传jpg/jpeg/png/bmp格式图片，建议分辨率为750x562，最大4M</p>
+        <label for="imgUpload">
+          <div class="img-box">
+            <i v-if="!ruleForm.image" class="el-icon-plus"></i>
+            <img v-else :src="ruleForm.image" alt="" width="100%">
+          </div>
+          <el-button type="danger" style="width: 100%;">上传</el-button>
+        </label>
+        <input type="file" accept="image/*" id="imgUpload" style="display: none;" @change="uploadFile">
+      </div>
+      <div class="right-content fl">
+        <el-form label-position="top" :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
+          <el-form-item label="文章名称" prop="title">
+            <el-input v-model="ruleForm.title" maxlength="50" show-word-limit></el-input>
+          </el-form-item>
+          <el-form-item label="文章摘要" prop="description">
+            <el-input type="textarea" v-model="ruleForm.description" :autosize="{minRows: 5}" maxlength="500" show-word-limit></el-input>
+          </el-form-item>
+          <el-form-item prop="tagIds">
+            <template slot="label">
+              文章标签 <span style="font-size: 12px;color: #999999;">添加标签后，您的文章将显示在对应标签分区中，方便用户进行检索；标签不分先后，最多可添加5个标签</span>
+            </template>
+            <div class="article-tag">
+              <el-tag :key="index" v-for="(tag,index) in diaDynamicTags" closable :disable-transitions="false" @close="handleCloseDia(tag,index)">
+                {{tag.tagName}}-{{tag.description}}
+              </el-tag>
+              <div class="add-tag">
+                <span @click="addLabel"><i class="el-icon-circle-plus-outline"></i>添加标签（{{diaDynamicTags.length}}/5）</span>
+              </div>
+            </div>
+          </el-form-item>
+          <el-form-item label="编辑正文" prop="content">
+            <quill-editor class="editor-container" v-model="ruleForm.content" ref="myQuillEditor" :options="editorOption"></quill-editor>
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
+    <div class="footer-release">
+      <el-button @click="submitForm('ruleForm')">预览</el-button>
+      <el-button @click="submitForm('ruleForm')">存草稿</el-button>
+      <el-button type="danger" @click="submitForm('ruleForm')">发布</el-button>
+    </div>
+    <el-dialog title="添加标签" :visible.sync="dialogVisible" :close-on-press-escape='false' :close-on-click-modal='false' width="785px" class="label-dialog">
+      <div class="dialog-content">
+        <div class="have-chosen">
+          <p class="dialog-title">
+            <span></span>
+            <span>已选标签</span>
+            <span>{{diaDynamicTags.length}}/5</span>
+          </p>
+          <div class="label-list">
+            <el-tag :key="index" v-for="(tag,index) in diaDynamicTags" closable :disable-transitions="false" @close="handleCloseDia(tag,index)">
+              {{tag.tagName}}-{{tag.description}}
+            </el-tag>
+          </div>
+        </div>
+        <div class="all-label">
+          <p class="dialog-title">
+            <span></span>
+            <span>全部标签</span>
+            <span>最多可选择5个标签</span>
+          </p>
+          <div class="label-box">
+            <ul class="left-frist">
+              <li v-for="(item,index) in firstTag" :key="index" :class="[activeIndex==index?'active-style':'']" @click="changeFirst(item,index)">
+                <span class="red-label"></span>
+                <span class="frist-name">{{item.tagName}}
+                  <span class="frist-name-have" v-if="item.checkedArr.length>0">{{item.checkedArr.length}}</span>
+                </span>
+              </li>
+            </ul>
+            <ul class="right-second" v-if="firstTag[activeIndex]">
+              <li v-for="(its,ins) in computedSecondTag(firstTag[activeIndex].id)" :key="its.id" :class="[its.checked?'checked-style':'']" @click="changeSecond(its,ins)">{{its.tagName}}</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="sureLabel()">确 定</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { quillEditor } from 'vue-quill-editor'
+import 'quill/dist/quill.snow.css'
+import api from '@/fetch'
+import axios from 'axios'
+
+export default {
+  components: {
+    quillEditor
+  },
+  data() {
+    return {
+      //  富文本编辑器配置
+      editorOption: {
+        theme: 'snow',
+        placeholder: '请输入正文'
+      },
+      tagParams: {
+        asc: true,
+        pageNum: 1,
+        pageSize: 20,
+        paramObject: {}
+      },
+      dialogVisible: false, //选择标签的弹框
+      diaDynamicTags: [], //弹框内已选的标签
+      activeIndex: 0,
+      allTags: [],
+      ruleForm: {
+        image: '', // 封面图
+        content: '', // 文章内容
+        title: '', // 文章标题
+        description: '', // 文章摘要
+        tagIds: '' // 文章标签
+      },
+      rules: {
+        title: [{ required: true, message: '请输入文章名称', trigger: 'blur' }, { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }],
+        description: [{ required: true, message: '请填写文章摘要', trigger: 'blur' }, { min: 1, max: 500, message: '长度在 1 到 500 个字符', trigger: 'blur' }],
+        // tagIds: [{ required: true, message: '请选择文章标签', trigger: 'change' }],
+        content: [{ required: true, message: '请编辑文章正文', trigger: 'blur' }]
+      },
+      dateNow: '',
+      avatarImg: '',
+      fileSuffix: ['.jpg', '.jpeg', '.png', '.bmp']
+    }
+  },
+  computed: {
+    firstTag() {
+      return this.allTags.filter(item => !item.parentId)
+    }
+  },
+  methods: {
+    computedSecondTag(id) {
+      return this.allTags.filter(item => item.parentId === id)
+    },
+    // 添加标签
+    addLabel() {
+      this.dialogVisible = true
+      this.diaDynamicTags = JSON.parse(JSON.stringify(this.dynamicTags))
+      if (this.diaDynamicTags.length == 0) {
+        this.firstTag.map(item => {
+          item.checkedArr = []
+          this.computedSecondTag(item.id).map(its => {
+            its.checked = false
+          })
+        })
+      } else {
+        this.firstTag.map(items => {
+          items.checkedArr = []
+          this.computedSecondTag(items.id).map(its => {
+            its.checked = false
+          })
+        })
+        this.diaDynamicTags.map(item => {
+          let obj = this.firstTag.find(it => it.id == item.parentId)
+          obj.checkedArr.push(item)
+          this.computedSecondTag(obj.id).map(its => {
+            if (its.id == item.id) {
+              its.checked = true
+            }
+          })
+        })
+      }
+    },
+    // 选择第二级
+    changeSecond(its, ins) {
+      if (this.diaDynamicTags.length >= 5) {
+        if (its.checked) {
+          this.$set(its, 'checked', !its.checked)
+          this.firstTag[this.activeIndex].checkedArr = this.computedSecondTag(this.firstTag[this.activeIndex].id).filter(item => item.checked)
+          this.diaDynamicTags.splice(this.diaDynamicTags.findIndex(item => item.id == its.id), 1)
+        }
+      } else {
+        this.$set(its, 'checked', !its.checked)
+        this.firstTag[this.activeIndex].checkedArr = this.computedSecondTag(this.firstTag[this.activeIndex].id).filter(item => item.checked)
+        if (its.checked) {
+          this.diaDynamicTags.push(this.allTags.find(item => item.id == its.id))
+        } else {
+          this.diaDynamicTags.splice(this.diaDynamicTags.findIndex(item => item.id == its.id), 1)
+        }
+      }
+    },
+    // 确定标签
+    sureLabel() {
+      if (this.diaDynamicTags.length > 0) {
+        this.dynamicTags = JSON.parse(JSON.stringify(this.diaDynamicTags))
+        this.dialogVisible = false
+      }
+    },
+    tagList() {
+      api.tagList(this.tagParams).then(res => {
+        this.allTags = res.data.records
+        this.allTags.map(item => {
+          item.checkedArr = []
+        })
+      })
+    },
+    // 选择第一级
+    changeFirst(item, index) {
+      this.activeIndex = index
+    },
+    // 弹框内删除标签
+    handleCloseDia(tag) {
+      this.spliceFunction(tag)
+      this.diaDynamicTags.splice(this.diaDynamicTags.indexOf(tag), 1)
+    },
+    submitForm(formName) {
+      if (!this.ruleForm.image) return this.$message.warning('请上传文章题图')
+      this.$refs[formName].validate(valid => {
+        let arr = []
+        this.dynamicTags.map(item => {
+          arr.push(item.id)
+        })
+        this.ruleForm.tagIds = arr.toString()
+        if (valid) {
+          api.saveOrUpdateArticle(this.ruleForm).then(res => {
+            this.$message.success('文章创建成功')
+          })
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    },
+    resetForm(formName) {
+      this.$refs[formName].resetFields()
+    },
+    // 随机生成32位数字 字母组合的字符串
+    generateUUID() {
+      let d = new Date().getTime()
+      let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        let r = (d + Math.random() * 16) % 16 | 0
+        d = Math.floor(d / 16)
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+      })
+      return uuid
+    },
+    // 获取日期
+    getDateFn() {
+      let date = new Date()
+      let Y = date.getFullYear()
+      let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
+      let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+      this.dateNow = Y + M + D
+    },
+    // 获取后缀名
+    get_suffix(filename) {
+      let pos = filename.lastIndexOf('.')
+      return pos != -1 ? filename.substring(pos) : ''
+    },
+    // 头像上传图片
+    async uploadFile(event) {
+      let files = event.target.files || event.dataTransfer.files
+      if (!files.length) return
+      let file = files[0]
+      let fileType = this.get_suffix(file.name)
+      if (!this.fileSuffix.includes(fileType)) return this.$message.warning('仅支持jpg/jpeg/png/bmp格式图片')
+      if (file.size / 1024 / 1024 > 4) return this.$message.warning('照片最大4M')
+      // 获取阿里云数据
+      let { data: dataKey } = await api.getUploadPic()
+      let ossUrl = dataKey.host
+      let policyText = {
+        expiration: dataKey.expiration, // 设置该Policy的失效时间，超过这个失效时间之后，就没有办法通过这个policy上传文件了
+        conditions: [
+          ['content-length-range', 0, 1048576000] // 设置上传文件的大小限制
+        ]
+      }
+      let Base64 = require('js-base64').Base64
+      let policyBase64 = Base64.encode(JSON.stringify(policyText))
+      let bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, dataKey.accessKeySecret, { asBytes: true })
+      let signature = Crypto.util.bytesToBase64(bytes)
+      let sendData = new FormData()
+      let renderNum = this.generateUUID()
+      sendData.append('key', `images/${this.dateNow}/${renderNum}${fileType}`)
+      sendData.append('OSSAccessKeyId', dataKey.accessKeyId)
+      sendData.append('signature', signature)
+      sendData.append('x-oss-security-token', dataKey.securityToken)
+      sendData.append('policy', policyBase64)
+      sendData.append('success_action_status', 200) // 指定返回的状态码
+      sendData.append('file', file)
+      try {
+        await axios.post(ossUrl, sendData)
+        this.ruleForm.image = `${ossUrl}/images/${this.dateNow}/${renderNum}${fileType}`
+      } catch (error) {
+        console.log(error)
+      }
+    }
+  },
+  created() {
+    this.getDateFn()
+    this.tagList()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.container {
+  width: 1100px;
+  margin: 21px auto 29px;
+  min-height: 910px;
+  background-color: #fff;
+  > h4 {
+    color: #4a4a4a;
+    font-size: 16px;
+    height: 50px;
+    line-height: 50px;
+    border-bottom: 1px solid #dddddd;
+    padding-left: 20px;
+  }
+  .content-area {
+    .left-content {
+      width: 320px;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+      > h5 {
+        color: #4a4a4a;
+        > span {
+          color: #e23732;
+        }
+        & + p {
+          color: #999;
+          font-size: 12px;
+          margin-top: 10px;
+        }
+      }
+      .img-box {
+        width: 278px;
+        height: 208px;
+        line-height: 208px;
+        border: 1px solid #ddd;
+        border-radius: 10px;
+        margin: 10px 0;
+        text-align: center;
+        .el-icon-plus {
+          font-size: 30px;
+          color: #aaa;
+        }
+        & + p {
+          width: 280px;
+          height: 34px;
+          line-height: 34px;
+          color: #fff;
+          background-color: #e23732;
+          border-radius: 5px;
+          text-align: center;
+        }
+      }
+    }
+    .right-content {
+      border-left: 1px solid #dddddd;
+      width: 780px;
+      height: 100%;
+      padding: 10px 20px;
+      box-sizing: border-box;
+      .article-tag {
+        .el-tag {
+          margin-right: 10px;
+        }
+        .add-tag {
+          color: #e23732;
+          > span {
+            cursor: pointer;
+            > i {
+              margin-right: 5px;
+            }
+          }
+        }
+      }
+    }
+  }
+  .footer-release {
+    text-align: center;
+    line-height: 50px;
+    border-top: 1px solid #dddddd;
+    .el-button {
+      width: 90px;
+    }
+  }
+}
+.label-dialog {
+  /deep/.el-dialog__header {
+    padding: 22px 0 12px 20px;
+    border: 1px solid #dddddd;
+    .el-dialog__title {
+      line-height: 16px;
+      font-size: 16px;
+      color: #4a4a4a;
+    }
+  }
+  /deep/.el-dialog__body {
+    padding: 0;
+  }
+  /deep/.el-dialog__footer {
+    padding: 9px 0 7px 0;
+    text-align: center !important;
+    border: 1px solid #ddd;
+    .dialog-footer {
+      button {
+        font-size: 14px;
+        padding: 0;
+      }
+      button:nth-child(1) {
+        width: 89px;
+        height: 32px;
+        line-height: 32px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(221, 221, 221, 1);
+        border-radius: 5px;
+        color: #4a4a4a;
+      }
+      button:nth-child(2) {
+        width: 90px;
+        height: 34px;
+        line-height: 34px;
+        background: #e23732;
+        border: none;
+        border-radius: 5px;
+        color: #fff;
+      }
+    }
+  }
+  .dialog-content {
+    padding: 0 20px;
+    padding-top: 10px;
+    .dialog-title {
+      margin-bottom: 12px;
+      span {
+        display: inline-block;
+        vertical-align: middle;
+      }
+      span:nth-child(1) {
+        width: 4px;
+        height: 14px;
+        background: #f33535;
+        margin-right: 6px;
+      }
+      span:nth-child(2) {
+        height: 14px;
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(102, 102, 102, 1);
+        line-height: 14px;
+        margin-right: 10px;
+      }
+      span:nth-child(3) {
+        height: 14px;
+        font-size: 14px;
+        line-height: 14px;
+        font-weight: 400;
+        color: rgba(153, 153, 153, 1);
+      }
+    }
+    .label-list {
+      margin-bottom: 10px;
+    }
+    .all-label {
+      .label-box {
+        width: 740px;
+        height: 449px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(153, 153, 153, 1);
+        margin-bottom: 70px;
+        .left-frist {
+          width: 120px;
+          background: #f7f6fb;
+          float: left;
+          padding-top: 10px;
+          height: calc(100% - 10px);
+          li {
+            height: 40px;
+            line-height: 40px;
+            text-align: center;
+            font-size: 14px;
+            color: rgba(102, 102, 102, 1);
+            cursor: pointer;
+            .red-label {
+              width: 4px;
+              height: 14px;
+              background: #f33535;
+              border-radius: 1px;
+              margin-top: 13px;
+              display: none;
+              position: absolute;
+            }
+            .frist-name {
+              position: relative;
+              .frist-name-have {
+                position: absolute;
+                top: -7px;
+                padding: 0 7px;
+                height: 15px;
+                line-height: 15px;
+                background: #fd4040;
+                border-radius: 7px;
+                color: #fff;
+              }
+            }
+          }
+          li:hover {
+            color: #f33535;
+            .red-label {
+              display: block;
+            }
+          }
+          .active-style {
+            color: #f33535;
+            .red-label {
+              display: block;
+            }
+          }
+        }
+        .right-second {
+          float: left;
+          display: flex;
+          padding: 12px;
+          width: 596px;
+          flex-wrap: wrap;
+          align-content: flex-start;
+          justify-content: flex-start;
+          li {
+            width: 120px;
+            text-align: center;
+            height: 40px;
+            line-height: 40px;
+            background: #f3f3f5;
+            border-radius: 2px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(51, 51, 51, 1);
+            margin-right: 10px;
+            cursor: pointer;
+            margin-top: 10px;
+          }
+          li:nth-child(1),
+          li:nth-child(2),
+          li:nth-child(3),
+          li:nth-child(4) {
+            margin-top: 0;
+          }
+          .checked-style {
+            color: #f33535;
+            background-color: #fbf0f1;
+          }
+        }
+      }
+    }
+  }
+}
+/deep/ .el-form--label-top .el-form-item__label {
+  padding-bottom: 0;
+}
+/deep/ .ql-editor {
+  height: 305px;
+}
+/deep/ .el-tag {
+  height: 30px;
+  line-height: 30px;
+  border: none;
+  border-radius: 2px;
+  background: #f3f3f3;
+  color: #333333;
+  margin-right: 10px;
+  margin-bottom: 10px;
+  .el-tag__close {
+    color: #e23732;
+  }
+  .el-tag__close:hover {
+    background-color: #e23732;
+    color: #fff;
+  }
+}
+</style>
+

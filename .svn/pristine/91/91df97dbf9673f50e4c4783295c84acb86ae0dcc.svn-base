@@ -1,0 +1,151 @@
+
+body,html{
+  width:100%;
+  font-family: 'Micosoft YaHei','Helvetica Neue',Helvetica,arial,sans-serif;
+}
+/* firfox浏览器不好 */
+html {
+  overflow: -moz-hidden-unscrollable;
+  height: 100%;
+  overflow-y: scroll;
+  -ms-overflow-style: none;
+  background-color: #F4F4F4;
+}
+/* chorme */
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* firefox */
+body {
+  /* height: 100%; */
+  width: calc(100vw + 18px);
+  overflow: auto;
+  /* color: #333; */
+  font-size: 14px;
+}
+.scroll-overflow{
+  -ms-overflow-style:-ms-autohiding-scrollbar;
+}
+html, body, ul, li, ol, dl, dd, dt, p, h1, h2, h3, h4, h5, h6, form, select, textarea, legend {
+  margin: 0;
+  padding: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+  text-decoration: none;
+  font-size: 100%;
+  font-weight: normal;
+}
+fieldset, img, input, button {
+  margin: 0;
+  padding: 0;
+  border: 0 none;
+  outline-style: none;
+  font-family: 'Micosoft YaHei',
+    'Helvetica Neue',
+    Helvetica,
+    arial,
+    sans-serif;
+}
+select, input, img {
+  vertical-align: middle;
+}
+
+s, i, em {
+  font-style: normal;
+  text-decoration: none;
+}
+textarea {
+  resize: none;
+}
+table {
+  border-collapse: collapse;
+}
+ul, li {
+  list-style: none;
+}
+a {
+  color: #333;
+  cursor: pointer;
+  text-decoration: none;
+}
+a:hover{
+  text-decoration: none;
+}
+.fl {
+  float: left;
+}
+.fr {
+  float: right;
+}
+/*清除浮动*/
+.clearfix:before, .clearfix:after {
+  content: "";
+  display: table;
+}
+.clearfix:after {
+  clear: both;
+}
+.clearfix {
+  *zoom: 1;
+  /*IE/7/6*/
+}
+
+.red{
+  color: #f00;
+  cursor: pointer;
+  font-size: 14px;
+}
+.green {
+  color:#7355F6;
+}
+.gray{
+  color:rgba(153,153,153,1);
+}
+
+.font-12{
+  font-size: 12px;
+}
+.font-14{
+  font-size: 14px;
+}
+.font-16 {
+  font-size: 16px;
+}
+.font-18 {
+  font-size: 18px;
+}
+/*控制整个滚动条*/
+::-webkit-scrollbar {
+  -webkit-appearance: none;
+  width: 10px;
+  height: 10px;
+}
+
+/*滚动条两端方向按钮*/
+/* ::-webkit-scrollbar-button {
+  background-color: pink;
+} */
+
+/*滚动条中间滑动部分*/
+::-webkit-scrollbar-thumb {
+  cursor: pointer;
+  border-radius: 5px;
+  background: rgba(0, 0, 0, .25);
+  /* transition: color .2s ease; */
+}
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, .1);
+  border-radius: 0;
+}
+::-webkit-scrollbar-thumb:window-inactive {
+  background: rgba(0, 0, 0, .15)
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(128, 135, 139, .8)
+}
+/* 左右布局 需要间隙 */
+.common-ul{
+  padding-right: 400px !important;
+}

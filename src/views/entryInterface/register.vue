@@ -1,0 +1,620 @@
+<template>
+  <div class="entry-register">
+    <div class="header">
+      <div class="logo">
+        <a
+          href="/"
+          class="fl"
+        >
+          <img
+            src="@/assets/images/logo214-49.png"
+            alt=""
+          >
+        </a>
+      </div>
+      <div class="list font-14 gray">
+        <span>已有账号，
+          <router-link
+            to="/login"
+            class="red"
+          >去登录</router-link>
+        </span>
+        <span>|</span>
+        <router-link
+          to="/index"
+          class="gray"
+        >返回首页</router-link>
+      </div>
+    </div>
+    <div class="content">
+      <el-card class="register">
+        <div class="text">注册</div>
+        <div class="form">
+          <el-form
+            :model="ruleForm"
+            :rules="registerRules"
+            ref="ruleForm"
+            label-width="100px"
+            class="demo-ruleForm"
+          >
+            <!-- <el-form-item prop="userName">
+              <el-input
+                type="text"
+                v-model.trim="ruleForm.userName"
+                placeholder="请输入用户账号（注：一经注册无法修改）"
+              ></el-input>
+            </el-form-item> -->
+            <!-- <el-form-item
+              class="password"
+              prop="password"
+            >
+              <el-input
+                :type="passType"
+                v-model.trim="ruleForm.password"
+                placeholder="密码(6-20位)"
+              ></el-input>
+              <div class="closeeyes">
+                <img
+                  @click='lookPassword'
+                  v-if='!lookPW'
+                  src="@/assets/images/closeEyes.png"
+                  alt=""
+                >
+                <img
+                  @click='lookPassword'
+                  v-if='lookPW'
+                  src='@/assets/images/liulan.png'
+                />
+              </div>
+            </el-form-item> -->
+            <!-- <el-form-item
+              class="checkPass"
+              prop="newPassword"
+            >
+              <el-input
+                class="password"
+                :type="checkPasstype"
+                v-model.trim="ruleForm.newPassword"
+                placeholder="请再次输入密码"
+              ></el-input>
+              <div class="closeeyes">
+                <img
+                  @click='lookPassword2'
+                  v-if='!lookPW2'
+                  src="@/assets/images/closeEyes.png"
+                  alt=""
+                >
+                <img
+                  @click='lookPassword2'
+                  v-if='lookPW2'
+                  src='@/assets/images/liulan.png'
+                />
+              </div>
+            </el-form-item> -->
+            <el-form-item prop="mobile">
+              <el-input
+                type="text"
+                v-model.trim="ruleForm.mobile"
+                placeholder="请输入手机号"
+              ></el-input>
+            </el-form-item>
+            <el-form-item
+              class="code"
+              prop="smsVerifyCode"
+            >
+              <el-input
+                class="inputCode"
+                v-model.trim="ruleForm.smsVerifyCode"
+                placeholder="请输入验证码"
+              ></el-input>
+              <el-button
+                class="getCode"
+                v-show="show"
+                @click="sendCode"
+              >{{yzCode}}</el-button>
+              <el-button
+                class="getCode"
+                v-show="!show"
+              >{{count}} S后重新获取</el-button>
+            </el-form-item>
+
+            <!-- <el-form-item class="checkPass" prop="checkPass">
+                                                  <el-input class="password" :type="checkPasstype" v-model="ruleForm.checkPass" placeholder="请再次输入密码" ></el-input>
+                                                  <div class="closeeyes"><img @mousedown="showPassword2" @mouseleave="closePassword2" src="../../assets/images/closeEyes.png" alt=""></div>
+                                                </el-form-item> -->
+
+            <slide-verify
+              :verifyVal='verifyVal'
+              @getVerify="getVerify"
+              v-if='verifyFlag'
+              :key="uploadKey"
+            ></slide-verify>
+            <el-form-item
+              class="checkbox"
+              prop="checked"
+            >
+              <el-checkbox v-model="ruleForm.checked">我已阅读并同意</el-checkbox>
+              <a
+                class="red"
+                type="text"
+                @click="$router.push('/userAgreement')"
+              >《百工驿用户协议》</a>
+              <!-- <el-dialog title="百工驿用户协议" :visible.sync="centerDialogVisible" width="30%" center>
+                <protocol-span></protocol-span>
+                <span slot="footer" class="dialog-footer">
+                  <el-button class="cancel" @click="centerDialogVisible = false">不同意</el-button>
+                  <el-button class="confirm" type="primary" @click="agreeProtocol">同意</el-button>
+                </span>
+              </el-dialog> -->
+            </el-form-item>
+            <el-form-item class="regButton">
+              <el-button
+                type="danger"
+                class="button"
+                @click="register('ruleForm')"
+                :disabled="IsRegdisable"
+              >注册</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
+      </el-card>
+      <!-- 注册成功 弹框 -->
+      <el-dialog
+        :title="registerSuccessTips"
+        :visible.sync="dialogVisible"
+        width="30%"
+        center
+        class="successDialog"
+      >
+        <div
+          class="dialog-body"
+          style="text-align:center"
+        >
+          <img
+            src="@/assets/images/pic.png"
+            alt=""
+          >
+        </div>
+        <!-- <p>用户账号：
+          <i>{{ruleForm.userName}}</i>
+        </p> -->
+        <p>手机号：
+          <i>{{ruleForm.mobile}}</i>
+        </p>
+        <span
+          slot="footer"
+          class="dialog-footer"
+        >
+          <el-button
+            type="danger"
+            @click="succRegister"
+          >去登录</el-button>
+        </span>
+      </el-dialog>
+    </div>
+    <div class="footer">
+      <div class="copyright font-12 gray">
+        <p>Copyright(©)2017上海青矩互联网科技有限公司 版权所有</p>
+        <p>沪ICP备16015426号-1</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import {
+  validatorUser,
+  validatorMobile,
+  validatorPass,
+  validatorCode
+} from "@/assets/js/validator.js";
+import protocolSpan from "../../components/protocol";
+import slideVerify from "../../components/slideVerify";
+import api from "@/fetch";
+export default {
+  name: "Register",
+  components: {
+    protocolSpan,
+    slideVerify
+  },
+  data() {
+    const validateUser = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("用户账号不能为空 "));
+      } else {
+        if (validatorUser(value)) {
+          api
+            .checkUsername({"userName":value})
+            .then(res => {
+              callback();
+              return true;
+            })
+            .catch(err => {
+              callback(new Error(err.message));
+              return false;
+            });
+        } else {
+          callback(new Error("支持数字、字母、‘_’、中文，组合的4-20位字符"));
+          return false;
+        }
+      }
+    };
+    const validateMobile = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("手机号不能为空 "));
+      } else {
+        if (validatorMobile(value)) {
+          api
+            .checkMobile(value)
+            .then(res => {
+              callback();
+              return true;
+            })
+            .catch(err => {
+              callback(new Error(err.message));
+              return false;
+            });
+        } else {
+          callback(new Error("请输入正确的手机号"));
+          return false;
+        }
+      }
+    };
+    const validatePass = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("请输入密码"));
+      } else {
+        if (validatorPass(value)) {
+          callback();
+          return true;
+        } else {
+          callback(new Error("请输入6-20位字母数字混合密码"));
+          return false;
+        }
+      }
+    };
+    const validateCheckPass = (rule, value, callback) => {
+      if (value === "") {
+        callback(new Error("请再次输入密码"));
+      } else if (value !== this.ruleForm.password) {
+        callback(new Error("两次输入密码不一致!"));
+      } else {
+        callback();
+      }
+    };
+    const validateCode = (rule, value, callback) => {
+      if (!value) {
+        return callback(new Error("验证码不能为空"));
+      } else {
+        if (validatorCode(value)) {
+          callback();
+          return true;
+        } else {
+          callback(new Error("请输入正确的验证码"));
+          return false;
+        }
+      }
+    };
+    return {
+      uploadKey:1,
+      ruleForm: {
+        userName: null,
+        password: null,
+        newPassword: null,
+        // checkPass: null,
+        mobile: null,
+        smsVerifyCode: null, // 短信验证码
+        checked: false,
+        slideVerify: false // 滑块验证
+      },
+      verifyVal: {
+        width: 360,
+        height: 30
+      },
+      lookPW: false,
+      lookPW2: false,
+      verifyFlag: false,
+      isDisabled: false,
+      show: true,
+      count: 120,
+      flag: "",
+      registerSuccessTips:"注册成功",
+      yzCode: "获取验证码",
+      passType: "password",
+      checkPasstype: "password",
+      IsRegdisable: true, // 注册按钮
+      centerDialogVisible: false, // 协议弹框
+      dialogVisible: false, // 注册成功弹框
+      // 表单验证
+      registerRules: {
+        // userName: [{ required: true, validator: validateUser }],
+        mobile: [{ required: true, validator: validateMobile }],
+        smsVerifyCode: [{ required: true, validator: validateCode }],
+        // password: [{ required: true, validator: validatePass }],
+        // newPassword: [
+        //   { required: true, validator: validateCheckPass, trigger: "blur" }
+        // ],
+        checked: [
+          {
+            validator: function(rule, value, callback) {
+              if (value) {
+                callback();
+              } else {
+                callback(new Error("阅读协议并同意，才能进行下一步"));
+              }
+            }
+          }
+        ]
+      }
+    };
+  },
+  methods: {
+    lookPassword() {
+      if (this.lookPW) {
+        this.lookPW = false;
+        this.passType = "password";
+      } else {
+        this.lookPW = true;
+        this.passType = "text";
+      }
+    },
+    lookPassword2() {
+      if (this.lookPW2) {
+        this.lookPW2 = false;
+        this.checkPasstype = "password";
+      } else {
+        this.lookPW2 = true;
+        this.checkPasstype = "text";
+      }
+    },
+    // closePassword2 () {
+    //   this.checkPasstype = 'password'
+    // },
+    // 滑块验证
+    getVerify(resVerify) {
+      this.ruleForm.slideVerify = resVerify;
+      if (resVerify) {
+        // api
+        //   .checkUsername({"userName":this.ruleForm.userName})
+        //   .then(res => {
+
+        //   })
+        //   .catch(err => {
+        //     this.$message.error(err.message);
+        //   });
+        api
+          .checkMobile(this.ruleForm.mobile)
+          .then(res => {
+            api.getSmsCode({ mobile: this.ruleForm.mobile }).then(res => {
+              if (res.code === 200) {
+                this.$message({
+                  message: "验证码已发送，120s内有效",
+                  type: "success"
+                });
+                const TIME_COUNT = 120;
+                if (!this.timer) {
+                  this.count = TIME_COUNT;
+                  this.show = false;
+                  this.timer = setInterval(() => {
+                    if (this.count > 0 && this.count <= TIME_COUNT) {
+                      this.count--;
+                      this.yzCode = '重新获取'
+                    } else {
+                      this.show = true;
+                      clearInterval(this.timer);
+                      this.timer = null;
+                    }
+                  }, 1000);
+                }
+              }
+            });
+          })
+          .catch(err => {
+            this.$message.error(err.message);
+          });
+      }
+    },
+    // 协议
+    agreeProtocol() {
+      this.ruleForm.checked = true;
+      this.centerDialogVisible = false;
+    },
+    // 获取验证码
+    async sendCode() {
+      if (
+        validatorMobile(this.ruleForm.mobile)
+        // && validatorUser(this.ruleForm.userName)
+        // && validatorPass(this.ruleForm.password)
+        // &&this.ruleForm.password === this.ruleForm.newPassword
+      ) {
+            this.verifyFlag = true;
+            this.uploadKey++
+      } else {
+        this.$message({
+          message: "请输入完整的注册信息"
+        });
+      }
+    },
+    // 注册
+    register(formName) {
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          delete this.ruleForm.newPassword;
+          if (this.$route.query.id) this.ruleForm.invitedAccountId = this.$route.query.id
+          api.register(this.ruleForm).then(res => {
+            this.registerSuccessTips="注册成功!已获得"+res.data.beansNum+"青豆!";
+            this.dialogVisible = true;
+          });
+        }
+      });
+    },
+    succRegister() {
+      this.dialogVisible = false;
+      this.$router.push("/login");
+    }
+  },
+  watch: {
+    ruleForm: {
+      handler(newVal, oldVal) {
+        var vals =
+        validatorMobile(this.ruleForm.mobile)
+          // && validatorUser(this.ruleForm.userName)
+          // && validatorPass(this.ruleForm.password)
+          // && validatorPass(this.ruleForm.newPassword);
+          && this.ruleForm.checked
+          && this.ruleForm.slideVerify
+          && validatorCode(this.ruleForm.smsVerifyCode)
+        if (vals) {
+          this.IsRegdisable = false;
+        } else {
+          this.IsRegdisable = true;
+        }
+      },
+      deep: true,
+      immediate: true
+    }
+  }
+};
+</script>
+
+<style lang="less" scoped>
+.entry-register {
+  width: 1100px;
+  .header {
+    height: 50px;
+    margin: 100px 0 10px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    .logo {
+      width: 214px;
+      height: 100%;
+      img {
+        width: 214px;
+        height: 49px;
+      }
+    }
+    .list {
+      :nth-child(2) {
+        padding: 0 20px;
+      }
+    }
+  }
+
+  .footer {
+    margin: 20px 0;
+    .copyright {
+      p {
+        text-align: center;
+        &:nth-child(2) {
+          padding-top: 5px;
+        }
+      }
+    }
+  }
+
+  .content {
+    height: 620px;
+    background-color: #fff;
+    .register {
+      width: 360px;
+      height: 570px;
+      margin: 0 auto;
+      padding-top: 50px;
+      box-shadow: none;
+      border: none;
+      .text {
+        text-align: center;
+        margin-bottom: 50px;
+        font-size: 16px;
+        font-weight: 800;
+      }
+      .form {
+        .code {
+          /deep/.el-button {
+            border: none;
+            outline: none;
+            padding: 0;
+            width: auto;
+            span {
+              font-size: 14px;
+            }
+          }
+          .inputCode {
+            position: relative;
+            /deep/ .el-input__inner {
+              padding-right: 100px;
+              box-sizing: border-box;
+            }
+          }
+          .getCode {
+            // color:#666;
+            position: absolute;
+            top: 10px;
+            right: 15px;
+          }
+        }
+        .checkbox {
+          padding-left: 58px;
+          .cancel {
+            width: 80px;
+            padding: 6px;
+          }
+          .confirm {
+            width: 80px;
+            padding: 6px;
+          }
+        }
+      }
+    }
+
+    .successDialog {
+      .dialog-body {
+        text-align: center;
+        img {
+          margin-bottom: 20px;
+        }
+      }
+      p {
+        margin-left: 112px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #acadb5;
+        i {
+          color: #333;
+          padding-left: 10px;
+        }
+      }
+      /deep/.el-dialog__footer {
+        padding: 0 20px 50px;
+        .dialog-footer {
+          .el-button {
+            width: auto;
+          }
+        }
+      }
+    }
+  }
+  /deep/ .el-form {
+    .password {
+      position: relative;
+    }
+    .el-input__inner {
+      padding-right: 30px;
+      box-sizing: border-box;
+    }
+    .closeeyes {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+    }
+  }
+}
+
+em,
+i,
+s {
+  font-style: normal;
+  text-decoration: none;
+}
+</style>

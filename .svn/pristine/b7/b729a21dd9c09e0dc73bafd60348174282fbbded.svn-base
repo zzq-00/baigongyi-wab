@@ -1,0 +1,98 @@
+import Vue from 'vue'
+import VueRouter from 'vue-router'
+import entryInterface from '../views/entryInterface/entryInterface.vue'
+import layout from '../views/layout/layout.vue'
+// import store from '@/store'
+// 进度条
+// import Nprogress from 'nprogress'
+Vue.use(VueRouter)
+
+let routes = [
+  {
+    path: '/pic',
+    component: () => import('../utils/upLoadPic.vue')
+  },
+  {
+    path: '/entryInterface',
+    name: 'entryInterface',
+    component: entryInterface,
+    children: [{
+      path: '/login',
+      component: () => import('../views/entryInterface/login.vue')
+    }, {
+      path: '/register',
+      component: () => import('../views/entryInterface/register.vue')
+    }, {
+      path: '/forgetPassword',
+      component: () => import('../views/entryInterface/forgetPassword.vue')
+    }]
+  },
+  {
+    path: '/',
+    redirect: '/index'
+  },
+  {
+    path: '/layout',
+    name: 'layout',
+    component: layout,
+    children: [
+      {
+        path: '/index',
+        component: () => import('../views/homeManger/index.vue')
+      }
+    ]
+  }
+]
+
+const routeFiles = require.context('.', false, /\.js$/)
+routeFiles.keys().forEach(key => {
+  if (key === './index.js') return
+  routes = [
+    ...routeFiles(key).default,
+    ...routes
+  ]
+})
+
+const router = new VueRouter({
+  mode: 'history',
+  routes
+})
+
+// 路由拦截器
+// router.beforeEach((to, from, next) => {
+//   // 进度条开启
+//   Nprogress.start()
+//   // 1.如果访问的是登录页，直接放行
+//   if (to.path === '/login') {
+//     next()
+//     return
+//   }
+//   if (to.path === '/register') {
+//     next()
+//     return
+//   }
+//   if (to.path === '/forgetPassword') {
+//     next()
+//     return
+//   }
+//   if (to.path === '/index') {
+//     next()
+//     // return
+//   }
+// 2.如果是非登录页，才校验token
+// 获取用户token
+// const token = store.state.user.token
+// // 判断是否有token
+// if (token) {
+//   next()
+// } else {
+//   next('/login')
+//   // 如果在登录页且非登录状态，手动阻止进度条，否则进度条不会停止
+//   Nprogress.done()
+// }
+// })
+// 全局后置钩子--关闭进度条
+// router.afterEach((to, from) => {
+//   Nprogress.done()
+// })
+export default router

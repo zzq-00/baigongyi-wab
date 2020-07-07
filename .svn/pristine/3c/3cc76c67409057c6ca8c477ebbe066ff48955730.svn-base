@@ -1,0 +1,129 @@
+<template>
+  <div class="articleList">
+    <div class="list">
+      <img src="@/assets/images/live.png" class="img">
+      <div class="text">
+        <div class="headline">
+          <h3 class="ellipsis">
+            <router-link to="/">{{articleData.title}}</router-link>
+          </h3>
+          <span class="article">{{articleData.description}}</span>
+        </div>
+        <div class="artBottom">
+          <div class="artIcon">
+            <p><span v-if="$route.path!='/myHome/draftArt'">{{articleData.userName}} | </span><span>{{articleData.convertTime}}</span></p>
+            <p v-if="$route.path!='/myHome/draftArt'"><img src="@/assets/images/good.png" alt=""><span>{{articleData.likeCount}}</span></p>
+            <p v-if="$route.path!='/myHome/draftArt'"><img src="@/assets/images/collection.png" alt=""><span>{{articleData.commentCount}}</span></p>
+            <p v-if="$route.path!='/myHome/draftArt'"><img src="@/assets/images/xiaoxi.png" alt=""><span>{{articleData.collectCount}}</span></p>
+            <p v-if="$route.path!='/myHome/draftArt'"><img src="@/assets/images/fenxiang.png" alt=""><span>100</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="button">
+      <el-button round @click="reEditArticle">编辑</el-button>
+      <el-button round @click="deleteArticle">删除</el-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  props: {
+    articleData: Object
+  },
+  methods: {
+    reEditArticle() {
+      this.$router.push('/article/reEditArticle/' + this.articleData.id)
+    },
+    deleteArticle() {
+      api.deleteArticle(this.articleData.id).then(res => {
+        this.$emit('getNewData', this.articleData)
+        this.$message.success('删除成功')
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.articleList {
+  display: flex;
+  flex-direction: column;
+  .button {
+    text-align: right;
+    margin-top: 10px;
+    .el-button {
+      width: 70px;
+    }
+  }
+  .list {
+    position: relative;
+    height: 146px;
+    display: flex;
+    align-items: center;
+    .img {
+      width: 200px;
+      height: 118px;
+      border-radius: 5px;
+    }
+    .text::after {
+      position: absolute;
+      content: '';
+      display: block;
+      background-color: #ddd;
+      height: 1px;
+      width: 103%;
+      bottom: 0;
+      right: -20px;
+    }
+    .text {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 20px 0 12px 15px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      .headline {
+        h3 {
+          font-size: 16px;
+          color: #333;
+        }
+        .article {
+          font-size: 14px;
+          color: #666;
+          margin-top: 10px;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          overflow: hidden;
+        }
+      }
+      .artBottom {
+        width: 100%;
+        .artIcon {
+          width: 100%;
+          color: #999;
+          font-size: 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          vertical-align: middle;
+          p {
+            img {
+              vertical-align: bottom;
+              width: 16px;
+              height: 16px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</style>

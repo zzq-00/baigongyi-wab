@@ -1,0 +1,13 @@
+// 工程圈
+import { post, get } from 'axios'
+export default {
+  // 分页查询
+  ideaList: params => post('idea/list', params),
+  // Id查询详情
+  ideaId: id => get(`idea/${id}`),
+  //最赞用户
+  ideaBestLikePeople: () => get('idea/bestLikePeople'),
+  //新增
+  ideaAdd: params => post('idea/add', params),
+
+}

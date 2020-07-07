@@ -1,0 +1,278 @@
+<template>
+  <div class='liveTv'>
+    <div class="tabChange clearfix">
+      <span v-for="(item,index) in tabsColumn" :key="index" @click="nowIndex = index" :class="{active:index==nowIndex}">{{item}}
+      </span>
+    </div>
+    <ul class="classList" v-if="dataList.records && dataList.records.length>0">
+      <li class="line" v-for="(item,index) in dataList.records" :key="index" @click="goDetails(item)">
+        <div class="classPic"><img :src="$store.state.imageDomain + item.homeImage" alt=""></div>
+        <div class="classInfo">
+          <span class="font-14 titles">{{item.title}}</span>
+          <div class="price">
+            <i :class="item.price > 0 ? 'red' : 'purple'">{{item.price === 0 ? '免费': '收费' }}</i>
+            <div>
+              <span class="font-12 update">{{item.type===1? '视频': ''}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="otherInfo">
+          <div class="photoInfo clearfix">
+            <img @click.stop="openUserCenter(item.accountId)" :src="item.avatar ? $store.state.imageDomain + item.avatar : require('@/assets/images/err-header-icon01.png')" class="photo fl">
+            <div @click.stop="openUserCenter(item.accountId)" class="name font-12 fl">{{item.realName}}</div>
+          </div>
+          <div class="time">{{item.publishTime | formatDate}}</div>
+        </div>
+      </li>
+    </ul>
+    <div class="no-content" v-else>
+      <img src="@/assets/images/No-live.png" alt="">
+      <p>暂无直播</p>
+    </div>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination hide-on-single-page @current-change="handleCurrentChange" :current-page.sync="dataList.current " :page-size.sync="dataList.size" layout="prev,slot, next, total" :total="dataList.total">
+        <slot>
+          <span>第
+            <i>{{dataList.current}}/{{dataList.pages}}</i>页</span>
+        </slot>
+      </el-pagination>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  data() {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['直播回放'],
+      dialogVisible: false, // 创建课程弹框
+      // currentPath: this.$route.path,
+      dataList: {},
+      params: {
+        condition: {
+          feeType: 0,
+          sortType: 1,
+          status: 1,
+          type: 1
+        },
+        pageNum: 1,
+        pageSize: 8
+      }
+    }
+  },
+  mounted() {
+    this.getDataFn()
+  },
+  methods: {
+    getDataFn() {
+      api
+        .liveHomeList(this.params)
+        .then(res => {
+          if (res.code === 200) {
+            this.dataList = res.data
+          }
+        })
+        .catch(err => {})
+    },
+    // 翻页
+    handleCurrentChange(val) {
+      this.params.pageNum = val
+      this.getDataFn()
+    },
+    goDetails(data) {
+      this.$router.push('/livetv/' + data.id)
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.liveTv {
+  .tabChange {
+    font-size: 16px;
+    margin: 20px 20px 26px 0;
+    span:first-child {
+      margin-right: 20px;
+    }
+    .active {
+      position: relative;
+      color: #4a4a4a;
+    }
+    .active::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      bottom: -10px;
+      left: 20px;
+      height: 3px;
+      width: 24px;
+      background-color: #e43c31;
+    }
+  }
+  .classList {
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    .line::after {
+      content: '';
+      display: block;
+      height: 1px;
+      width: 100%;
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      background-color: #f4f4f4;
+    }
+    li {
+      width: 23%;
+      height: 346px;
+      border-radius: 10px;
+      background-color: #fff;
+      margin-right: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      border: 1px solid #f4f4f4;
+      box-sizing: border-box;
+      .classPic {
+        width: 100%;
+        height: 174px;
+        box-sizing: border-box;
+        border-bottom: 1px solid #e7e8ec;
+        img {
+          width: 100%;
+          height: 174px;
+          border-top-left-radius: 10px;
+          border-top-right-radius: 10px;
+        }
+      }
+      .classInfo {
+        padding: 20px 20px 22px 20px;
+        height: 121px;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .titles {
+          display: block;
+          width: 100%;
+          color: #333333;
+        }
+        .price {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+
+          .red,
+          .purple {
+            font-size: 16px;
+          }
+          .update {
+            padding: 3px 9px;
+            background-color: #f2f2f2;
+            border-radius: 3px;
+            margin-right: 3px;
+            color: #666;
+          }
+        }
+      }
+      .otherInfo {
+        padding: 0 12px;
+        height: 50px;
+        line-height: 50px;
+        font-size: 14px;
+        text-align: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .photoInfo {
+          .name {
+            max-width: 90px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            word-break: keep-all;
+          }
+          .photo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 8px;
+            margin-top: 13px;
+          }
+        }
+        .time {
+          font-size: 12px;
+          color: #999;
+        }
+        .handle {
+          span {
+            padding: 3px 9px;
+            border-radius: 5px;
+          }
+        }
+      }
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+  .no-content {
+    min-height: calc(100vh - 255px);
+    padding: 20px 0;
+    text-align: center;
+    background: #fff;
+    p {
+      height: 14px;
+      line-height: 14px;
+      font-size: 15px;
+      color: rgba(188, 188, 196, 1);
+      text-align: center;
+    }
+  }
+  // 分页
+  .pagination {
+    margin-top: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    /deep/.el-pagination .btn-next,
+    /deep/.el-pagination .btn-prev {
+      width: 40px;
+      height: 40px;
+      padding-right: auto;
+      .el-icon-arrow-left:before,
+      .el-icon-arrow-right:before {
+        font-size: 20px;
+      }
+    }
+    /deep/.el-pagination {
+      slot {
+        span {
+          font-size: 20px;
+          margin: 6px 20px 0;
+          color: #999;
+          font-weight: normal;
+        }
+      }
+      .el-pagination__total {
+        margin: 6px 0 0 20px;
+        font-size: 20px;
+        color: #999;
+        font-weight: normal;
+      }
+    }
+  }
+}
+em,
+i,
+s {
+  font-style: normal;
+  text-decoration: none;
+}
+</style>

@@ -1,0 +1,304 @@
+<template>
+  <div class="index-page">
+    <div class="header-box">
+      <img class="web-icon" src="@/assets/images/logo214-49.png" alt="">
+      <div class="search-box">
+        <input type="text" v-model="searchWord" placeholder="定额即将取消？">
+        <button>
+          <img src="@/assets/images/search-icon.png" alt="">
+          <span>搜索</span>
+        </button>
+      </div>
+      <div class="header-right">
+        <ul v-if="userInfo.accountId">
+          <li>
+            <img src="@/assets/images/index-QR.png" alt="">
+            <p>百工驿APP</p>
+          </li>
+          <li>
+            <a href="" target="_blank" rel="noopener noreferrer">
+              <img src="@/assets/images/news-icon.png" alt="">
+              <p>消息中心</p>
+            </a>
+          </li>
+          <li>
+            <a href="/myHome/myReply" target="_blank" rel="noopener noreferrer">
+              <img src="@/assets/images/indexUser.png" alt="">
+              <p>个人中心</p>
+            </a>
+          </li>
+        </ul>
+        <ul v-else>
+          <li>
+            <img src="@/assets/images/index-QR.png" alt="">
+            <p>百工驿APP</p>
+          </li>
+          <li>
+            <a href="/login" target="_blank" rel="noopener noreferrer">
+              <img src="@/assets/images/news-icon.png" alt="">
+              <p>登录/注册</p>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <navListIndex :tasList='tasList'></navListIndex>
+    <div class="index-main">
+      <div class="planting-login-box">
+        <div class="planting-box">
+          <swiperComponents></swiperComponents>
+        </div>
+        <div class="login-box">
+          <a href="/myHome/myReply" rel="noopener noreferrer" v-if="userInfo.accountId">
+            <img class="user-portrait" :src="$store.state.imageDomain + userInfo.avatar" alt="" style="border-radius:50%;" v-if="userInfo.avatar">
+            <img class="user-portrait" src="@/assets/images/login-user.png" alt="" style="border-radius:50%;" v-else>
+          </a>
+          <a href="/login" rel="noopener noreferrer" v-else>
+            <img class="user-portrait" src="@/assets/images/user-icon.png" alt="">
+          </a>
+          <p class="login-name">
+            <a href="/myHome/myReply" v-if="userInfo.accountId">Hi {{userInfo.userName}}</a>
+            <a href="/login" v-else>Hi 请<span>登录/注册</span>账户</a>
+          </p>
+          <ul>
+            <li v-for="(item,index) in userNavList" :key="index">
+              <a :href="userInfo.accountId?item.url:'/login'" target="_blank" rel="noopener noreferrer">
+                <img :src="item.imgs" alt="">
+                <button>{{item.name}}</button>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div style="clear:both"></div>
+      </div>
+      <hotAndCurriculumIndex :newHotObj="newHotObj" :hotColumns='hotColumns'></hotAndCurriculumIndex>
+      <columnAndLiveIndex :dataObj="columnAndLiveDataObj"></columnAndLiveIndex>
+      <bgcommunity :bgyCommunityObj='bgyCommunityObj' :tasList='tasList'></bgcommunity>
+    </div>
+    <footerComponents></footerComponents>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import footerComponents from '@/components/footerComponents.vue'
+import swiperComponents from '@/components/swiperComponents.vue'
+import navListIndex from '@/components/navListIndex.vue' //导航条
+import hotAndCurriculumIndex from '@/components/hotAndCurriculumIndex.vue' //热点和新上好课
+import columnAndLiveIndex from '@/components/columnAndLiveIndex.vue' //热门专栏和直播
+import bgcommunity from '@/components/bgcommunity.vue' //百工社区
+
+export default {
+  components: {
+    navListIndex,
+    hotAndCurriculumIndex,
+    swiperComponents,
+    footerComponents,
+    columnAndLiveIndex,
+    bgcommunity
+  },
+  data() {
+    return {
+      searchWord: '', //顶部搜索
+      newHotObj: {}, //新闻热点，建筑前沿，资质热点
+      userNavList: [
+        { name: '发文章', imgs: require('@/assets/images/write-icon.png'), url: '/article/publishArticle' },
+        { name: '提问题', imgs: require('@/assets/images/asking-icon.png'), url: '/askingQuestions' },
+        { name: '写想法', imgs: require('@/assets/images/ideas-icon.png'), url: '' }
+      ],
+      hotColumns: [],
+      userInfo: {},
+      columnAndLiveDataObj: {}, //热门专栏和直播回放
+      bgyCommunityObj: {}, //百工驿社区分类
+      tasList: []
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    // var num = num > 9999 ? num/10000 + "万" : num;
+    getIndexPageData() {
+      api.getIndexPageData().then(res => {
+        this.hotColumns = res.data.hotCourses.records
+        this.newHotObj = {
+          hot_news: res.data.hot_news, //新闻热点
+          architectural_frontier: res.data.architectural_frontier, //建筑前沿
+          qualification_hotspot: res.data.qualification_hotspot //资质热点
+        }
+        this.columnAndLiveDataObj = {
+          hotColumns: res.data.hotColumns, //专栏头部
+          hotFreeColumns: res.data.hotFreeColumns, //热门免费专栏
+          hotPayColumns: res.data.hotPayColumns, //热门付费专栏
+          hotLives: res.data.hotLives //直播回放
+        }
+        this.bgyCommunityObj = res.data.tagContent
+        this.tasList = res.data.tasList.records
+      })
+    }
+  },
+  mounted() {
+    if (window.localStorage.userInfo) {
+      this.userInfo = JSON.parse(window.localStorage.userInfo)
+    }
+    this.getIndexPageData()
+  }
+}
+</script>
+<style lang="less" scoped>
+.index-page {
+  background-color: #fff;
+  .header-box {
+    width: 1100px;
+    margin: 0 auto;
+    padding-top: 21px;
+    padding-bottom: 32px;
+    .web-icon {
+      float: left;
+    }
+    .search-box {
+      margin-left: 140px;
+      display: inline-block;
+      width: 465px;
+      height: 36px;
+      background: rgba(255, 255, 255, 1);
+      border: 1px solid rgba(228, 61, 48, 1);
+      border-radius: 19px;
+      position: relative;
+      input {
+        height: 36px;
+        width: 335px;
+        border: none;
+        float: left;
+        border-top-left-radius: 19px;
+        border-bottom-left-radius: 19px;
+        padding: 0 22px;
+      }
+      button {
+        border-top-right-radius: 19px;
+        border-bottom-right-radius: 19px;
+        float: left;
+        width: 86px;
+        height: 38px;
+        background: #e23632;
+        position: absolute;
+        right: 0;
+        top: -1px;
+        vertical-align: middle;
+        cursor: pointer;
+        img {
+          vertical-align: middle;
+          margin-right: 4px;
+        }
+        span {
+          vertical-align: middle;
+          display: inline-block;
+          height: 14px;
+          line-height: 14px;
+          font-size: 14px;
+
+          color: rgba(255, 255, 255, 1);
+        }
+      }
+    }
+    .header-right {
+      float: right;
+      > img {
+        float: right;
+        margin-top: 4px;
+        cursor: pointer;
+      }
+      ul {
+        display: inline-block;
+        li {
+          display: inline-block;
+          text-align: center;
+          cursor: pointer;
+          p {
+            height: 13px;
+            line-height: 13px;
+            font-size: 12px;
+
+            color: rgba(140, 140, 140, 1);
+            margin-top: 4px;
+          }
+        }
+        li {
+          margin-right: 24px;
+        }
+      }
+    }
+  }
+
+  .index-main {
+    width: 1100px;
+    margin: 0 auto;
+    padding: 24px 0 114px 0;
+    .planting-login-box {
+      .planting-box {
+        float: left;
+        width: 726px;
+        height: 336px;
+        img {
+          border-radius: 4px;
+        }
+      }
+      .login-box {
+        float: right;
+        width: 338px;
+        height: 334px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(232, 232, 232, 1);
+        border-radius: 4px;
+        .user-portrait {
+          display: block;
+          width: 80px;
+          height: 80px;
+          margin: 32px auto 27px auto;
+        }
+        .login-name {
+          height: 17px;
+          line-height: 17px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(89, 89, 89, 1);
+          text-align: center;
+          span {
+            color: #e43d30;
+          }
+        }
+        ul {
+          margin-top: 61px;
+          padding: 0 42px;
+          li {
+            display: inline-block;
+            cursor: pointer;
+            img {
+              display: block;
+              margin: 0 auto;
+              margin-bottom: 10px;
+            }
+            button {
+              display: block;
+              width: 63px;
+              height: 30px;
+              line-height: 30px;
+              background: rgba(255, 255, 255, 1);
+              border: 1px solid rgba(228, 61, 48, 1);
+              border-radius: 4px;
+              color: #e43d30;
+              cursor: pointer;
+            }
+            button:hover {
+              background-color: #e43d30;
+              color: #fff;
+            }
+          }
+          li:nth-child(2) {
+            margin: 0 32px;
+          }
+        }
+      }
+    }
+  }
+}
+</style>

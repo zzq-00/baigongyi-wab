@@ -1,0 +1,223 @@
+<!--课程列表-->
+<template>
+  <div class="course">
+    <ul class="classList">
+      <li class="line" v-for="(item,index) in dataList.course.records" :key="index" @click="$emit('courseDetail',item)">
+        <div class="classPic"><img src="@/assets/images/class.png" alt=""></div>
+        <div class="classInfo">
+          <span class="font-14">{{item.name}}</span>
+          <div class="price ">
+            <i :class="item.price > 0 ? 'red' : 'green'">{{item.price>0 ? '￥'+item.price : '免费' }}</i>
+            <div>
+              <span class="font-12 update">{{item.type===1? '音频': '视频'}}</span>
+              <el-tag v-if="currentPath ==='/myLecture'" :type="item.status==='0'? '': 'success'" size="mini">{{item.status==='0'? '草稿': '已发布'}}</el-tag>
+            </div>
+          </div>
+        </div>
+        <div class="otherInfo">
+            <div class="photoInfo" v-if="currentPath!=='/myLecture'">
+              <img  :src="item.avatar" class="photo">
+              <span class="font-12">{{item.realName}}</span>
+            </div>
+            <div class="time">{{item.createTime}}</div>
+            <div v-show="currentPath==='/myLecture'" class="font-12 handle">
+              <div v-if="item.status==='0'">
+                <span style="margin-right:3px" @click="$router.push('/editCourse/'+item.id)">编辑</span>
+                <span @click="onDelete(item.id)">删除</span>
+              </div>
+              <span v-if="item.status!=='0'" @click="downCourse(item.id)">下架课程</span>
+            </div>
+        </div>
+      </li>
+    </ul>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination
+        @current-change="handleCurrentChange"
+        :current-page.sync="dataList.course.current "
+        :page-size.sync="dataList.course.size"
+        layout="prev,slot, next, total"
+        :total="dataList.course.total">
+        <slot>
+          <span>第<i>{{dataList.course.current}}/{{dataList.course.pages}}</i>页</span>
+        </slot>
+      </el-pagination>
+    </div>
+
+  </div>
+</template>
+
+<script>
+// import store from '@/store'
+import api from '@/fetch'
+export default {
+  name: 'CourseList',
+  props: {
+    dataList: Object
+  },
+  data () {
+    return {
+      dialogVisible: false, // 创建课程弹框
+      currentPath: this.$route.path
+    }
+  },
+  methods: {
+    // 翻页
+    handleCurrentChange (val) {
+      // console.log(val)
+      this.$emit('getCurrentPage', val)
+    },
+    // 下架课程
+    downCourse (id) {
+      this.$confirm('确定下架该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.downCourse(id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '下架成功!'
+          })
+        })
+      })
+    },
+    // 删除
+    onDelete (id) {
+      this.$confirm('确定删除该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.delCourse(id).then(() => {
+          this.$message({
+            type: 'success',
+            message: '删除成功!'
+          })
+        })
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .course{
+    .classList {
+      overflow: hidden;
+      .line::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 100%;
+        position: absolute;
+        bottom: 48px;
+        left:0;
+        background-color: #ddd;
+      }
+      li {
+        float: left;
+        width: 260px;
+        height: 346px;
+        border-radius: 10px;
+        background-color: #fff;
+        margin-right: 20px;
+        margin-bottom: 20px;
+        position: relative;
+        border: 1px solid #E7E8EC;
+        box-sizing: border-box;
+        .classPic {
+          width: 260px;
+          height: 174px;
+          box-sizing: border-box;
+          border-bottom:1px solid #E7E8EC;
+          img{
+            width: 260px;
+            height: 174px;
+          }
+        }
+        .classInfo{
+          padding:20px 20px 22px 20px;
+          height: 121px;
+          width: 100%;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: flex-start;
+          .price {
+            width:100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .red,.green {
+              font-size: 16px;
+            }
+            .update{
+              padding:3px 9px;
+              background-color: #F2F2F2;
+              border-radius: 5px;
+              margin-right: 3px;
+            }
+          }
+        }
+        .otherInfo {
+          padding:0 20px;
+          height: 50px;
+          font-size: 14px;
+          text-align: center;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          .photoInfo{
+            .photo {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              margin-right: 8px;
+            }
+          }
+          .time {
+            font-size: 12px;
+            color:#999;
+          }
+          .handle {
+            span{
+              padding:3px 9px;
+              border-radius: 5px;
+            }
+          }
+        }
+      }
+    }
+    // 分页
+    .pagination {
+      margin-top: 30px;
+      text-align: center;
+      .el-pagination .btn-next, .el-pagination .btn-prev {
+          width: 40px;
+          height: 40px;
+          padding-right: auto;
+          .el-icon-arrow-left:before, .el-icon-arrow-right:before {
+            font-size: 20px;
+          }
+        }
+      .el-pagination {
+        slot {
+          span{
+            font-size: 20px;
+            margin: 6px 20px 0;
+            color:#999;
+            font-weight: normal;
+          }
+        }
+        .el-pagination__total {
+          margin: 6px 0 0 20px;
+          font-size: 20px;
+          color:#999;
+          font-weight: normal;
+        }
+      }
+    }
+  }
+</style>

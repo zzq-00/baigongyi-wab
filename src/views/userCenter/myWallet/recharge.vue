@@ -1,0 +1,233 @@
+<template>
+  <div class="recharge-box">
+    <div class="recharge-title">
+      <p class="font-16">{{$route.query.money?'扫码支付':'请填写充值金额'}}</p>
+    </div>
+    <div class="recharge-content">
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px" v-show="!showErCode">
+        <el-form-item label="充值金额" prop="amount">
+          <el-input v-model.trim="form.amount" style="width: 260px;"></el-input> 元
+        </el-form-item>
+        <div style="height: 40px;"></div>
+        <el-form-item label="充值方式">
+          <label v-for="(item,index) in rechargeMethods" :key="index" class="recharge-method">
+            <input type="radio" v-model="form.method" :value="item.value" v-show="false">
+            <span :class="[item.name==='微信'?'wechat':'alipay']">{{item.name}}</span>
+          </label>
+        </el-form-item>
+        <el-form-item>
+          <el-button type="primary" @click="onSubmit">下一步</el-button>
+        </el-form-item>
+        <el-form-item>
+          <div class="other-tips">
+            <p>温馨提示：</p>
+            <p class="font-12">1. 充值成功后，余额可能存在延迟现象，一般1到5分钟内到账，如有问题，请咨询客服；</p>
+            <p class="font-12">2. 充值完成后，您可以进入账户充值记录页面进行查看余额充值状态。</p>
+          </div>
+        </el-form-item>
+      </el-form>
+      <div class="er-scanner" v-show="showErCode">
+        <div>
+          <img :src="erCode" alt="" width="156px" height="156px">
+          <div>
+            <p class="font-16" style="color: #e43d30;">&yen; <span style="font-size: 26px;">{{$route.query.money}}</span></p>
+            <p>请用{{form.method === '1'?'微信':'支付宝'}}扫码支付</p>
+            <p>
+              <img :src="form.method === '1'?require('@/assets/images/wx28.png'):require('@/assets/images/zfb28.png')" alt="">
+            </p>
+          </div>
+        </div>
+        <p style="margin-left: 15px;">若二维码过期，请刷新页面重新获取。</p>
+      </div>
+    </div>
+    <el-dialog :visible.sync="dialogVisible" :close-on-click-modal='false' width="600px" :before-close="handleClose">
+      <p v-if="hasPayPassword" style="margin: 10px auto 30px;font-size: 18px;text-align: center;">付款成功，等待跳转...</p>
+      <div v-else class="success-with-nopassword">
+        <p>支付成功</p>
+        <p>
+          <img src="@/assets/images/pic.png" alt="">
+        </p>
+        <p>为了保护您的资金，请您设置 <router-link to="/modifyPayPassword?Identification=2&set=sets" class="red" style="text-decoration: underline;cursor: pointer;">支付密码</router-link>
+        </p>
+      </div>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import QRCode from 'qrcode'
+
+export default {
+  data() {
+    var checkAmount = (rule, value, callback) => {
+      if (value === '') {
+        callback(new Error('请输入充值金额'))
+      } else if (value <= 0) {
+        callback(new Error('充值金额大于0'))
+      } else if (!/^(([1-9][0-9]*)|(([0]\.\d{1,2}|[1-9][0-9]*\.\d{1,2})))$/.test(value)) {
+        callback(new Error('充值金额为数字，且最多包含两位小数'))
+      } else {
+        callback()
+      }
+    }
+    return {
+      dialogVisible: false,
+      httpHead: process.env.VUE_APP_API,
+      rechargeMethods: [{ name: '微信', value: '1' }, { name: '支付宝', value: '2' }],
+      form: {
+        amount: '',
+        method: '1'
+      },
+      rules: {
+        amount: [{ validator: checkAmount, trigger: 'blur' }]
+      },
+      showErCode: false,
+      hasPayPassword: true,
+      erCode: ''
+    }
+  },
+  watch: {
+    '$route.query.money': {
+      handler: function(val) {
+        if (val && val > 0) {
+          api.wechatpayWeb({ payAmount: val }).then(res => {
+            this.getPaystatus(res.data.order_id)
+            QRCode.toDataURL(res.data.code_url)
+              .then(url => (this.erCode = url))
+              .catch(err => console.error(err))
+          })
+          this.showErCode = true
+        }
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    handleClose() {
+      if (!this.hasPayPassword) {
+        this.$router.push('/myWallet')
+      }
+    },
+    // 获取支付状态
+    getPaystatus(id) {
+      window.interval = setInterval(() => {
+        api.getPaystatus(id).then(res => {
+          if (res.data == true) {
+            clearInterval(window.interval)
+            this.dialogVisible = true
+            if (this.hasPayPassword) {
+              setTimeout(() => {
+                this.$router.push('/myWallet')
+              }, 3000)
+            }
+          }
+        })
+      }, 500)
+    },
+    onSubmit() {
+      this.$refs['form'].validate(valid => {
+        if (valid) {
+          if (this.form.method === '2') {
+            // 支付宝要跳转到自己的支付页面
+            let sendData = new FormData()
+            sendData.append('amount', this.form.amount)
+            api.alipayWeb(sendData).then(res => {
+              document.querySelector('body').innerHTML = res
+              document.forms[0].submit()
+            })
+          } else {
+            // 微信
+            this.$router.replace('/myWallet/recharge?money=' + this.form.amount)
+          }
+        } else {
+          console.log('error submit!!')
+          return false
+        }
+      })
+    }
+  },
+  created() {
+    // 获取是否已设置支付密码
+    api.getwallet().then(res => (this.hasPayPassword = res.data.hasPayPassword))
+  },
+  destroyed: function() {
+    clearInterval(window.interval)
+  }
+}
+</script>
+<style lang="less" scoped>
+.recharge-box {
+  margin-top: 20px;
+  border-radius: 10px;
+  background-color: #fff;
+  min-height: calc(100vh - 190px);
+  .recharge-title {
+    height: 50px;
+    padding: 0 20px;
+    border-bottom: 1px solid #dddddd;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .recharge-content {
+    padding: 58px 122px;
+    .recharge-method {
+      > span {
+        cursor: pointer;
+        display: inline-block;
+        width: 260px;
+        height: 70px;
+        line-height: 70px;
+        margin-right: 10px;
+        text-align: center;
+        color: #fff;
+        &.wechat {
+          background: url(~@/assets/images/wxbg.png) center no-repeat;
+        }
+        &.alipay {
+          background: url(~@/assets/images/zfbbg.png) center no-repeat;
+        }
+      }
+      > input[type='radio']:checked + .wechat {
+        background-image: url(~@/assets/images/wxbg-h.png);
+      }
+      > input[type='radio']:checked + .alipay {
+        background-image: url(~@/assets/images/zfbbg-h.png);
+      }
+    }
+    .other-tips {
+      background-color: #fcf8eb;
+      border: 1px solid #ffb502;
+      padding: 12px 24px;
+      border-radius: 5px;
+      width: 550px;
+    }
+    .er-scanner {
+      margin-top: 140px;
+      margin-left: 255px;
+      > div {
+        display: flex;
+        > div {
+          flex: 1;
+          margin-left: 20px;
+          > p {
+            margin-top: 18px;
+          }
+        }
+      }
+    }
+  }
+  .success-with-nopassword {
+    text-align: center;
+    > p {
+      &:first-child {
+        font-size: 18px;
+      }
+      &:nth-child(2) {
+        margin: 12px auto 25px;
+      }
+    }
+  }
+}
+</style>

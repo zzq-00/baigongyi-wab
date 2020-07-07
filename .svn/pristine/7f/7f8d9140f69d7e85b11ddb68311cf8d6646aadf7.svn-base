@@ -1,0 +1,27 @@
+import { post, get, DELETE } from 'axios'
+
+/**
+ * 评论
+ */
+export default {
+  // 评论列表
+  getCommentList (params) {
+    return post('/commentRecord/list', params)
+  },
+  // 新增评论
+  addComment (params) {
+    return post('/commentRecord/add', params)
+  },
+  // 更新评论
+  updateComment (params) {
+    return post('/commentRecord', params)
+  },
+  // id查询
+  comment (id) {
+    return get(`/commentRecord/${id}`)
+  },
+  // 删除评论
+  delComment (delId) {
+    return DELETE(`/commentRecord/${delId}`)
+  }
+}

@@ -1,0 +1,40 @@
+import { post, get } from 'axios'
+
+export default {
+  // 密码登录
+  passLogin (params) {
+    return post('/login', params)
+  },
+  // 手机号登录
+  mobileLogin (params) {
+    return post('/login/mobile', params)
+  },
+  // 注册
+  register (params) {
+    return post('/user/account/regist', params)
+  },
+
+  // 获取短信验证码
+  getSmsCode (params) {
+    return post('/verifycode/sms', params)
+  },
+
+  // 验证短信验证码
+  verifySmsCode (params) {
+    return post('/verifycode/sms/check', params)
+  },
+
+  // 忘记密码
+  forgetPwd (params) {
+    return post('/user/account/forgetPwd', params)
+  },
+
+  // 检查手机号是否可用
+  checkMobile (mobile) {
+    return get(`/user/account/checkMobile/${mobile}`)
+  },
+  // 检查用户名是否可用
+  checkUsername (username) {
+    return get(`/user/account/checkUserName/${username}`)
+  }
+}

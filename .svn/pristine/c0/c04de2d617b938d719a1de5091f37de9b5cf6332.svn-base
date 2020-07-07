@@ -1,0 +1,285 @@
+<template>
+  <div class="myHome">
+    <user-header class="headerCom" :userInfoData="userInfoData"></user-header>
+    <div class="box">
+      <div class="left">
+        <el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+          <el-menu-item index="/myHome/myReply">回答 {{userInfoData.answerCount}}</el-menu-item>
+          <el-menu-item index="/myHome/myQuestion">提问 {{userInfoData.questionCount}}</el-menu-item>
+          <el-submenu index="3">
+            <template slot="title">文章 {{userInfoData.articleCount}}</template>
+            <el-menu-item index="/myHome/publishArt">已发布</el-menu-item>
+            <el-menu-item index="/myHome/draftArt">草稿</el-menu-item>
+          </el-submenu>
+          <el-menu-item index="/myHome/myIdea">想法 {{userInfoData.ideaCount}}</el-menu-item>
+          <el-menu-item index="/myHome/myLive">直播 {{num}}</el-menu-item>
+          <el-submenu index="6">
+            <template slot="title">更多</template>
+            <el-menu-item index="/myHome/myCollectCourse">收藏</el-menu-item>
+            <el-menu-item index="/myHome/myAttention">关注</el-menu-item>
+          </el-submenu>
+        </el-menu>
+        <div class="content">
+          <router-view></router-view>
+        </div>
+      </div>
+      <div class="right">
+        <div class="r-top">
+          <div @click="goAttention">
+            <p>关注了</p><span>{{userInfoData.concernPersonCount}}</span>
+          </div>
+          <div @click="goFans">
+            <p>关注者</p><span>{{userInfoData.fansCount}}</span>
+          </div>
+        </div>
+        <ul class="r-bottom">
+          <li :class=" { 'active-color': tabActive==index }" v-for="(item,index) in rightList" :key="index" @click="switchModule(item,index)">
+            <img :src="item.imgs" alt="">
+            <span>{{item.name}}</span>
+            <span class="numbers">{{item.number}}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import UserHeader from '@/components/userHeader'
+import api from '@/fetch'
+export default {
+  name: 'MyHome',
+  props: {},
+  components: {
+    UserHeader
+  },
+  data() {
+    return {
+      userInfoData: {},
+      userCollectCount: {},
+      num: 3, // 数量--后期修改
+      activeIndex: '/myHome/myReply',
+      rightList: [
+        { imgs: require('@/assets/images/kecheng.png'), name: '收藏的课程', number: '0' },
+        { imgs: require('@/assets/images/icon_shoucang.png'), name: '收藏的专栏', number: '0' },
+        { imgs: require('@/assets/images/zhibo.png'), name: '收藏的直播', number: '0' },
+        { imgs: require('@/assets/images/wenzhang.png'), name: '收藏的文章', number: '0' },
+        { imgs: require('@/assets/images/huida.png'), name: '收藏的回答', number: '0' },
+        { imgs: require('@/assets/images/wenti.png'), name: '关注的问题', number: '0' }
+      ]
+    }
+  },
+  created() {
+    this.activeIndex = this.$route.path
+    if (this.activeIndex === '/myHome/myCollectCourse') {
+      this.$store.commit('setTab', 0)
+      // 点击关注
+    } else if (this.activeIndex === '/myHome/myAttention') {
+      this.$store.commit('setTab', 5)
+    } else {
+      this.$store.commit('setTab', -1)
+    }
+    this.getUserCollectCount()
+    this.getuserInfo()
+  },
+  computed: {
+    tabActive() {
+      return this.$store.state.tabActive
+    },
+    cancelStatus() {
+      return this.$store.state.cancelStatus
+    }
+  },
+  watch: {
+    cancelStatus: function(newd,old) {
+      console.log(newd,'newd')
+      this.getUserCollectCount()
+    }
+  },
+  methods: {
+    handleSelect(key, keyPath) {
+      // 点击收藏
+      if (key === '/myHome/myCollectCourse') {
+        this.$store.commit('setTab', 0)
+        // 点击关注
+      } else if (key === '/myHome/myAttention') {
+        this.$store.commit('setTab', 5)
+      } else {
+        this.$store.commit('setTab', -1)
+      }
+      if (this.$route.query) {
+        //他人
+        this.$router.push({ path: key, query: { own: this.$route.query.own, id: this.$route.query.id } })
+      } else {
+        //自己
+        this.$router.push({ path: key })
+      }
+      this.activeIndex = key
+    },
+    // 切换模块
+    switchModule(item, index) {
+      this.$store.commit('setTab', index)
+      if (item.name === '关注的问题') {
+        this.activeIndex = '/myHome/myAttention'
+        this.$router.push(this.$route.query.own != 'Others' ? '/myHome/myAttention' : `/myHome/myAttention?own=${this.$route.query.own}&id=${this.$route.query.id}`)
+      } else {
+        this.activeIndex = '/myHome/myCollectCourse'
+        this.$router.push(this.$route.query.own != 'Others' ? '/myHome/myCollectCourse' : `/myHome/myCollectCourse?own=${this.$route.query.own}&id=${this.$route.query.id}`)
+      }
+    },
+    // 关注
+    goAttention() {
+      this.activeIndex = '/myHome/myAttention'
+      this.$router.push(this.$route.query.own != 'Others' ? '/myHome/myAttention' : `/myHome/myAttention?own=${this.$route.query.own}&id=${this.$route.query.id}`)
+    },
+    // 粉丝
+    goFans() {
+      this.activeIndex = '/myHome/myAttention'
+      this.$router.push(this.$route.query.own != 'Others' ? '/myHome/myAttention' : `/myHome/myAttention?own=${this.$route.query.own}&id=${this.$route.query.id}`)
+    },
+    // 个人信息
+    async getuserInfo() {
+      const res = await api.userInfo(this.$route.query.own == 'Others' ? this.$route.query.id : this.$store.state.userInfo.accountId)
+      this.userInfoData = res.data
+    },
+    // 个人收藏信息
+    async getUserCollectCount() {
+      const res = await api.userCollectCount(this.$route.query.own != 'Others' ? this.$store.state.userInfo.accountId : this.$route.query.id)
+      const numbers = res.data
+      this.rightList[0].number = numbers.courseCount
+      this.rightList[1].number = numbers.columnCount
+      this.rightList[2].number = numbers.liveCount
+      this.rightList[3].number = numbers.articleCount
+      this.rightList[4].number = numbers.answerCount
+      this.rightList[5].number = numbers.concernQuestionCount
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.myHome {
+  background-color: #f4f4f4;
+  .headerCom {
+    width: 100%;
+    margin-bottom: 20px;
+  }
+  .box {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    .left {
+      // width: 590px; // 根据页面定宽度
+      width: 70.9%;
+      border-radius: 10px;
+      // border-right: 10px solid #f4f4f4;
+      // 可删--
+      .el-tabs__header {
+        margin: 0;
+        background-color: #fff;
+      }
+      .el-tabs__nav {
+        margin-left: 20px;
+      }
+      .el-tabs__item:hover {
+        color: #e23732;
+      }
+      .el-tabs__item.is-active {
+        color: #e23732;
+      }
+      .el-tabs__active-bar {
+        background-color: #e23732;
+      }
+      .el-tabs__content {
+        padding: 10px;
+        background-color: #fff3f3;
+      }
+      // --可删
+
+      .el-menu {
+        height: 50px;
+        border-radius: 10px 10px 0 0;
+        .el-menu-item,
+        .el-submenu__title {
+          padding: 0px;
+          margin: 0 20px;
+        }
+      }
+      .el-menu--horizontal > .el-menu-item {
+        height: 50px;
+        line-height: 60px;
+      }
+      .el-menu--horizontal > .el-submenu .el-submenu__title {
+        height: 50px;
+      }
+      .el-menu--horizontal > .el-menu-item.is-active {
+        border-bottom: 2px solid #e23732;
+        font-size: 16px;
+        color: #4a4a4a;
+      }
+      .el-menu--horizontal > .el-submenu:focus .el-submenu__title,
+      .el-menu--horizontal > .el-submenu:hover .el-submenu__title {
+        font-size: 16px;
+        color: #4a4a4a;
+      }
+      .el-menu--horizontal > .el-submenu.is-active .el-submenu__title {
+        border-bottom: 2px solid #e23732;
+        font-size: 16px;
+        color: #4a4a4a;
+      }
+    }
+    .right {
+      width: 27.27%;
+      .r-top {
+        width: 240px;
+        width: 100%;
+        height: 80px;
+        border-radius: 10px;
+        box-sizing: border-box;
+        background-color: #fff;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        > div {
+          text-align: center;
+          p {
+            color: #666;
+            margin-bottom: 6px;
+          }
+          span {
+            color: #333;
+            font-size: 16px;
+          }
+        }
+      }
+      .r-bottom {
+        margin-top: 20px;
+        padding: 10px 20px 20px 20px;
+        box-sizing: border-box;
+        // width: 240px;
+        width: 100%;
+        background-color: #fff;
+        border-radius: 10px;
+        .active-color {
+          color: #e23732;
+        }
+        li {
+          height: 38px;
+          line-height: 38px;
+          font-size: 14px;
+          cursor: pointer;
+          img {
+            margin-right: 11px;
+          }
+          .numbers {
+            float: right;
+          }
+        }
+        li:hover {
+          color: #e23732;
+        }
+      }
+    }
+  }
+}
+</style>

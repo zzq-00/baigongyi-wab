@@ -1,0 +1,238 @@
+<template>
+  <div class='liveTv'>
+    <div class="tabChange clearfix">
+      <span v-for="(item,index) in tabsColumn" :key="index" @click="nowIndex = index" :class="{active:index==nowIndex}">{{item}}
+      </span>
+    </div>
+    <ul class="classList">
+      <li class="line" v-for="(item,index) in dataList.records" :key="index" @click="goDetails(item)">
+        <div class="classPic"><img :src="item.homeImage" alt=""></div>
+        <div class="classInfo">
+          <span class="font-14" style='font-wight:500; color:#333333;'>{{item.title}}</span>
+          <div class="price ">
+            <i :class="item.price > 0 ? 'red' : 'green'">{{item.price === 0 ? '免费': '收费' }}</i>
+            <div>
+              <span class="font-12 update">{{item.type===1? '视频': ''}}</span>
+            </div>
+          </div>
+        </div>
+        <div class="otherInfo">
+          <div class="photoInfo">
+            <img :src="item.avatar" class="photo">
+            <span class="font-12">{{item.userName}}</span>
+          </div>
+          <div class="time">{{item.submitTime}}</div>
+        </div>
+      </li>
+    </ul>
+    <!-- 分页 -->
+    <div class="pagination">
+      <el-pagination @current-change="handleCurrentChange" :current-page.sync="dataList.current " :page-size.sync="dataList.size" layout="prev,slot, next, total" :total="dataList.total">
+        <slot>
+          <span>第
+            <i>{{dataList.current}}/{{dataList.pages}}</i>页</span>
+        </slot>
+      </el-pagination>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  data() {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['直播回放'],
+      dialogVisible: false, // 创建课程弹框
+      // currentPath: this.$route.path,
+      dataList: {},
+      params: {
+        "condition": {
+          "feeType": 0,
+          "sortType": 1,
+          "status": 1,
+          "type": 1
+        },
+        "pageNum": 1,
+        "pageSize": 8
+      }
+    }
+  },
+  mounted() {
+    this.getDataFn();
+  },
+  methods: {
+    getDataFn() {
+      api.liveHomeList(this.params).then(res => {
+        if (res.code === 200) {
+          this.dataList = res.data
+        }
+      })
+        .catch(err => {
+          console.log(err)
+        })
+    },
+    // 翻页
+    handleCurrentChange(val) {
+      this.params.pageNum = val;
+      this.getDataFn();
+    },
+    goDetails(data) {
+      console.log(data, 'nnn');
+      this.$router.push('/livetv/' + data.id)
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.liveTv {
+  .tabChange {
+    font-size: 16px;
+    margin: 20px 20px 26px 0;
+    span:first-child {
+      margin-right: 20px;
+    }
+    .active {
+      position: relative;
+      color: #4A4A4A;
+    }
+    .active::after {
+      content: "";
+      display: inline-block;
+      position: absolute;
+      bottom: -10px;
+      left: 20px;
+      height: 3px;
+      width: 24px;
+      background-color: #e43c31;
+    }
+  }
+  .classList {
+    overflow: hidden;
+    display: flex;
+    flex-wrap: wrap;
+    .line::after {
+      content: "";
+      display: block;
+      height: 1px;
+      width: 100%;
+      position: absolute;
+      bottom: 48px;
+      left: 0;
+      background-color: #ddd;
+    }
+    li {
+      width: 23%;
+      height: 346px;
+      border-radius: 10px;
+      background-color: #fff;
+      margin-right: 20px;
+      margin-bottom: 20px;
+      position: relative;
+      border: 1px solid #E7E8EC;
+      box-sizing: border-box;
+      .classPic {
+        width: 100%;
+        height: 174px;
+        box-sizing: border-box;
+        border-bottom: 1px solid #E7E8EC;
+        img {
+          width: 100%;
+          height: 174px;
+        }
+      }
+      .classInfo {
+        padding: 20px 20px 22px 20px;
+        height: 121px;
+        width: 100%;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .price {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          .red,
+          .green {
+            font-size: 16px;
+          }
+          .update {
+            padding: 3px 9px;
+            background-color: #F2F2F2;
+            border-radius: 3px;
+            margin-right: 3px;
+            color: #666;
+          }
+        }
+      }
+      .otherInfo {
+        padding: 0 20px;
+        height: 50px;
+        font-size: 14px;
+        text-align: center;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        .photoInfo {
+          .photo {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            margin-right: 8px;
+          }
+        }
+        .time {
+          font-size: 12px;
+          color: #999;
+        }
+        .handle {
+          span {
+            padding: 3px 9px;
+            border-radius: 5px;
+          }
+        }
+      }
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  } // 分页
+  .pagination {
+    margin-top: 30px;
+    text-align: center;
+    margin-bottom: 20px;
+    .el-pagination .btn-next,
+    .el-pagination .btn-prev {
+      width: 40px;
+      height: 40px;
+      padding-right: auto;
+      .el-icon-arrow-left:before,
+      .el-icon-arrow-right:before {
+        font-size: 20px;
+      }
+    }
+    .el-pagination {
+      slot {
+        span {
+          font-size: 20px;
+          margin: 6px 20px 0;
+          color: #999;
+          font-weight: normal;
+        }
+      }
+      .el-pagination__total {
+        margin: 6px 0 0 20px;
+        font-size: 20px;
+        color: #999;
+        font-weight: normal;
+      }
+    }
+  }
+}
+</style>

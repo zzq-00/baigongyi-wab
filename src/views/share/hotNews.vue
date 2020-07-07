@@ -1,0 +1,176 @@
+<template>
+  <div id="hotnews" class="main">
+    <template v-if="loaded">
+      <div class="title">{{ hotNews.title }}</div>
+      <div class="desc">
+        <div>
+          <span>{{ convertDate(hotNews.publishTime) }}</span>
+        </div>
+        <div class="flex-align-center">
+          <i class="eye-icon"></i>
+          <span>&nbsp;{{ hotNews.watchCount }}&nbsp;&nbsp;&nbsp;</span>
+        </div>
+      </div>
+      <div class="desc">摘要：{{ hotNews.roundup }}</div>
+      <div class="content" v-html="hotNews.content"></div>
+      <div class="desc"></div>
+      <div class="source" v-if="hotNews.sourceUrl">
+        <span>来源：{{hotNews.sourceName}}</span>
+        <br>
+        <a :href="hotNews.sourceUrl">原文链接：{{hotNews.sourceUrl}}</a>
+      </div>
+      <div class="statement">
+        本站系本网编辑转载，
+        转载目的在于传递更多信息，并不代表本网赞同其观点和对其真实性负责。如涉及作品内容、版权和其它问题，请及时与本网联系，我们将根据著作权人的要求，立即更正或者删除有关内容。
+        <br />
+        【声明】本站文章版权归原作者所有内容为作者个人观点
+        本站只提供参考并不构成任何投资及应用建议。本站拥有对此声明的最终解释权。
+      </div>
+      <div class="separate-line"></div>
+      <div class="comment">
+        <div class="comm-label">评论（{{ hotNews.commentCount }}条）</div>
+        <div class="comm-write" @click="openApp">写评论...</div>
+        <ul>
+          <li v-for="(comment, index) in comments" :key="index">
+            <div
+              class="avatar"
+              :style="{
+                backgroundImage:
+                  'url(' +
+                  (comment.avatar
+                    ? $store.state.imageDomain + comment.avatar
+                    : require('@/assets/images/err-header-icon01.png')) +
+                  ')'
+              }"
+            ></div>
+            <div
+              class="comm-box"
+              :class="{ 'comm-box_line': index != comments.length - 1 }"
+            >
+              <div class="comm-author">
+                <span class="comm-author-name">{{ comment.nickName }}</span>
+                <span class="comm-date">{{
+                  convertDate(comment.commentsTime)
+                }}</span>
+              </div>
+              <div class="comm-content">{{ comment.comment }}</div>
+            </div>
+          </li>
+        </ul>
+        <div
+          style="text-align: center;"
+          v-if="commentTotal > 0 && commentTotal != comments.length"
+        >
+          <span class="more-btn" @click="loadMorecomments">查看更多评论>></span>
+        </div>
+        <div v-else class="noMore">哎呀，没有更多了...</div>
+      </div>
+      <div class="app-open">
+        <div class="app-open-btn" @click="openApp">App内打开</div>
+      </div>
+      <div class="separate-line"></div>
+      <div class="like-comm-count">
+        <div class="like-comm-count_box" @click="openApp">
+          <i class="like-icon"></i>
+          <span>{{ hotNews.likeCount }}</span>
+        </div>
+        <div class="like-comm-count_box" @click="openApp">
+          <i class="comm-icon"></i>
+          <span>{{ hotNews.commentCount }}</span>
+        </div>
+      </div>
+    </template>
+  </div>
+</template>
+<script>
+require("@/assets/style/share.css");
+require("@/assets/js/lib-flexible/index.min.js");
+
+import api from "@/fetch";
+import { openApp, convertDate, share } from "@/assets/js/shareUtil.js";
+export default {
+  data() {
+    return {
+      loaded: false,
+      hotNewsId: "",
+      hotNews: {},
+      commentTotal: 0,
+      comments: [],
+      commentParam: {
+        pageNum: 1,
+        pageSize: 3,
+        paramObject: {
+          objId: "",
+          objType: 7
+        }
+      },
+      shareConfig: {}
+    };
+  },
+  async created() {
+    document.title = "百工驿-热点资讯";
+    let _this = this;
+    _this.hotNewsId = _this.$route.query.id;
+    _this.commentParam.paramObject.objId = _this.hotNewsId;
+    let { data: _hotNews } = await api.hotNewsId(_this.hotNewsId);
+    _this.hotNews = _hotNews;
+
+    _this.shareConfig.wechat_title = _hotNews.title;
+    _this.shareConfig.wechat_desc = _hotNews.roundup;
+    _this.shareConfig.wechat_images0 =
+      _this.$store.state.imageDomain + _hotNews.image;
+    // 分享参数
+    let { data: _shareConfig } = await api.getShareConfig();
+    _this.shareConfig.appId = _shareConfig.appId;
+    _this.shareConfig.timestamp = _shareConfig.timestamp;
+    _this.shareConfig.nonceStr = _shareConfig.nonceStr;
+    _this.shareConfig.signature = _shareConfig.signature;
+    _this.shareConfig.url = _shareConfig.url;
+    share(_this.shareConfig);
+    // 评论列表
+    api.getCommentList(_this.commentParam).then(function(res) {
+      _this.comments = res.data.records;
+      _this.commentTotal = res.data.total;
+      _this.loaded = true;
+    });
+  },
+  methods: {
+    loadMorecomments() {
+      if (this.comments.length == this.commentTotal) return;
+      this.commentParam.pageNum++;
+      api.getCommentList(this.commentParam).then(res => {
+        this.comments = this.comments.concat(res.data.records);
+      });
+    },
+    openApp() {
+      openApp();
+    },
+    convertDate(date) {
+      return convertDate(date);
+    }
+  }
+}
+</script>
+
+<style lang="less">
+.statement {
+  font-size: 0.32rem;
+  line-height: 0.56rem;
+  color: #666;
+  margin-bottom: 0.43rem;
+}
+.source {
+  font-size:0.35rem;
+  line-height:0.56rem;
+  color: #4A4A4A;
+  word-wrap: break-word;
+  white-space: pre-wrap;
+  a, span{
+    width: 100%;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    display: inline-block;
+    margin-bottom: .4rem;
+  }
+}
+</style>

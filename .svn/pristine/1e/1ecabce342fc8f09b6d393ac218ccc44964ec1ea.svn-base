@@ -1,0 +1,11 @@
+//热点资讯接口
+import { post, get } from 'axios'
+export default {
+  hotNewsList(params) {//分页查询
+    return post('/hotNews/list', params)
+  },
+  // Id查询详情
+  hotNewsId(id) {
+    return get(`/hotNews/${id}`)
+  },
+}

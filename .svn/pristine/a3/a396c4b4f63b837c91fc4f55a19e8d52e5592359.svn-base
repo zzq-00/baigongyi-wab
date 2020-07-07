@@ -1,0 +1,304 @@
+<template>
+    <div class='fillInMessage'>
+        <div class='fillInMessage_main'>
+            <el-form ref="ruleForm" :model="ruleForm" label-width="80px" label-position="top" :inline='true' size="small">
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师姓名" required prop="name">
+                            <el-input v-model="ruleForm.name"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师头像" required prop="name">
+                            <div class="recommed">请上传本人真实照片。照片jpg/jpeg/png/bmp格式图片，最大4M，要求居中晰。</div>
+                            <div class="upload-tx">
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>上传头像</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCard($event)" />
+                                </label>
+                                <img v-if='false' src='https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=216605226,3652567530&fm=111&gp=0.jpg' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="身份证明" required prop="region">
+                            <el-select v-model="ruleForm.region" placeholder="请选择活动区域">
+                                <el-option label="区域一" value="shanghai"></el-option>
+                                <el-option label="区域二" value="beijing"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="手持证件正面照" required prop="name">
+                            <div class="recommed recommedRinght">
+                                请确保证件姓名、证件号码清晰可见 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M
+                            </div>
+                            <div class="upload-tx upload-sfz">
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件正面照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCard($event)" />
+                                </label>
+                                <img v-if='false' src='https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=216605226,3652567530&fm=111&gp=0.jpg' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="手持证件反面照" required prop="name">
+                            <div class="recommed recommedRinght">
+                                请确保证件姓名、证件号码清晰可见 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M
+                            </div>
+                            <div class="upload-tx upload-sfz">
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件反面照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCard($event)" />
+                                </label>
+                                <img v-if='false' src='https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=216605226,3652567530&fm=111&gp=0.jpg' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="资格证书" required prop="name">
+                            <el-input v-model="ruleForm.name"></el-input>
+                            <div class="recommed recommedRinght" style='top:90px;'>
+                                请提交教学能力或专业能力证明，如职称证书、考级证书等（需包含官方证书等有效信息）。 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M，要求居中清晰。
+                            </div>
+                            <div class="upload-tx upload-sfz" style='margin-top:11px;'>
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件反面照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCard($event)" />
+                                </label>
+                                <img v-if='false' src='https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=216605226,3652567530&fm=111&gp=0.jpg' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师简介" required prop="name">
+                            <div class="recommed" style='margin-left:0;margin-top:-10px;'>请清晰、准确、真实地描述您的教学理念、目标服务群体、主要课程方向等，简介内容将会展示在你的课程/专栏主页以供学员参考，100字以内。</div>
+                            <el-input type="textarea" placeholder="请输入内容" v-model="ruleForm.name" maxlength="100" show-word-limit></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
+        </div>
+
+        <div class='fillInMessage_footer'>
+            <button>上一步</button>
+            <button @click="submitForm('ruleForm')">提交审核</button>
+        </div>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            ruleForm: {
+                name: '',
+                region: '', // 发布者身份
+                name: '',
+                price: '',
+                type: '', // 类型--音频视频
+                url: '', // 音频视频地址
+                id: '',
+                tagIds: [],
+                description: ''
+            },
+            rules: {
+                name: [
+                    { required: true, message: '请输入活动名称', trigger: 'blur' },
+                    { min: 3, max: 5, message: '长度在 3 到 5 个字符', trigger: 'blur' }
+                ],
+                region: [
+                    { required: true, message: '请选择活动区域', trigger: 'change' }
+                ],
+            }
+        }
+    },
+    methods: {
+        onFileChangeCard(e) {
+            let files = e.target.files || e.dataTransfer.files;
+            if (!files.length) return;
+            let formData = new FormData(),
+                reader = new window.FileReader();
+            formData.append("trademarkImage", files[0]);
+            console.log(reader, 'mmm');
+        },
+        submitForm(formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    alert('submit!');
+                } else {
+                    console.log('error submit!!');
+                    return false;
+                }
+            });
+        },
+    }
+}
+</script>
+<style lang="less" scoped>
+.fillInMessage {
+    overflow-x: hidden;
+    padding: 12px 32px;
+    display: flex;
+    flex-direction: column;
+    /deep/ .el-form {
+        .el-form-item__label {
+            line-height: 14px;
+            padding-bottom: 12px!important;
+        }
+        .el-form-item__label:before {
+            margin-right: 2px;
+            color: #E23732;
+        }
+        .el-input {
+            width: 260px;
+            height: 30px;
+        }
+        .el-input__inner {
+            border-radius: 0;
+        }
+        .el-form-item {
+            position: relative;
+            width: 100%;
+        }
+        .el-textarea__inner {
+            height: 150px;
+        }
+        .recommed {
+            font-size: 12px;
+            color: #999999;
+            margin-top: -35px;
+            margin-left: 80px;
+        }
+        .recommedRinght {
+            position: absolute;
+            left: 150px;
+            top: 50px;
+            width: 280px;
+            line-height: 24px;
+        }
+        .upload-tx {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            >label {
+                display: block;
+                width: 100%;
+                height: 120px;
+                background: #DDDDDD;
+                border: 1px solid #EEEEEE;
+                border-radius: 10px;
+                position: relative;
+                >.iconTx {
+                    display: inline-block;
+                    width: 28px;
+                    height: 28px;
+                    background: #E23732;
+                    color: #fff;
+                    border-radius: 50%;
+                    text-align: center;
+                    line-height: 28px;
+                    position: absolute;
+                    left: 50%;
+                    margin-left: -14px;
+                    top: 42px;
+                }
+                >input {
+                    width: 100%;
+                    height: 120px;
+                    background: red;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    opacity: 0;
+                    z-index: 99;
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+                >p {
+                    position: absolute;
+                    color: #4A4A4A;
+                    top: 80px;
+                    left: 32px;
+                }
+            }
+            >img {
+                width: 100%;
+                height: 120px;
+                border-radius: 10px;
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+        .upload-sfz {
+            width: 200px;
+            >label {
+                >p {
+                    left: 51px;
+                }
+            }
+        }
+    }
+}
+
+.fillInMessage_main {
+    flex: 1;
+}
+
+.fillInMessage_footer {
+    width: 100%;
+    height: 50px;
+    border-top: 1px solid #DDDDDD;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    button {
+        width: 90px;
+        height: 34px;
+        color: #fff;
+        background: #E23732;
+        border-radius: 5px;
+        box-sizing: border-box;
+        border:1px solid #E23732;
+        &:nth-child(1){
+            background: #fff;
+            border:1px solid #DDDDDD;
+            color:#4A4A4A;
+            margin-right:5px;
+        }
+        &:nth-child(2){
+            margin-left:5px;
+        }
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}
+</style>
+

@@ -1,0 +1,113 @@
+body, h1, h2, h3, h4, h5, h6, p, ul, ol, form, dl, dd {
+  margin: 0;
+}
+h1, h2, h3, h4, h5, h6 {
+  font-size: 100%;
+}
+input, textarea, select {
+  font-size: 100%;
+  font-family: inherit;
+}
+em, i, s {
+  font-style: normal;
+  text-decoration: none;
+}
+ul, ol {
+  padding-left: 0;
+  list-style-type: none;
+}
+img {
+  vertical-align: middle;
+}
+input {
+  outline: none;
+  vertical-align: middle;
+}
+button {
+  border: 0;
+  outline: none;
+}
+input::placeholder {
+  color: #BFBFBF;
+}
+a {
+  color: inherit;
+  text-decoration-line: none;
+}
+a:hover {
+  color: #E23732;
+}
+body {
+  min-width: 1250px;
+  color: #4A4A4A;
+  background-color: #F4F4F4;
+  font-size: 14px;
+  /* font-family: '阿里巴巴普惠体', 'Alibaba Sans'; */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+/*清除浮动*/
+.clearfix:before, .clearfix:after {
+  content: "";
+  display: table;
+}
+.clearfix:after {
+  clear: both;
+}
+.clearfix {
+  *zoom: 1;
+  /*IE/7/6*/
+}
+/* 超出省略... */
+.ellipsis {
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+}
+.fl {
+  float: left;
+}
+.fr {
+  float: right;
+}
+.container {
+  width: 1100px;
+}
+
+.red {
+  color: #f00;
+  cursor: pointer;
+  font-size: 14px;
+}
+.green {
+  color: #7355F6;
+}
+.gray {
+  color: #999999;
+}
+
+.font-12 {
+  font-size: 12px;
+}
+.font-14 {
+  font-size: 14px;
+}
+.font-16 {
+  font-size: 16px;
+}
+.font-18 {
+  font-size: 18px;
+}
+.font-bold {
+  font-weight: 700;
+}
+.cursor-pointer {
+  cursor: pointer;
+}
+/* 左右布局 需要间隙 */
+/* .common-ul{
+  padding-right: 400px !important;
+} */
+.el-input__inner, .el-textarea__inner {
+  border-radius: 2px !important;
+}

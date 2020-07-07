@@ -1,0 +1,149 @@
+<template>
+  <div class='hotMessage'>
+    <div class='hotMessage_nav'>
+      <el-breadcrumb separator="/">
+        <el-breadcrumb-item v-for="(item,index) in hotMessageNav" :key="index" :to="{ path: item.path }">{{item.name}}</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
+    <router-view></router-view>
+  </div>
+</template>
+
+<script>
+// import newsHot from './newsHot.vue'
+export default {
+  // components: {
+  //   newsHot,
+  // },
+  data() {
+    return {
+      //currentIndex: 0,
+      hotMessageNav: [
+        {
+          name: '热点资讯',
+          path: '/hotmessage'
+        },
+        {
+          name: "新闻热点",
+        }
+      ],
+      //leftNavData: [{ name: '新闻热点', icon: 'el-icon-document' }, { name: '建筑前沿' }, { name: '资质热点' }],
+    }
+  },
+  methods: {
+    //分页减少
+    reduceNumFn() {
+
+    },
+    //分页增加
+    addNumFn() {
+
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.hotMessage {
+  overflow: hidden;
+}
+
+.hotMessage_nav {
+  height: 40px;
+  line-height: 40px;
+  /deep/ .el-breadcrumb {
+    height: 40px;
+    line-height: 40px;
+  }
+  /deep/ .el-breadcrumb__inner {
+    color: #4A4A4A;
+    font-weight: 500;
+    &:hover {
+      color: #E23732;
+    }
+  }
+}
+
+// .hotMessage_main {
+//   width: 100%;
+//   height: calc(100vh - 260px);
+//   background: #fff;
+//   border-radius: 10px;
+//   padding-top: 32px;
+//   display: flex;
+// }
+
+// .hotMessage_main_left {
+//   border-right: 1px solid #DDDDDD;
+//   height: 200px;
+//   width: 178px;
+//   li {
+//     position: relative;
+//     padding-top: 10px;
+//     padding-bottom: 20px;
+//     >span {
+//       font-size: 16px;
+//       color: #4A4A4A;
+//       padding-left: 46px;
+//       font-weight: 500;
+//     }
+//     >i {
+//       font-size: 16px;
+//       position: absolute;
+//       left: 20px;
+//     }
+//     &:hover {
+//       cursor: pointer;
+//       span,
+//       i {
+//         color: #E23732;
+//       }
+//     }
+//   }
+//   .active {
+//     span,
+//     i {
+//       color: #E23732;
+//     }
+//   }
+// }
+
+// .hotMessage_main_right {
+//   padding-left: 20px;
+//   flex: 1;
+//   padding-right: 280px;
+//   overflow-y: scroll;
+// }
+
+// .hotMessage_footer {
+//   padding-top: 20px;
+//   display: flex;
+//   justify-content: center;
+//   >p {
+//     width: 34px;
+//     height: 34px;
+//     background: #fff;
+//     line-height: 34px;
+//     text-align: center;
+//     border: 1px solid #DDDDDD;
+//     border-radius: 5px;
+//     >i {
+//       font-size: 18px;
+//       color: #999999;
+//     }
+//     &:hover {
+//       cursor: pointer;
+//     }
+//   }
+//   >em {
+//     line-height: 34px;
+//     color: #999999;
+//     padding: 0 10px;
+//   }
+//   >span {
+//     line-height: 34px;
+//     color: #999999;
+//     padding-left: 10px;
+//   }
+// }
+</style>

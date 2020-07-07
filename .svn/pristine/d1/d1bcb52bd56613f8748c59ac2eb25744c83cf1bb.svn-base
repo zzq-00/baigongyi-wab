@@ -1,0 +1,241 @@
+<!--创建专栏-->
+<template>
+  <div class="creatColumn">
+    <div class="content">
+      <div class="title">创建专栏</div>
+      <el-form ref="form" :model="form" label-width="80px" label-position="top" :inline='true' size="small">
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="专栏主页图" required>
+              <div class="ask">可上传jpg/jpeg/png/bmp格式图片，建议分辨率为900*506，最大4M</div>
+              <el-upload
+                class="avatar-uploader"
+                action="#"
+                :headers="headers"
+                :http-request="onUpload"
+                :show-file-list="false"
+                name="image">
+                <img v-if="form.image" :src="form.image" style="height:50px">
+                <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+              </el-upload>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="发布专栏角色" required>
+              <el-select placeholder="讲师" disabled v-model="form.accountIdentity">
+                <el-option value="讲师" ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="专栏名称" required>
+              <el-input v-model="form.name" class="columnName" maxlength="10" show-word-limit></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="订阅价格(元)" required>
+          <el-input v-model="form.price"></el-input>
+        </el-form-item>
+
+        <el-form-item label="选择更新频率" required class="update">
+          <el-select placeholder="每月" class="update1" v-model="form.upToTime">
+            <el-option value="1"></el-option>
+          </el-select>
+          <el-select placeholder="几号" class="update2" v-model="form.upToTime">
+            <el-option value="22"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-row :gutter="20" >
+          <el-col :span="24">
+            <el-form-item label="专栏标签" required>
+              <div v-for="(item,i) of items"  :key="i" class="addTag">
+                <el-select placeholder="请选择一级标签" class="tag1" v-model="items[i].tag1">
+                  <el-option value="0"></el-option>
+                  <el-option value="1"></el-option>
+                  <el-option value="2"></el-option>
+                  <el-option value="4"></el-option>
+                </el-select>
+                <el-select placeholder="请选择二级标签" class="tag2" v-model="items[i].tag2">
+                  <el-option value="0"></el-option>
+                  <el-option value="1"></el-option>
+                  <el-option value="2"></el-option>
+                  <el-option value="4"></el-option>
+                </el-select>
+                <img src="@/assets/images/delete.png" v-show="items.length>1" @click.prevent="onReduce(items[i])">
+                <img src="@/assets/images/add.png"
+                  @click.prevent="onAdd"  class="onAdd">
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="专栏内容" required>
+          <quill-editor ref="myQuillEditor" v-model="form.description">
+          </quill-editor>
+        </el-form-item>
+
+        <el-form-item class="button">
+          <el-button>预览</el-button>
+          <el-button>存为草稿</el-button>
+          <el-button type="danger" >提交审核</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+
+import { quillEditor } from 'vue-quill-editor'
+import api from '@/fetch'
+export default {
+  name: 'creatColumn',
+  components: {
+    quillEditor
+  },
+  data () {
+    return {
+      items: [{ tag1: '', tag2: '' }],
+      headers: {
+        Authorization: JSON.parse(window.localStorage.getItem('user')).token
+      },
+      imgData: {
+        accept: 'image/jpg, image/jpeg, image/png, imgagebmp'
+      },
+      form: {
+        image: '',
+        accountIdentity: '', // 发布者身份
+        name: '',
+        price: '',
+        upToTime: '',
+        id: '',
+        tagIds: '',
+        description: ''
+      }
+    }
+  },
+  methods: {
+    onAdd () {
+      const arr = { tag1: '', tag2: '' }
+      this.items.push(arr)
+    },
+    onReduce (i) {
+      if (confirm('确定要删除吗？')) {
+        this.items.splice(i, 1)
+      }
+    },
+    // 编辑头像，改变组件默认的上传方式
+    onUpload (config) {
+      const reader = new FileReader()
+      const img1 = config.file
+      console.log(img1.type, img1.size)
+      const type = img1.type
+      const size = img1.size
+      if (this.imgData.accept.indexOf(type) === -1) {
+        return false
+      }
+      if (size > 4194304) {
+        return false
+      }
+      reader.readAsDataURL(config.file)
+      var that = this
+      reader.onload = function (e) {
+        that.form.image = e.target.result
+      }
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .creatColumn {
+    .content {
+      width: 860px;
+      background-color: #fff;
+      border-radius: 10px;
+      .title {
+        height: 50px;
+        line-height: 50px;
+        padding-left: 20px;
+        border-bottom: 1px solid #ddd;
+        box-sizing: border-box;
+      }
+    }
+  }
+  .content {
+    .ask {
+          font-size: 12px;
+          color:#ccc;
+          line-height: 18px;
+        }
+    .el-form {
+      margin-left: 20px;
+      .el-form-item {
+        margin-bottom: 18px;
+        .el-form-item__content {
+          .el-input {
+            width: auto;
+            width: 260px;
+          }
+          .columnName {
+            width: 560px;
+          }
+          .update1, .update2 {
+            .el-input {
+              width: 120px;
+              margin-right: 20px;
+            }
+          }
+          .tag1 +.tag2{
+            margin-left: 40px;
+          }
+        }
+        .addTag{
+          margin-bottom:22px;
+          // position: relative;
+          img {
+            margin-left: 10px;
+          }
+        }
+      }
+      .update {
+        margin-left:28px;
+      }
+      .button {
+        margin-left: 230px;
+        .el-button {
+          width: 90px;
+          height: 34px;
+        }
+      }
+
+    }
+    .el-form--label-top {
+      .el-form-item__label {
+        padding: 0px!important;
+        line-height: 30px!important;
+      }
+    }
+    .avatar-uploader{
+      width: 200px;
+      height: 200px;
+      border:1px dashed #ccc;
+      // margin-right:30px;
+      font-size: 28px;
+      float: left;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+    }
+  }
+
+</style>

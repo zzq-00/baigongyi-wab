@@ -1,0 +1,116 @@
+<template>
+  <div class="myCollectCourse">
+    <div class="title">
+      <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)"
+          :class="{active:index==nowIndex}">{{item}}
+      </span>
+    </div>
+    <div class="content">
+      <collect-com :collectData = collectData :nowIndex = nowIndex ></collect-com>
+      <live-com v-if="nowIndex===2" :collectData = collectData></live-com>
+    </div>
+  </div>
+</template>
+
+<script>
+import CollectCom from '@/components/Collect'
+import LiveCom from '@/components/Live'
+import api from '@/fetch'
+// import { mapState } from 'vuex'
+export default {
+  name: 'myCollect',
+  components: {
+    LiveCom,
+    CollectCom
+  },
+  data () {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['收藏的课程', '收藏的专栏', '收藏的直播回放', '收藏的文章'],
+      collectData: [], // 收藏的数据
+      collectCourseData: [], // 收藏的课程
+      collectColumnData: [], // 收藏的专栏
+      collectArticleData: [], // 收藏的文章
+      collectLiveData: [], // 收藏的直播
+      // 收藏课程列表
+      collectCourse: {
+        accountId: this.$store.state.user.accountId,
+        pageNum: 1,
+        pageSize: 10
+      },
+      // 收藏专栏
+      collectColumn: {
+        accountId: this.$store.state.user.accountId,
+        pageNum: 1,
+        pageSize: 10
+      },
+      // 收藏文章
+      collectArticle: {
+        accountId: this.$store.state.user.accountId,
+        pageNum: 1,
+        pageSize: 10
+      }
+    }
+  },
+  created () {
+    this.CollectCourse()
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.CollectCourse()
+      } else if (this.nowIndex === 1) {
+        this.CollectColumn()
+      } else if (this.nowIndex === 2) {
+        // 收藏直播
+      } else {
+        this.CollectArticle()
+      }
+    })
+    console.log(this.$store.state.user.accountId)
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs (index) {
+      this.nowIndex = index
+    },
+    // 获取收藏课程
+    async CollectCourse () {
+      const res = await api.CollectCourse(this.collectCourse)
+      console.log(res)
+      this.collectData = res.data.records
+    },
+    // 获取收藏专栏
+    async CollectColumn () {
+      const res = await api.CollectColumn(this.collectColumn)
+      console.log(res)
+      this.collectData = res.data.records
+    },
+    // 获取收藏文章
+    async CollectArticle () {
+      const res = await api.CollectArticle(this.collectArticle)
+      console.log(res)
+      this.collectData = res.data.records
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .myCollectCourse {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+      cursor: pointer;
+      span + span {
+        margin-left: 12px;
+      }
+      .active {
+        color:#E23732;
+      }
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

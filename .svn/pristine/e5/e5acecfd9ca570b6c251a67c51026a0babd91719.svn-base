@@ -1,0 +1,65 @@
+import { post, delete as deleteMethod } from 'axios'
+/**
+ * 关注， 收藏 ，点赞
+ *
+ */
+
+export default {
+  // 关注
+  // 新增关注
+  addAttention (params) {
+    return post('/concernRecord/add', params)
+  },
+  // 查询
+  getAttention (params) {
+    return post('/concernRecord/list', params)
+  },
+  // 取消关注
+  delAttention (params) {
+    return deleteMethod('/concernRecord/cancelConcern', { data: params })
+  },
+  // 我关注的人
+  myAttention (params) {
+    return post('/homePage/myConcernPersonList', params)
+  },
+  // 关注我的人--粉丝
+  myFans (params) {
+    return post('/homePage/concernMePersonList', params)
+  },
+
+  // 收藏
+  addCollect (params) {
+    return post('/collectionRecord/add', params)
+  },
+  // 取消收藏
+  cancelCollect (params) {
+    return deleteMethod('/collectionRecord/cancelCollect', { data: params })
+  },
+  // 查询收藏
+  getCollect (params) {
+    return post('/collectionRecord/list', params)
+  },
+  // 删除收藏
+  delCollect (delId) {
+    return deleteMethod(`/collectionRecord/${delId}`)
+  },
+  // 收藏课程列表
+  CollectCourse (params) {
+    return post('/homePage/myCollectCourseList', params)
+  },
+  // 收藏专栏列表
+  CollectColumn (params) {
+    return post('/homePage/collection/column', params)
+  },
+  // 收藏文章列表
+  CollectArticle (params) {
+    return post('/homePage/myCollectArticleList', params)
+  },
+  // 点赞
+  like (params) {
+    return post('/like', params)
+  },
+  delLike (bizType, delId) {
+    return deleteMethod(`/like/${bizType}/${delId}`)
+  }
+}

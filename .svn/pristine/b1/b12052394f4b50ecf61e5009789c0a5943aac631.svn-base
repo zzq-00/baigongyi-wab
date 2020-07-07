@@ -1,0 +1,35 @@
+/**
+ * 问答
+ */
+export default [
+    {
+        path: '/layout',
+        component: () => import('../views/layout/layout.vue'),
+        children: [
+            {
+                path: '/askingQuestions',   //提问题
+                component: () => import('../views/questions/askingQuestions.vue')
+            },
+            {
+                path: '/questions',         //问答列表
+                component: () => import('../views/questions/questions.vue'),
+                meta: {
+                    keepAlive: true
+                },
+            },
+            {
+                path: '/QandADetails/:id',  //问答详情
+                component: () => import('../views/questions/QandADetails.vue')
+            },
+            {
+                path: '/questionsDetails/:id',  //问题详情
+                component: () => import('../views/questions/questionsDetails.vue')
+            },
+            {
+                path: '/writeAnswer/:id',  //写回答
+                component: () => import('../views/questions/writeAnswer.vue')
+            },
+
+        ]
+    }
+]

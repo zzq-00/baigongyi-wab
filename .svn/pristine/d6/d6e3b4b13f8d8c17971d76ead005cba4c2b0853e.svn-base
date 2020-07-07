@@ -1,0 +1,140 @@
+<template>
+  <div class="courseOrder">
+    <div class="remind">提示: 上下拖动可改变课成顺序</div>
+    <div class="tableData">
+      <!-- @sort-change="sortChange" @row-click='rowClick' stripe border -->
+      <!-- <draggable v-model="tableData" @update="datadragEnd" :options="{animation:500}">
+        <transition-group>
+          <el-table
+            ref="project-table"
+            style="width: 100%;"
+            height="calc(100vh - 280px)"
+            :data="tableData"
+            row-key="id"
+            key="1"
+            size="mini"
+          >
+            <el-table-column label="操作" align="center" width="120px">
+              <img src="../assets/images/yidong.png" alt />
+            </el-table-column>
+            <el-table-column label="提交/保存时间" prop="updateTime" width="220px"></el-table-column>
+            <el-table-column label="课程名称" prop="name" width="240px"></el-table-column>
+            <el-table-column label="课程类型" prop="type" width="120px"></el-table-column>
+            <el-table-column label="审核状态" prop="status" width="180px"></el-table-column>
+            <el-table-column label="审核时间" prop="auditTime" width="220px"></el-table-column>
+          </el-table>
+        </transition-group>
+      </draggable> -->
+    </div>
+
+    <draggable v-model="colors" @update="datadragEnd" :options = "{animation:500}">
+      <transition-group>
+          <div v-for="element in colors" :key="element.text" class = "drag-item">
+              {{element.text}}
+          </div>
+      </transition-group>
+    </draggable>
+
+    <!-- <table border="1" class="tableOrder">
+        <tr>
+          <th>操作</th>
+          <th>提交/保存时间</th>
+          <th>课程名称</th>
+          <th>课程类型</th>
+          <th>审核状态</th>
+          <th>审核时间</th>
+        </tr>
+        <draggable v-model="colors" @update="datadragEnd" :options = "{animation:500}" class="draggable">
+          <transition-group>
+            <tr v-for="item in tableData" :key="item.id">
+              <td><img src="../assets/images/yidong.png" alt /></td>
+              <td>{{item.updateTime}}</td>
+              <td>{{item.name}}</td>
+              <td>{{item.type}}</td>
+              <td>{{item.status}}</td>
+              <td>{{item.auditTime}}</td>
+            </tr>
+          </transition-group>
+        </draggable>
+    </table> -->
+  </div>
+</template>
+
+<script>
+import draggable from 'vuedraggable'
+export default {
+  name: 'CourseOrder',
+  components: {
+    draggable
+  },
+  props: {
+    tableData: Array
+  },
+  data () {
+    return {
+      colors: [
+        {
+          text: 'Aquamarine'
+        },
+        {
+          text: 'Hotpink'
+        },
+        {
+          text: 'Gold'
+        },
+        {
+          text: 'Crimson'
+        }
+      ],
+      startArr: [],
+      endArr: [],
+      count: 0
+    }
+  },
+  methods: {
+    getdata (evt) {
+      console.log(evt.draggedContext.element.text)
+    },
+    datadragEnd (evt) {
+      evt.preventDefault()
+      console.log('拖动前的索引 :' + evt.oldIndex)
+      console.log('拖动后的索引 :' + evt.newIndex)
+      console.log(this.colors)
+    }
+  },
+  mounted () {
+    // 为了防止火狐浏览器拖拽的时候以新标签打开，此代码真实有效
+    document.body.ondrop = function (event) {
+      event.preventDefault()
+      event.stopPropagation()
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.courseOrder {
+  .remind {
+    color: #e23732;
+    font-size: 12px;
+    padding: 20px 0 10px 20px;
+  }
+
+  .tableOrder {
+    .draggable{
+      width: 100%;
+    }
+    tr {
+      height: 36px;
+      line-height: 36px;
+      // background-color: #999;
+      th {
+        width:180px;
+      }
+      td {
+        widows: 180px;
+      }
+    }
+  }
+}
+</style>

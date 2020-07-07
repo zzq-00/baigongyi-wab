@@ -1,0 +1,136 @@
+<template>
+  <div class="myAsk">
+    <div class="myAsk-title">{{$route.query.own != 'Others'?'我的提问':'他的提问'}}</div>
+    <div class="myAsk-content">
+      <ul v-loading="AskLoading" element-loading-text="正在加载" infinite-scroll-disabled='loadStatus' v-infinite-scroll="asklistLoad" infinite-scroll-immediate='false' infinite-scroll-distance='67'>
+        <li v-for="(item,index) in myaskList" :key="index">
+          <p class="ask-title">
+            <a :href="`/questionsDetails/${item.id}?own=${$route.query.own?$route.query.own:'own'}`" target="_blank" rel="noopener noreferrer">{{item.title}}</a>
+          </p>
+          <p class="subscript">
+            <span>{{item.answerCount}}个回答</span>
+            <span>·</span>
+            <span>{{item.followers}}人关注</span>
+          </p>
+        </li>
+        <!-- <p class="tips">{{newloadText}}</p> -->
+      </ul>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  data() {
+    return {
+      myaskList: [], //我的提问列表
+      AskLoading: true, //加载状态
+      loadStatus: false,
+      params: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          accountId: '',
+          flag: 3,
+          id: '',
+          questionContent: '',
+          tagIds: '',
+          title: ''
+        }
+      },
+      newloadText: ''
+    }
+  },
+  methods: {
+    asklistLoad() {
+      this.loadStatus = true
+      this.params.pageNum += 1
+      this.getFollowAndQuestionList()
+    },
+    getFollowAndQuestionList() {
+      if (this.$route.query.own == 'Others') {
+        this.params.paramObject.flag = 4
+        this.params.paramObject.accountId = this.$route.query.id
+      } else {
+        this.params.paramObject.flag = 3
+        this.params.paramObject.accountId = ''
+      }
+      api.getFollowAndQuestionList(this.params).then(res => {
+        this.myaskList = this.myaskList.concat(res.data.records)
+        this.AskLoading = false //加载状态
+        this.loadStatus = false
+        // if (res.data.records.length == 0) {
+        //   this.newloadText = '暂无更多数据'
+        // } else {
+        //   this.newloadText = ''
+        // }
+      })
+    }
+  },
+  mounted() {
+    this.getFollowAndQuestionList()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.myAsk {
+  .myAsk-title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+  }
+  .myAsk-content {
+    background-color: #fff;
+
+    border-bottom-left-radius: 10px;
+    border-bottom-right-radius: 10px;
+    ul {
+      min-height: 50px;
+      height: calc(100vh - 476px);
+      overflow: auto;
+      padding-bottom: 67px;
+      li {
+        padding: 20px 18px 20px 20px;
+        border-bottom: 1px solid #dddddd;
+        .ask-title {
+          width: 550px;
+          height: 17px;
+          line-height: 17px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(51, 51, 51, 1);
+          overflow: hidden;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+        }
+        .subscript {
+          margin-top: 10px;
+          height: 15px;
+          line-height: 15px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(153, 153, 153, 1);
+          span {
+            display: inline-block;
+          }
+          span:nth-child(2) {
+            margin: 0 3px;
+          }
+        }
+      }
+      .tips {
+        text-align: center;
+        padding: 10px 0;
+        font-size: 16px;
+      }
+    }
+    ul::-webkit-scrollbar {
+      display: none;
+      overflow: hidden;
+    }
+  }
+}
+</style>

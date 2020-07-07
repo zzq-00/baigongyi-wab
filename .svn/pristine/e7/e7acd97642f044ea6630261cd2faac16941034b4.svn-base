@@ -1,0 +1,383 @@
+<template>
+  <div class="userCenter">
+    <div
+      class="silder"
+      v-if="isOwn"
+    >
+      <div class="useTitle">用户中心</div>
+      <el-menu
+        router
+        :default-active="sliderIndex"
+        :default-openeds='subMenu'
+        class="el-menu-demo"
+      >
+        <el-menu-item index="/myHome">我的主页 </el-menu-item>
+        <el-menu-item index="/myWallet">我的钱包</el-menu-item>
+        <el-menu-item index="/myBuy">我的购买</el-menu-item>
+        <el-menu-item index="/myLive">我的直播</el-menu-item>
+        <el-menu-item
+          index="/myLecture"
+          v-if="userInfoData.wasTeacher"
+        >我的讲堂</el-menu-item>
+        <!-- index="/myTeacher"-->
+        <el-menu-item @click='teacherFn'>讲师入驻</el-menu-item>
+        <el-submenu index="2">
+          <template slot="title">账号管理</template>
+          <el-menu-item index="/safetySet">安全设置</el-menu-item>
+          <el-menu-item index="/personalData">个人资料</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+    <div class="main">
+      <router-view :userInfoData='userInfoData' />
+    </div>
+    <div class='Visible'>
+      <el-dialog
+        title="验证身份"
+        :visible.sync="dialogTableVisible"
+        :close-on-click-modal='false'
+      >
+        <div class='el-dialog_mian'>
+          <div>
+            <p>您已绑定手机号：{{$store.state.userInfo.mobile && $store.state.userInfo.mobile.replace(/^(\d{3})\d{4}(\d+)/,"$1****$2")}}</p>
+            <!-- <button @click='getCode'>{{buttonText}}</button> -->
+            <button
+              class="getCode"
+              v-show="show"
+              @click='getCode'
+            >{{yzCode}}</button>
+            <button
+              class="getCode"
+              v-show="!show"
+            >{{count}} S后重新获取</button>
+          </div>
+          <el-input
+            v-model="value"
+            placeholder="请输入手机验证码"
+          ></el-input>
+          <slideVerify
+            :verifyVal='verifyVal'
+            @getVerify="getVerify"
+            v-if='verifyFlag'
+            :key="uploadKey"
+          ></slideVerify>
+        </div>
+        <div class='el-dialog_footer'>
+          <button @click='dialogTableVisible = false'>取消</button>
+          <button @click='editSubmitFn'>确认</button>
+        </div>
+      </el-dialog>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from "@/fetch";
+import slideVerify from '../../components/slideVerify' // 滑动验证
+export default {
+    components: {
+      slideVerify
+    },
+  data() {
+    return {
+      uploadKey:1,
+      sliderIndex: this.$route.path,
+      subMenu: [],
+      userInfoData: {},
+      verifyFlag: false,
+      dialogTableVisible: false,
+      value: "",
+      moveVerify: false,
+      show: true,
+      count: 120,
+      flag: "",
+      yzCode: "获取验证码",
+      verifyVal: {
+        width: 460,
+        height: 30
+      }
+    };
+  },
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId;
+      }
+      return true;
+    }
+  },
+  watch: {
+    "$route.path": {
+      handler: function(val) {
+        this.sliderIndex = this.$route.path;
+        if (
+          val === "/myHome/myReply" ||
+          val === "/myHome/myQuestion" ||
+          val === "/myHome/myIdea" ||
+          val == "/myHome/myLive" ||
+          val == "/myHome/myCollect" ||
+          val == "/myHome/myAttention"
+        ) {
+          this.sliderIndex = "/myHome";
+        } else if (val === "/personalData") {
+          this.subMenu.push("2");
+        } else if (
+          val.indexOf("/editCourse") != -1 ||
+          val.indexOf("/courseMessage") != -1 ||
+          val.indexOf("/editColumn") != -1 ||
+          val === "/editColumn"
+        ) {
+          this.sliderIndex = "/myLecture";
+        }
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  methods: {
+    // 个人信息
+    async getuserInfo(id) {
+      if (!id) return this.$router.replace('/login')
+      const res = await api.getUserInfo(id);
+      this.userInfoData = res.data;
+    },
+    teacherFn() {
+      api
+        .myLecturerInfo(this.$store.state.userInfo.accountId)
+        .then(res => {
+          if (res.data && res.data.status === 1000) {
+            this.$router.push("/examineIng");
+          } else if (res.data.status === 1002) {
+            this.$router.push("/seeInformation");
+          } else if ( res.data.status === 1001) {
+            this.dialogTableVisible = true
+          }
+        })
+        .catch(err => {
+          this.$router.push("/agreement");
+        });
+    },
+    // 滑块验证
+    getVerify(resVerify) {
+      this.moveVerify = resVerify;
+      if (resVerify) {
+        api
+          .getSmsCode({ mobile: this.$store.state.userInfo.mobile })
+          .then(res => {
+            if (res.code === 200) {
+              if (res.code === 200) {
+                this.$message({
+                  message: "验证码已发送，120s内有效",
+                  type: "success"
+                });
+                const TIME_COUNT = 120;
+                if (!this.timer) {
+                  this.count = TIME_COUNT;
+                  this.show = false;
+                  this.timer = setInterval(() => {
+                    if (this.count > 0 && this.count <= TIME_COUNT) {
+                      this.count--;
+                      this.yzCode = '重新获取'
+                    } else {
+                      this.show = true;
+                      clearInterval(this.timer);
+                      this.timer = null;
+                    }
+                  }, 1000);
+                }
+              }
+            }
+          });
+      } else {
+        this.$message({
+          message: "请拖动验证"
+        });
+      }
+    },
+    // 获取验证码
+    getCode() {
+    //  if(this.yzCode == '获取验证码'){
+         this.verifyFlag = true;
+         this.uploadKey++;
+    //   }else{
+    //       this.getVerify(true)
+    //   }
+    },
+    editSubmitFn() {
+      if (this.value && this.moveVerify) {
+        api
+          .verifySmsCode({
+            mobile: this.$store.state.userInfo.mobile,
+            smsVerifyCode: this.value
+          })
+          .then(res => {
+            this.dialogTableVisible = false;
+            this.value = '';
+            this.$router.push("/messageSbmit");
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      } else {
+        this.$message({
+          message: "请输入验证码或拖动验证"
+        });
+      }
+    }
+  },
+  mounted() {
+    this.getuserInfo(
+      this.$route.query.id || this.$store.state.userInfo.accountId
+    );
+  },
+  beforeRouteUpdate(to, from, next) {
+    this.getuserInfo(to.query.id || this.$store.state.userInfo.accountId);
+    next();
+  }
+};
+</script>
+
+<style lang="less" scoped>
+.userCenter {
+  padding-top: 20px;
+  display: flex;
+  overflow: hidden;
+  .silder {
+    width: 220px;
+    height: 500px;
+    border-radius: 10px;
+    background-color: #fff;
+    overflow: hidden;
+    margin-right: 20px;
+    .useTitle {
+      height: 50px;
+      border-radius: 10px 10px 0 0;
+      background: #e23732;
+      font-size: 18px;
+      color: #fff;
+      line-height: 50px;
+      padding-left: 20px;
+    }
+    /deep/.el-menu {
+      border: none;
+      border-radius: 0 0 10px 10px;
+      padding-bottom: 60px;
+    }
+    /deep/.el-menu-item,
+    /deep/.el-submenu__title {
+      position: relative;
+      height: 48px;
+      line-height: 48px;
+    }
+    /deep/.el-menu-item:focus,
+    /deep/.el-menu-item:hover,
+    /deep/.el-menu-item:active {
+      background-color: #f7f9fd;
+    }
+    /deep/.el-menu-item:hover::after,
+    /deep/.el-menu-item:active::after {
+      content: "";
+      display: block;
+      position: absolute;
+      height: 16px;
+      width: 3px;
+      background-color: #f00;
+      top: 0;
+      bottom: 0;
+      margin: auto;
+      left: 0;
+    }
+  }
+  .main {
+    // background-color: #fff;
+    border-radius: 10px;
+    flex: 1;
+    // margin-left: 20px;
+    overflow: hidden;
+  }
+}
+.Visible {
+  /deep/ .el-dialog {
+    width: 500px;
+    height: 300px;
+    position: relative;
+    .el-dialog__header {
+      border-bottom: 1px solid #ddd;
+    }
+    .el-dialog__body {
+      padding-top: 20px;
+    }
+    .el-dialog_mian {
+      > div {
+        display: flex;
+        justify-content: space-between;
+        padding-bottom: 10px;
+        > p {
+          color: #4a4a4a;
+        }
+        > button {
+          background: #fff;
+          border: none;
+          color: #e23732;
+          &:hover {
+            cursor: pointer;
+          }
+        }
+      }
+      .el-input__inner {
+        height: 30px;
+      }
+    }
+    .el-dialog_footer {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 50px;
+      border-top: 1px solid #dddddd;
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 100%;
+      > button {
+        box-sizing: bordre-box;
+        width: 90px;
+        height: 34px;
+        border: 1px solid #dddddd;
+        border-radius: 5px;
+        color: #4a4a4a;
+        background: #fff;
+        &:nth-child(1) {
+          margin-right: 5px;
+        }
+        &:nth-child(2) {
+          margin-left: 5px;
+          background: #e23732;
+          color: #fff;
+          border-color: #e23732;
+        }
+        &:hover {
+          cursor: pointer;
+        }
+      }
+    }
+  }
+}
+
+.el-dialog {
+  .submit-img {
+    display: flex;
+    justify-content: center;
+    input {
+      width: 120px;
+      height: 34px;
+      background: #e23732;
+      color: #fff;
+      margin-top: 20px;
+      border-radius: 5px;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+</style>

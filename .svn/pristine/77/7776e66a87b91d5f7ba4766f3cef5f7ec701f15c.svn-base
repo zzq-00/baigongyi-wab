@@ -1,0 +1,65 @@
+<template>
+  <div class="hisCollect">
+    <div class="title">
+      <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)"
+          :class="{active:index==tabActive}">{{item}}
+      </span></div>
+    <div class="content">
+      <live-com v-if="nowIndex===2"></live-com>
+    </div>
+  </div>
+</template>
+
+<script>
+import LiveCom from '@/components/Live'
+export default {
+  name: 'hisCollect',
+  components: {
+    LiveCom
+  },
+  data () {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['收藏的课程', '收藏的专栏', '收藏的直播回放', '收藏的文章']
+    }
+  },
+  created () {
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) { } else {}
+    })
+  },
+  computed: {
+    tabActive () {
+      return this.$store.state.tabActive
+    }
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs (index) {
+      this.nowIndex = index
+      this.$store.commit('setTab', index)
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .hisCollect {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+      cursor: pointer;
+      span + span {
+        margin-left: 16px;
+      }
+      .active {
+        color:#E23732;
+      }
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

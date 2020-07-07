@@ -1,0 +1,202 @@
+<template>
+  <div class="container">
+    <div class="left-content">
+      <ul class="top-tab clearfix">
+        <li class="fl" :class="{'active': params.paramObject.flag == 1}" @click="getArticlelist(1)">热门</li>
+        <li class="fl" :class="{'active': params.paramObject.flag == 2}" @click="getArticlelist(2)">最新</li>
+        <li class="fl" :class="{'active': params.paramObject.flag == 3}" @click="getArticlelist(3)">关注</li>
+      </ul>
+      <ul class="article-list">
+        <li v-for="(item,index) in articleList" :key="index">
+          <img :src="item.image" alt="" width="200px">
+          <div>
+            <h5 class="ellipsis">
+              <router-link :to="'/article/list/'+item.id">{{item.title}}</router-link>
+            </h5>
+            <p>{{item.description}}</p>
+            <div class="operational">
+              <span>{{item.userName}} | {{item.convertTime}}</span>
+              <div>
+                <span>
+                  <img v-if="item.whetherLike" src="@/assets/images/yizan.png" alt="" @click="likeDelete(item)">
+                  <img v-else src="@/assets/images/zan.png" alt="" @click="likeAdd(item)">
+                  {{item.likeCount}}
+                </span>
+                <span>
+                  <img src="@/assets/images/pinglun.png" alt="">
+                  {{item.commentCount}}
+                </span>
+                <span>
+                  <img v-if="item.whetherToCollect" src="@/assets/images/yishoucang.png" alt="" @click="cancelCollect(item)">
+                  <img v-else src="@/assets/images/shoucang.png" alt="" @click="addCollect(item)">
+                  {{item.collectCount}}
+                </span>
+                <span>
+                  <img src="@/assets/images/share.png" alt="">
+                  {{item.watchCount}}
+                </span>
+              </div>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    <div class="right-content"></div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+
+export default {
+  data() {
+    return {
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          flag: 1 // 1热门 2最新 3关注
+        }
+      },
+      articleList: [],
+      objType: 3, // COURSE(1, "课程"),COLUMN(2, "专栏"),ARTICLE(3, "文章"),QUESTION(4, "问答"),LIVE(5, "直播"),PERSON(6, "用户"),HOT_NEWS(7, "热点资讯"),LECTURER(8, "讲师"),ANSWER(9, "回答"),IDEA(10, "想法"),
+      loading: false
+    }
+  },
+  methods: {
+    // 文章列表
+    getArticlelist(flag = 1) {
+      this.params.paramObject.flag = flag
+      api.getArticlelist(this.params).then(res => {
+        this.articleList = res.data.records
+      })
+    },
+    // 点赞
+    likeAdd(item) {
+      if (this.loading) return
+      this.loading = true
+      api
+        .likeAdd({ objType: this.objType, objId: item.id })
+        .then(res => {
+          item.whetherLike = true
+          item.likeCount++
+        })
+        .finally(() => (this.loading = false))
+    },
+    // 取消点赞
+    likeDelete(item) {
+      if (this.loading) return
+      this.loading = true
+      api
+        .likeDelete(this.objType, item.id)
+        .then(res => {
+          item.whetherLike = false
+          item.likeCount--
+        })
+        .finally(() => (this.loading = false))
+    },
+    // 收藏
+    addCollect(item) {
+      api.addCollect({ objType: this.objType, objId: item.id }).then(res => {
+        item.whetherToCollect = true
+        item.collectCount++
+      })
+    },
+    // 取消收藏
+    cancelCollect(item) {
+      api.cancelCollect({ objType: this.objType, objId: item.id }).then(res => {
+        item.whetherToCollect = false
+        item.collectCount--
+      })
+    }
+  },
+  mounted() {
+    this.getArticlelist()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.container {
+  margin: 21px auto 29px;
+  min-height: 910px;
+  .left-content {
+    width: 780px;
+    background-color: #fff;
+    border-radius: 10px;
+    min-height: 700px;
+    .top-tab {
+      height: 50px;
+      line-height: 50px;
+      border-bottom: 1px solid #ddd;
+      padding-left: 5px;
+      font-size: 16px;
+      color: #999;
+      > li {
+        cursor: pointer;
+        padding: 0 16px;
+        position: relative;
+        &.active {
+          color: #4a4a4a;
+          &::after {
+            content: '';
+            display: block;
+            width: 20px;
+            height: 3px;
+            background-color: #e23732;
+            position: absolute;
+            bottom: 1px;
+            left: 50%;
+            transform: translateX(-50%);
+          }
+        }
+      }
+    }
+    .article-list {
+      padding: 5px 92px 5px 20px;
+      > li {
+        padding: 15px 0;
+        display: flex;
+        align-items: center;
+        > img {
+          max-height: 118px;
+          margin-right: 20px;
+        }
+        > div {
+          flex: 1;
+          overflow: hidden;
+          > h5 {
+            font-size: 16px;
+            margin-bottom: 5px;
+          }
+          > p {
+            color: #666666;
+            line-height: 20px;
+            margin-bottom: 22px;
+            height: 40px;
+            word-wrap: break-word;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+          }
+          > .operational {
+            caret-color: #999999;
+            display: flex;
+            justify-content: space-between;
+            > div {
+              > span {
+                cursor: pointer;
+                vertical-align: middle;
+                margin-left: 28px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</style>
+

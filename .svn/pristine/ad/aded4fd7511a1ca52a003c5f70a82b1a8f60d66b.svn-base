@@ -1,0 +1,407 @@
+<<template>
+  <div class='changePassword'>
+      <div class='changePassword_nav'>
+            <p v-if='Identification==1'>修改登录密码</p>
+            <p v-if='Identification==2'>修改绑定手机</p>
+            <div>
+                <p>
+                    <em>1</em>
+                    <span>验证身份</span>
+                </p>
+                <span></span>
+                <p>
+                    <em>2</em>
+                    <span v-if='Identification==1'>修改密码</span>
+                    <span v-if='Identification==2'>修改手机</span>
+                </p>
+                <span></span>
+                <p class='redBorder'>
+                    <em>3</em>
+                    <span>完成</span>
+                </p>
+            </div>
+      </div>
+      <div class='changePassword_main'>
+         <div v-if='Identification==1'>
+             <h4>设置新密码</h4>
+             <!-- <input type='text' v-model="tel1" placeholder="新密码">
+             <input class='second' type='text' v-model="tel2" placeholder="再次输入新密码"> -->
+             <el-form :model="ruleForm" :rules="rules" ref="ruleForm" class="demo-ruleForm">
+                <el-form-item prop="pass">
+                    <el-input type="password" v-model="ruleForm.pass" placeholder="新密码"></el-input>
+                </el-form-item>
+                <el-form-item prop="checkPass">
+                    <el-input type="password" v-model="ruleForm.checkPass" placeholder="再次输入新密码"></el-input>
+                </el-form-item>
+            </el-form>
+             <button @click='loginSubmit("ruleForm")'>重置密码</button>
+         </div>
+         <div v-if='Identification==2'>
+             <h4>设置绑定手机</h4>
+                <el-form :model="ruleForm" :rules="rules" ref="ruleForm" class="demo-ruleForm">
+                    <el-form-item prop="tel">
+                        <el-input type="text" v-model="ruleForm.tel" placeholder="请输入手机号"></el-input>
+                    </el-form-item>
+                    <el-form-item prop="code" class='minInput'>
+                        <el-input type="text" v-model="ruleForm.code" placeholder="请输入短信验证码"></el-input>
+                         <span v-show="show" @click="getCode()">{{yzCode}}</span>
+                         <span v-show="!show">{{count}} S后重新获取</span>
+                    </el-form-item>
+                </el-form>
+             <p>
+                  <!-- <input type='text' v-model.number="tel2" placeholder="请输入短信验证码" style="color:#606266"> -->
+                 
+             </p>
+             <button @click='bindingSubmit("ruleForm")'>重置密码</button>
+         </div>
+      </div>
+  </div>
+</template>
+<script>
+import api from '@/fetch'
+import { validatorUser, validatorMobile, validatorPass, validatorCode } from '@/assets/js/validator.js'
+export default {
+    data() {
+        var validatePass = (rule, value, callback) => {
+            if (value === '') {
+                callback(new Error('请输入密码'))
+            } else {
+                if (validatorPass(value)) {
+                    callback()
+                    return true
+                } else {
+                    callback(new Error('请输入6-20位字母数字混合密码'))
+                    return false
+                }
+            }
+        };
+        var validatePass2 = (rule, value, callback) => {
+            if (value === '') {
+                callback(new Error('请再次输入密码'));
+            } else if (value !== this.ruleForm.pass) {
+                callback(new Error('两次输入密码不一致!'));
+            } else {
+                callback();
+            }
+        };
+        const validateMobile = (rule, value, callback) => {
+            if (!value) {
+                return callback(new Error('手机号不能为空 '))
+            } else {
+                if (validatorMobile(value)) {
+                    callback()
+                    return true
+                } else {
+                    callback(new Error('请输入正确的手机号'))
+                    return false
+                }
+            }
+        };
+        return {
+            tel1: '',
+            tel2: '',
+            ruleForm: {
+                pass: '',
+                checkPass: '',
+                tel: '',
+                code: ""
+            },
+            rules: {
+                pass: [
+                    { validator: validatePass, trigger: 'blur' }
+                ],
+                checkPass: [
+                    { validator: validatePass2, trigger: 'blur' }
+                ],
+                tel: [{ validator: validateMobile, trigger: 'blur' }],
+                code: [{ required: true, message: "请输入短信验证码", trigger: "blur" },
+                {
+                    pattern: /^\d{6}\b/,
+                    message: "请输入6位数值"
+                }]
+            },
+            Identification: 0,
+            verification: "",
+            show: true,
+            count: 120,
+            flag: "",
+            yzCode: "获取验证码",
+            timer: null,
+        }
+    },
+    mounted() {
+        this.Identification = this.$route.query.Identification;
+        this.verification = this.$route.query.verification
+    },
+    methods: {
+        // 获取验证码
+        getCode() {
+            api.getSmsCode({ mobile: this.ruleForm.tel }).then(res => {
+                if (res.code === 200) {
+                    this.$message({
+                        message: "验证码已发送，120s内有效",
+                        type: "success"
+                    });
+                    const TIME_COUNT = 120;
+                    if (!this.timer) {
+                        this.count = TIME_COUNT;
+                        this.show = false;
+                        this.timer = setInterval(() => {
+                            if (this.count > 0 && this.count <= TIME_COUNT) {
+                                this.count--;
+                            } else {
+                                this.show = true;
+                                clearInterval(this.timer);
+                                this.timer = null;
+                            }
+                        }, 1000);
+                    }
+                }
+            })
+        },
+        //修改手机 重置 按钮
+        bindingSubmit(formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    if (this.verification) {
+                        api.accountChangeMobile({
+                            "newMobile": this.ruleForm.tel,
+                            "oldMobile": this.$store.state.userInfo.mobile,
+                            "smsVerifyCode": this.ruleForm.code
+                        }).then(res => {
+                            this.$router.push({ path: "/modifiedSuccess", query: { Identification: 3 } })
+                        })
+                    } else {
+                        this.$message({
+                            message: "请先获取短信验证码",
+                        });
+                    }
+
+                } else {
+                    console.log('error submit!!');
+                    return false;
+                }
+            });
+
+        },
+        //登录修改密码 按钮
+        loginSubmit(formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    if (this.verification) {
+                        //修改密码 用 忘记密码的接口 因为不需要传oldPassword字段
+                        api.forgetPwd(
+                            {
+                                "mobile": this.$store.state.userInfo.mobile,
+                                "newPassword": this.ruleForm.checkPass,
+                                // "oldPassword": '1qaz2wsx',
+                                "smsVerifyCode": this.verification
+                            }
+                        ).then(res => {
+                            this.$router.push({ path: "/modifiedSuccess", query: { Identification: 1 } })
+                        })
+                    } else {
+                        this.$message({
+                            message: "请先获取短信验证码",
+                        });
+                    }
+
+                } else {
+                    console.log('error submit!!');
+                    return false;
+                }
+            });
+        }
+    }
+}
+</script>
+<style lang="less" scoped>
+.changePassword {
+    width: 100%;
+    height: 100vh;
+    background: #fff;
+    margin-top: 20px;
+    border-radius: 10px 10px 0 0;
+}
+
+.changePassword_nav {
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #dddddd;
+    background: #fff;
+    border-radius: 10px 10px 0 0;
+    >p {
+        color: #4a4a4a;
+        font-size: 16px;
+        line-height: 50px;
+    }
+    >div {
+        display: flex;
+        box-sizing: border-box;
+        >p {
+            >em {
+                width: 21px;
+                height: 21px;
+                border: 1px solid #e23732;
+                border-radius: 50%;
+                color: #ffffff;
+                display: inline-block;
+                background: #e23732;
+                margin-top: 14px;
+                line-height: 22px;
+                text-align: center;
+            }
+            >span {
+                font-weight: 500;
+                color: #333333;
+                padding-left: 10px;
+                display: inline-block;
+                margin-top: 14px;
+                line-height: 22px;
+            }
+        }
+        >span {
+            display: inline-block;
+            height: 2px;
+            width: 40px;
+            background: #000000;
+            margin: 24px 10px 0;
+        }
+    }
+    .redBorder {
+        em {
+            border: 1px solid #e23732;
+            color: #e23732;
+            background: #fff;
+        }
+    }
+}
+
+.changePassword_main {
+    width: 300px;
+    margin: 0 auto;
+    padding-top: 64px;
+    box-sizing: border-box;
+    >div {
+        display: flex;
+        flex-direction: column;
+        >h4 {
+            color: #4A4A4A;
+            padding-bottom: 20px;
+        }
+        >input {
+            width: 260px;
+            height: 30px;
+            padding-left: 10px;
+            border-radius: 0px;
+            border: none;
+            border: 1px solid #DDDDDD;
+            box-sizing: border-box;
+        }
+        .second {
+            margin-top: 20px;
+        }
+        >button {
+            width: 110px;
+            height: 34px;
+            border-radius: 5px;
+            margin-top: 32px;
+            background: #E23732;
+            color: #fff;
+            &:hover {
+                cursor: pointer;
+            }
+        }
+        >p {
+            margin-top: 20px;
+            >input {
+                width: 170px;
+                height: 30px;
+                padding-left: 10px;
+                border: none;
+                border: 1px solid #DDDDDD;
+                box-sizing: border-box;
+            }
+            span {
+                padding-left: 20px;
+                color: #E23732;
+                line-height: 30px;
+                text-decoration: underline;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+        }
+        .minInput {
+            /deep/ .el-input {
+                width: 170px;
+                height: 30px;
+            }
+            /deep/ .el-input__inner {
+                width: 170px;
+                height: 30px;
+            }
+            span {
+                padding-left: 20px;
+                color: #E23732;
+                line-height: 30px;
+                text-decoration: underline;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+        }
+        input::-webkit-input-placeholder,
+        textarea::-webkit-input-placeholder {
+            color: #999;
+        }
+
+        input:-moz-placeholder,
+        textarea:-moz-placeholder {
+            color: #999;
+        }
+
+        input::-moz-placeholder,
+        textarea::-moz-placeholder {
+            color: #999;
+        }
+
+        input:-ms-input-placeholder,
+        textarea:-ms-input-placeholder {
+            color: #999;
+        }
+        /deep/ .el-input__inner {
+            border: 1px solid #DDDDDD;
+            &::placeholder {
+                color: #999;
+            }
+
+            &::-webkit-input-placeholder {
+                /* WebKit browsers 适配谷歌 */
+                color: #999;
+            }
+
+            &:-moz-placeholder {
+                /* Mozilla Firefox 4 to 18 适配火狐 */
+                color: #999;
+            }
+
+            &::-moz-placeholder {
+                /* Mozilla Firefox 19+ 适配火狐 */
+                color: #999;
+            }
+
+            &:-ms-input-placeholder {
+                /* Internet Explorer 10+  适配ie*/
+                color: #999;
+            }
+        }
+    }
+}
+</style>
+

@@ -1,0 +1,11 @@
+import { post, get, delete as deleteMethod } from 'axios'
+
+export default {
+  // 问答右侧边栏
+  getFavoriteUser: () => get('questionAnswer/getFavoriteUser'),
+  // 回答列表
+  answerList: params => post('/questionAnswer/answerList', params),
+  // 发布或修改回答
+  saveOrUpdateAnswer: params => post('/questionAnswer/saveOrUpdateAnswer', params),
+
+}

@@ -1,0 +1,152 @@
+<template>
+    <div class='newsHot'>
+        <ul>
+            <li v-for='(item,index) in listData' :key='index'>
+                <dl>
+                    <dt>
+                        <img :src="item.img" />
+                    </dt>
+                    <dd>
+                        <h4 @click='goDetails(item)'>{{item.title}}</h4>
+                        <p>{{item.content}}</p>
+                        <div>
+                            <span>{{item.source}}</span>
+                            <p>
+                                <span>
+                                    <i class="el-icon-view"></i>{{item.data}}</span>
+                                <span>
+                                    <i class="el-icon-view"></i>{{item.num}}</span>
+                            </p>
+                        </div>
+                    </dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            listData: [
+                {
+                    img: '',
+                    title: '浙江宁波机场2号航站楼将于12月29日全面启用',
+                    content: '宁波栎社国际机场2号航站楼已建成竣工并具备运行使用条件，将于12月29日早晨5点整全面启用。住房城乡建设部关于修改《房屋建筑和市政...基础设施工程施工招标投标管理办法》的决定，修改投标管理办法，取消合同备案和招标金额限制。',
+                    source: '易筑科技',
+                    data: '2019-12-27 9:45',
+                    num: 119
+                },
+                {
+                    img: '',
+                    title: '浙江宁波机场2号航站楼将于12月29日全面启用',
+                    content: '为加强航道工程建设管理，规范航道工程建设活动，提高建设管理水平，根据中华人民全面启用。住房城乡建设部关于修改《房屋建筑和市政基...础设施工程施工招标投标管理办法》的决定，修改投标管理办法，取消合同备案和招标金额限制。',
+                    source: '易筑科技',
+                    data: '2019-12-27 9:45',
+                    num: 119
+                },
+                {
+                    img: '',
+                    title: '浙江宁波机场2号航站楼将于12月29日全面启用',
+                    content: '为加强航道工程建设管理，规范航道工程建设活动，提高建设管理水平，根据中华人民全面启用。住房城乡建设部关于修改《房屋建筑和市政基...础设施工程施工招标投标管理办法》的决定，修改投标管理办法，取消合同备案和招标金额限制。',
+                    source: '易筑科技',
+                    data: '2019-12-27 9:45',
+                    num: 119
+                },
+                {
+                    img: '',
+                    title: '浙江宁波机场2号航站楼将于12月29日全面启用',
+                    content: '为加强航道工程建设管理，规范航道工程建设活动，提高建设管理水平，根据中华人民全面启用。住房城乡建设部关于修改《房屋建筑和市政基...础设施工程施工招标投标管理办法》的决定，修改投标管理办法，取消合同备案和招标金额限制。',
+                    source: '易筑科技',
+                    data: '2019-12-27 9:45',
+                    num: 119
+                },
+                {
+                    img: '',
+                    title: '浙江宁波机场2号航站楼将于12月29日全面启用',
+                    content: '为加强航道工程建设管理，规范航道工程建设活动，提高建设管理水平，根据中华人民全面启用。住房城乡建设部关于修改《房屋建筑和市政基...础设施工程施工招标投标管理办法》的决定，修改投标管理办法，取消合同备案和招标金额限制。',
+                    source: '易筑科技',
+                    data: '2019-12-27 9:45',
+                    num: 119
+                },
+                {
+                    img: '',
+                    title: '浙江宁波机场2号航站楼将于12月29日全面启用',
+                    content: '为加强航道工程建设管理，规范航道工程建设活动，提高建设管理水平，根据中华人民全面启用。住房城乡建设部关于修改《房屋建筑和市政基...础设施工程施工招标投标管理办法》的决定，修改投标管理办法，取消合同备案和招标金额限制。',
+                    source: '易筑科技',
+                    data: '2019-12-27 9:45',
+                    num: 119
+                }
+            ]
+        }
+    },
+    methods : {
+        goDetails(item) {
+            console.log(item,'kkk');
+            this.$router.push('/hotmessage/newsHotDetails')
+        }
+    }
+}
+</script>
+<style lang="less" scope>
+.newsHot {
+    li {
+        padding-bottom: 32px;
+        dl {
+            position: relative;
+            dt {
+                img {
+                    width: 200px;
+                    height: 118px;
+                    border-radius: 5px;
+                    background: #eee;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                }
+            }
+            dd {
+                padding-left: 220px;
+                h4 {
+                    font-size: 16px;
+                    padding: 10px 0;
+                    color: #333333;
+                    font-weight: 600;
+                    &:hover{
+                        cursor: pointer;
+                    }
+                }
+                p {
+                    line-height: 20px;
+                    color: #666666;
+                    display: -webkit-box;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                    overflow: hidden;
+                }
+                >div {
+                    display: flex;
+                    justify-content: space-between;
+                    padding-top: 20px;
+                    >span {
+                        color: #999999;
+                    }
+                    >p {
+                        span {
+                            color: #999999;
+                            i {
+                                color: #999999;
+                                padding-right: 6px;
+                            }
+                            &:nth-child(2) {
+                                padding-left: 12px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+</style>
+

@@ -1,0 +1,226 @@
+<!--专栏列表-->
+<template>
+  <div class="column">
+    <!-- 专栏列表 -->
+    <ul class="classList">
+      <li class="line" v-for="item in dataList.column.records" :key="item.accountId" @click="$emit('columnDetail', item)">
+        <div class="classPic"><img :src="item.image" alt=""></div>
+        <div class="classInfo">
+          <span class="font-14">{{item.name}}</span>
+          <div class="price">
+            <i :class="item.price >0 ? 'red' : 'green'">{{item.price>0 ? '￥'+item.price : '免费' }}</i>
+            <div class="tag">
+              <span v-if="currentPath!=='/myLecture'" class="font-12 update">{{item.upToTime}}</span>
+              <div v-if="currentPath ==='/myLecture'">
+                <el-tag v-if="item.status===0" type="primary" plain size="mini">草稿</el-tag>
+                <el-tag v-if="item.status===1 || 1002" type="success" plain size="mini">已发布</el-tag>
+                <!-- <el-tag v-if="currentPath ==='/myLecture' && item.status===2" type="success" size="mini">已下架</el-tag> -->
+                <el-tag v-if="item.status===1000" type="warning" plain size="mini">待审核 </el-tag>
+                <el-tag v-if="item.status===1001" type="danger" plain size="mini">审核驳回</el-tag>
+                <!-- <el-tag v-if="currentPath ==='/myLecture' && item.status===1002" type="success" size="mini">审核通过</el-tag> -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="otherInfo">
+            <div class="photoInfo" v-if="currentPath!=='/myLecture'">
+              <img  :src="item.lecturerInfo.avatar" class="photo">
+              <span class="font-12">{{item.lecturerInfo.realName}}</span>
+            </div>
+            <div class="time">{{item.updateTime}}</div>
+            <div v-show="currentPath==='/myLecture'" class="font-12 handle">
+              <div v-if="item.status==='0' || '1001'">
+                <span style="margin-right:3px" @click="$router.push('/createColumn/'+item.id)">编辑</span>
+                <span @click="onDelete(item.id)">删除</span>
+              </div>
+              <div v-if="item.status==='1'|| '1002'">
+                <span  @click="downCourse(item.id)">下架课程</span>
+                <span @click="goCourseMessage(item.id)">课程管理</span>
+              </div>
+            </div>
+        </div>
+      </li>
+    </ul>
+
+    <!-- 专栏分页 -->
+    <div class="pagination">
+      <el-pagination
+        @current-change="handleCurrentChange"
+        :current-page.sync="dataList.column.current "
+        :page-size.sync="dataList.column.size "
+        layout="prev, slot, next, total"
+        :hide-on-single-page="true"
+        :total="dataList.column.total ">
+        <slot>
+          <span>第<i>{{dataList.column.current}}/{{dataList.column.pages}}</i>页</span>
+        </slot>
+      </el-pagination>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  name: 'ColumnList',
+  props: {
+    dataList: Object
+  },
+  data () {
+    return {
+      dialogVisible: false, // 创建专栏弹框
+      currentPath: this.$route.path
+    }
+  },
+  methods: {
+    // 翻页
+    handleCurrentChange (val) {
+      console.log(val)
+      this.$emit('getCurrentPage', val)
+    },
+    // 下架课程
+    downColumn (id) {
+      if (this.$store.state.user.accountId === this.dataList.course.records.accountId) {
+        if (this.dataList.course.records.price === 0) {
+          this.$emit('downColumn', id)
+        }
+        // if (this.dataList.course.records.price>0 && 无用户购买) {
+        //    this.$emit('downColumn', id)
+        // }
+      }
+    },
+    // 课程管理
+    goCourseMessage (id) {
+      if (this.$store.state.user.accountId === this.dataList.course.records.accountId) {
+        this.$router.push('/courseMessage/' + id)
+      }
+    },
+    // 删除
+    onDelete (id) {
+      this.$emit('onDelete', id)
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .column {
+    .classList {
+      overflow: hidden;
+      .line::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 100%;
+        position: absolute;
+        bottom: 48px;
+        left:0;
+        background-color: #ddd;
+      }
+      li {
+        float: left;
+        width: 260px;
+        height: 346px;
+        border-radius: 10px;
+        background-color: #fff;
+        margin-right: 20px;
+        margin-bottom: 20px;
+        position: relative;
+        border: 1px solid #E7E8EC;
+        box-sizing: border-box;
+        .classPic {
+          width: 260px;
+          height: 174px;
+          box-sizing: border-box;
+          border-bottom:1px solid #E7E8EC;
+          img{
+            width: 260px;
+            height: 174px;
+          }
+        }
+        .classInfo{
+          padding:20px 20px 22px 20px;
+          height: 121px;
+          width: 100%;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: flex-start;
+          .price {
+            width:100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .red,.green {
+              font-size: 16px;
+            }
+            .update{
+              padding:3px 9px;
+              background-color: #F2F2F2;
+              border-radius: 5px;
+              margin-right: 3px;
+            }
+          }
+        }
+        .otherInfo {
+          padding:0 20px;
+          height: 50px;
+          font-size: 14px;
+          text-align: center;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          .photoInfo{
+            .photo {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              margin-right: 8px;
+            }
+          }
+          .time {
+            font-size: 12px;
+            color:#999;
+          }
+          .handle {
+            span{
+              padding:3px 8px;
+              border-radius: 5px;
+            }
+          }
+        }
+      }
+    }
+    // 分页
+    .pagination {
+      margin-top: 30px;
+      text-align: center;
+      .el-pagination .btn-next, .el-pagination .btn-prev {
+          width: 40px;
+          height: 40px;
+          padding-right: auto;
+          .el-icon-arrow-left:before, .el-icon-arrow-right:before {
+            font-size: 20px;
+          }
+        }
+      .el-pagination {
+        slot {
+          span{
+            font-size: 20px;
+            margin: 6px 20px 0;
+            color:#999;
+            font-weight: normal;
+          }
+        }
+        .el-pagination__total {
+          margin: 6px 0 0 20px;
+          font-size: 20px;
+          color:#999;
+          font-weight: normal;
+        }
+      }
+    }
+  }
+</style>

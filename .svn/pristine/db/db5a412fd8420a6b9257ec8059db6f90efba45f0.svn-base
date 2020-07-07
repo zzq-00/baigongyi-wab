@@ -1,0 +1,27 @@
+/**
+ * 热点资讯
+ */
+export default [
+  {
+    path: '/layout',
+    name: 'layout',
+    component: () => import('../views/layout/layout.vue'),
+    children: [
+      {
+        path: '/hotmessage',
+        component: () => import('../views/hotMessage/hotMessage.vue'),
+        redirect: '/hotmessage/article',
+        children: [
+          {
+            path: 'article',
+            component: () => import('../views/hotMessage/article.vue'),
+          },
+          {
+            path: 'newsHotDetails',
+            component: () => import("../views/hotMessage/newsHotDetails.vue"),
+          }
+        ]
+      }
+    ]
+  }
+]

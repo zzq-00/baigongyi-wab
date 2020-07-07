@@ -1,0 +1,241 @@
+<template>
+  <div class="teacherHome">
+    <div class="teacherIntroduce">
+      <img class="fl" :src="teacherList.avatar ? $store.state.imageDomain + teacherList.avatar : require('@/assets/images/err-header-icon01.png')" alt="">
+      <div class="info fl">
+        <span>{{teacherList.realName}}</span>
+        <p class="font-14">{{teacherList.introduction}}</p>
+      </div>
+      <div v-if='$store.state.userInfo.accountId != teacherList.accountId'>
+        <el-button v-if="$store.state.userInfo && teacherList.wasConcerned===1" :type="'' || attentionType " @click="attention">已关注</el-button>
+        <el-button v-if="$store.state.userInfo && teacherList.wasConcerned===2" :type="'danger' || attentionType" @click="attention">关注</el-button>
+        <el-button v-if="$store.state.userInfo && teacherList.wasConcerned===3" :type="'' || attentionType" @click="attention">互相关注</el-button>
+      </div>
+      <el-button v-if="!$store.state.userInfo || !teacherList.wasConcerned" :type="'danger' || attentionType" @click="$router.push('/login')">关注</el-button>
+    </div>
+    <div class="content">
+      <div class="tabChange clearfix">
+        <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)" :class="{active:index==nowIndex}">{{item}}
+        </span>
+      </div>
+      <course-list :dataList=dataList @getCurrentPage="getCurrentPage" v-show="nowIndex===0" @courseDetail="courseDetail"></course-list>
+      <column-list :dataList=dataList @getCurrentPage="getCurrentPage" v-show="nowIndex===1" @columnDetail="columnDetail"></column-list>
+
+    </div>
+  </div>
+</template>
+
+<script>
+import CourseList from '@/components/courseList'
+import ColumnList from '@/components/columnList'
+import api from '@/fetch'
+export default {
+  name: 'LectureRoom',
+  components: {
+    CourseList,
+    ColumnList
+  },
+  data() {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['课堂', '专栏'],
+      attentionType: '', // danger 关注，已关注
+      // 课程参数
+      courseParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8,
+        paramObject: {
+          accountId: this.$route.params.id
+        }
+      },
+      // 专栏参数
+      columnParams: {
+        // asc: true,
+        // orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8
+        // paramObject: {
+        //   accountId: this.$route.params.id
+        // }
+      },
+      teacherList: {},
+      dataList: {
+        course: {},
+        column: {}
+      },
+      // 关注
+      attentionParams: {
+        objId: this.$route.params.id,
+        objType: 6
+      }
+    }
+  },
+  watch: {
+    courseParams: {
+      handler: 'getTeacherCourse',
+      deep: true
+    },
+    columnParams: {
+      handler: 'getTeacherColumn',
+      deep: true
+    },
+    $route(to, from) {
+      this.getTeacherColumn()
+    }
+  },
+  computed: {},
+  created() {
+    this.getTeacherCourse()
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.getTeacherCourse()
+      } else {
+        this.getTeacherColumn()
+      }
+    })
+    this.getTeacherDetail()
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs(index) {
+      this.nowIndex = index
+    },
+    // 关注
+    async attention() {
+      if (this.teacherList.wasConcerned === 1 || this.teacherList.wasConcerned === 3) {
+        const res = await api.delAttention(this.attentionParams)
+        if (res.code === 200) {
+          this.attentionType = 'danger'
+          this.getTeacherDetail()
+        }
+      } else if (this.teacherList.wasConcerned === 2) {
+        const res = await api.addAttention(this.attentionParams)
+        if (res.code === 200) {
+          this.attentionType = ''
+          this.getTeacherDetail()
+        }
+      }
+    },
+    // 讲师信息
+    async getTeacherDetail() {
+      const res = await api.getTeacherDetail(this.$route.params.id)
+      this.teacherList = res.data
+    },
+    // 讲师--课程列表
+    async getTeacherCourse() {
+      const res = await api.getCourse(this.courseParams)
+      this.dataList.course = res.data
+    },
+    // 讲师--专栏列表
+    async getTeacherColumn() {
+      // this.columnParams.paramObject.accountId = id;
+      const res = await api.homePageColumnList(this.$route.params.id, this.columnParams)
+      this.dataList.column = res.data
+    },
+    // 跳转到---课程详情页--讲堂
+    courseDetail(courseItem) {
+      this.$router.push(`/courseDetail/${courseItem.id}`)
+    },
+    // 跳转到---专栏详情页--讲堂
+    columnDetail(columnItem) {
+      this.$router.push(`/columnDetail/${columnItem.id}`)
+    },
+    // 翻页
+    getCurrentPage(currentPage) {
+      if (this.nowIndex != 1) {
+        api
+          .getCourse({
+            asc: true,
+            orderBy: 'id',
+            pageNum: currentPage,
+            pageSize: 8,
+            paramObject: {
+              accountId: this.$route.params.id
+            }
+          })
+          .then(res => {
+            this.dataList.course = res.data
+          })
+      } else {
+        this.columnParams.pageNum = currentPage
+        api.homePageColumnList(this.$route.params.id, this.columnParams).then(res => {
+          this.dataList.column = res.data
+        })
+      }
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.teacherHome {
+  width: 1100px;
+  overflow: hidden;
+  li:nth-child(4n) {
+    margin-right: 0;
+  }
+  .teacherIntroduce {
+    margin-top: 22px;
+    background-color: #fff;
+    padding: 30px;
+    display: flex;
+    box-sizing: border-box;
+    img {
+      display: inline-block;
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+    }
+    .info {
+      margin-top: 20px;
+      margin-left: 20px;
+      flex: 1;
+      box-sizing: border-box;
+      span {
+        font-size: 18px;
+        margin-bottom: 20px;
+        color: #4a4a4a;
+      }
+      p {
+        margin-top: 6px;
+        color: #999;
+      }
+    }
+    /deep/.el-button {
+      width: 90px;
+      height: 34px;
+      padding: 0;
+      margin-top: 25px;
+      margin-left: 20px;
+    }
+  }
+  .tabChange {
+    font-size: 16px;
+    margin: 20px 20px 26px 0;
+    span:first-child {
+      margin-right: 20px;
+    }
+    .active {
+      position: relative;
+      color: #e43c31;
+    }
+    .active::after {
+      content: '';
+      display: inline-block;
+      position: absolute;
+      bottom: -10px;
+      left: 5px;
+      height: 3px;
+      width: 24px;
+      background-color: #e43c31;
+    }
+    span {
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+</style>

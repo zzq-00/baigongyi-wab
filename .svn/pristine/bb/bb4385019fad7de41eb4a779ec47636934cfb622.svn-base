@@ -1,0 +1,3 @@
+VUE_APP_MODE=production
+VUE_APP_API=https://wapi.baigongyi.com/
+VUE_APP_M_URL=https://m.baigongyi.com/

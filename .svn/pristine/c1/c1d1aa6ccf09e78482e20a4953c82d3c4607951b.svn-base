@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>标题</title>
+
+    <style type="text/css">
+
+    </style>
+    <link href="../stylesheets/base.css" rel="stylesheet">
+    <!-- 分享sdk -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+   	<script src="https://g.alicdn.com/dingding/open-develop/1.9.0/dingtalk.js"></script>
+    <!-- vue -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+    <!-- axios -->
+    <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+    <!-- lib-flexible -->
+    <script src="../javascripts/lib-flexible/index.min.js"></script>
+    <!-- api.js -->
+    <script src="../javascripts/api.js"></script>
+    <!-- common.js -->
+    <script src="../javascripts/common.js"></script>
+</head>
+
+<body>
+    <div>
+
+    </div>
+</body>
+
+</html>

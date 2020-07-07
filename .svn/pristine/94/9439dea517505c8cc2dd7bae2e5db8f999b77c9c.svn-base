@@ -1,0 +1,33 @@
+<template>
+  <div class="hisArticle">
+    <div class="title">文章</div>
+    <div class="content">
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  components: {
+  },
+  data () {
+    return {
+
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .article {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

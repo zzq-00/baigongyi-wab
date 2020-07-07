@@ -1,0 +1,776 @@
+<template>
+  <div class="pages">
+    <div class="answerDetails-page">
+      <div class="questions-main-descrtion">
+        <div class="tag-list">
+          <span v-for="(item,index) in tagList" :key="index">{{item.tagName1}}-{{item.tagName2}}</span>
+        </div>
+        <div class="descrtion-left">
+          <p class="qusetions-title">{{questionDetailsObj.title}}</p>
+          <div class="questions-details" v-html="questionDetailsObj.stripHtmlContent" v-if="!desOpen"></div>
+          <div class="ql-container ql-snow" style="border: none;" v-if="questionDetailsObj.stripHtmlContent.length <= 150||desOpen">
+            <div v-html="questionDetailsObj.questionContent" class="ql-editor questions-details" style="padding: 0;"></div>
+          </div>
+        </div>
+        <div class="descrtion-right">
+          <ul class="data-statistics">
+            <li>
+              <p>{{questionDetailsObj.followers}}</p>
+              <p>关注人数</p>
+            </li>
+            <li>
+              <p>{{questionDetailsObj.watchCount}}</p>
+              <p>浏览次数</p>
+            </li>
+          </ul>
+        </div>
+        <div style="clear:both"></div>
+        <div class="descrtion-footer" v-if="questionDetailsObj.accountId != loginaccountId">
+          <el-button type="primary" @click="gotoWriting()">写回答</el-button>
+          <el-button class="follow-false" v-if="!isfollow" @click="followAnswer('1')">关注问题</el-button>
+          <el-button type="primary" class="follow-true" v-if="isfollow" @click="followAnswer('2')">已关注</el-button>
+        </div>
+        <div class="descrtion-footer" v-if="questionDetailsObj.accountId == loginaccountId">
+          <el-button type="primary" @click="gotoEdit()">修改回答</el-button>
+          <el-button class="follow-false" @click="deleteAnswer()">删除回答</el-button>
+          <el-button class="follow-false" v-if="!isfollow" @click="followAnswer('1')">关注问题</el-button>
+          <el-button type="primary" v-if="isfollow" @click="followAnswer('2')">已关注</el-button>
+        </div>
+      </div>
+      <div class="main-box">
+        <div class="answers-and-comments fl">
+          <div class="answers-box">
+            <div class="answer-user-info clearfix">
+              <img :src="questionAnswerDto.avatar ? $store.state.imageDomain + questionAnswerDto.avatar : require('@/assets/images/err-header-icon01.png')" alt="" srcset="" class="fl" @click="gotoUser(questionAnswerDto.accountId)">
+              <div class="fl">
+                <p @click="gotoUser(questionAnswerDto.accountId)">
+                  {{questionAnswerDto.userName}}
+                </p>
+                <p>{{questionAnswerDto.updateTime}}</p>
+              </div>
+            </div>
+            <div class="ql-container ql-snow" style="border: none;">
+              <div v-html="questionAnswerDto.answerContent" class="ql-editor answer-details" style="padding: 0;"></div>
+            </div>
+            <p class="answer-tips">著作权归作者所有</p>
+          </div>
+          <div class="comments-box">
+            <p class="comments-title">评论</p>
+            <div class="publish-comment clearfix" v-if="loginaccountId!=questionAnswerDto.accountId">
+
+              <img :src="publishUserImg|| require('@/assets/images/err-header-icon01.png')" alt="" srcset="" class="publish-user-img fl">
+              <div class="word-box fr">
+                <textarea name="" cols="30" rows="10" v-model="addParams.comment"></textarea>
+                <div><button @click="publishComment">评论</button></div>
+              </div>
+            </div>
+            <ul class="comments-list" infinite-scroll-disabled='loadStatus' v-infinite-scroll="answerlistLoad" infinite-scroll-immediate='false' infinite-scroll-distance='10'>
+              <li v-for="(i,index) in commentList" :key="index" class="clearfix">
+                <img :src="i.avatar ? $store.state.imageDomain + i.avatar : require('@/assets/images/err-header-icon01.png')" alt="" srcset="" class="fl">
+                <div class="fr">
+                  <p class="clearfix">
+                    <span class="fl">{{i.nickName}}</span>
+                    <span class="fr">{{i.commentsTime}}</span>
+                  </p>
+                  <p>{{i.comment}}</p>
+                </div>
+              </li>
+              <!-- <p class="tips">{{newloadText}}</p> -->
+            </ul>
+          </div>
+        </div>
+        <div class="right-side-sidebar">
+          <div class="answer-user">
+            <p class="answer-user-title">回答用户</p>
+            <div class="clearfix">
+              <img :src="questionAnswerDto.avatar ? $store.state.imageDomain + questionAnswerDto.avatar : require('@/assets/images/err-header-icon01.png')" alt="" srcset="" class="user-img fl">
+              <span class="fl">{{questionAnswerDto.userName}}</span>
+              <span class="user-more" @click="gotoUser(questionAnswerDto.accountId)">了解更多</span>
+            </div>
+            <p class="user-introduce">{{questionAnswerDto.introduction}}</p>
+          </div>
+          <div class="share-box">
+            <img src="@/assets/images/QRcodetest.png" alt="">
+            <div class="share-info">
+              <p>扫码下载百工驿APP</p>
+              <p>工程人都在用的分享交流神器！</p>
+            </div>
+            <div style="clear:both"></div>
+          </div>
+        </div>
+        <div style="clear:both"></div>
+      </div>
+    </div>
+    <operateIcon :propData='questionAnswerDto' :objType='9' @gotoComment='gotoComment' v-if="!isOwn" />
+    <ul class="article-operate" v-else>
+      <li @click="copyText">
+        <div style="color: #999999;text-align: center;margin-top: 7px;">分享</div>
+        <img src="@/assets/images/article-lianjie.png" alt="">
+        <div id="NewsToolBox"></div>
+      </li>
+      <li>
+        <img src="@/assets/images/article-weixin.png" alt="">
+        <div class="canvas-wrapper">
+          <canvas ref="wxcanvas" style="max-width: 74px;max-height: 74px;display: block;margin: 9px auto;"></canvas>
+        </div>
+      </li>
+    </ul>
+
+  </div>
+
+</template>
+
+<script>
+import api from '@/fetch'
+import operateIcon from '@/components/operateIcon'
+import 'quill/dist/quill.snow.css'
+
+export default {
+  components: {
+    operateIcon
+  },
+  data() {
+    return {
+      questionDetailsObj: {
+        stripHtmlContent: ''
+      },
+      tagList: [], //问题标签
+      // 最赞
+      parasm: {
+        pageNum: 1,
+        pageSize: 4,
+        asc: false,
+        orderBy: 'like_count',
+        paramObject: {
+          questionId: ''
+        }
+      },
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          objId: '',
+          objType: 9
+        }
+      },
+      commentList: [], //问题详情回答列表
+      loginaccountId: '', //登录人id
+      desOpen: false, //是否展开描述
+      isfollow: false,
+      questionAnswerDto: {}, //回答用户
+      publishUserImg: '', //发表人头像
+      addParams: {
+        comment: '',
+        objId: '',
+        objType: 9
+      },
+      isPublish: true,
+      loadStatus: false
+      // newloadText: ''
+    }
+  },
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  created() {
+    window.expandDescription = this.expandDescription
+  },
+  methods: {
+    // 复制链接
+    copyText() {
+      let text = window.location.href
+      var textarea = document.createElement('textarea') //创建input对象
+      var currentFocus = document.activeElement //当前获得焦点的元素
+      var toolBoxwrap = document.getElementById('NewsToolBox') //将文本框插入到NewsToolBox这个之后
+      toolBoxwrap.appendChild(textarea) //添加元素
+      textarea.value = text
+      textarea.focus()
+      if (textarea.setSelectionRange) {
+        textarea.setSelectionRange(0, textarea.value.length) //获取光标起始位置到结束位置
+      } else {
+        textarea.select()
+      }
+      try {
+        var flag = document.execCommand('copy') //执行复制
+      } catch (eo) {
+        var flag = false
+      }
+      toolBoxwrap.removeChild(textarea) //删除元素
+      currentFocus.focus()
+      return flag ? this.$message.success('链接复制成功') : this.$message.warning('链接复制失败，请手动复制地址栏T_T')
+    },
+    // 微信分享
+    wxShare() {
+      QRCode.toCanvas(this.$refs['wxcanvas'], window.location.href, error => {
+        if (error) console.error(error)
+      })
+    },
+
+    gotoComment() {
+      document.getElementsByClassName('answerDetails-page')[0].scrollTo(0, document.getElementsByClassName('comments-box')[0].offsetTop)
+    },
+    // 最赞回答
+    answerlistLoad() {
+      this.loadStatus = true
+      this.params.pageNum += 1
+      this.getCommentList()
+    },
+    //发表评论
+    publishComment() {
+      if (this.addParams.comment && this.isPublish) {
+        this.isPublish = false
+        this.addParams.objId = this.questionAnswerDto.id
+        api
+          .addComment(this.addParams)
+          .then(res => {
+            this.$message({
+              message: '发表成功',
+              type: 'success'
+            })
+            this.params.pageNum = 1
+            this.commentList = []
+            this.addParams.comment = ''
+            this.isPublish = true
+            this.getCommentList()
+            this.questionAnswerDto.commentCount++
+          })
+          .catch(res => {
+            this.isPublish = false
+          })
+      } else {
+        this.$message({
+          message: '请先输入评论',
+          type: 'warning'
+        })
+      }
+    },
+    // 回答详情评论列表
+    getCommentList() {
+      this.params.paramObject.objId = this.questionAnswerDto.id
+      api.getCommentList(this.params).then(res => {
+        this.commentList = this.commentList.concat(res.data.records)
+        // if (res.data.records.length == 0) {
+        //   this.newloadText = '暂无更多数据'
+        // } else {
+        //   this.newloadText = ''
+        // }
+        this.loadStatus = false
+      })
+    },
+    gotoUser(accountId) {
+      // 本人
+      if (accountId == this.loginaccountId) {
+        let routeUrl = this.$router.resolve('/myHome/myReply')
+        window.open(routeUrl.href, '_blank')
+      } else {
+        console.log('未完成')
+        alert('他人主页暂未完成')
+        // this.$router.push('/')
+      }
+    },
+    // 关注问题
+    followAnswer(val) {
+      if (val == 1) {
+        api.addAttention({ objId: this.questionDetailsObj.id, objType: 4 }).then(res => {
+          this.isfollow = true
+          this.questionDetailsObj.followers = this.questionDetailsObj.followers + 1
+        })
+      } else if (val == 2) {
+        api.delAttention({ objId: this.questionDetailsObj.id, objType: 4 }).then(res => {
+          this.isfollow = false
+          this.questionDetailsObj.followers = this.questionDetailsObj.followers - 1
+        })
+      }
+    },
+    // 关注
+    follow(val, item, index) {
+      // val:1:已关注;2:关注;3:互相关注;
+      if (!this.loginaccountId) {
+        let routeUrl = this.$router.resolve('/login')
+        window.open(routeUrl.href, '_blank')
+      } else {
+        let objId = item.accountId
+        let objType = 6
+        if (val == 1) {
+          api.delAttention({ objId: objId, objType: objType }).then(res => {
+            item.concernStatus = 2
+          })
+        } else if (val == 2) {
+          api.addAttention({ objId: objId, objType: objType }).then(res => {
+            item.concernStatus = 1
+          })
+        } else if (val == 3) {
+          api.delAttention({ objId: objId, objType: objType }).then(res => {
+            item.concernStatus = 2
+          })
+        }
+      }
+    },
+    answerDetails() {
+      return new Promise((resolve, relect) => {
+        api.answerDetails(this.$route.params.id).then(res => {
+          this.questionDetailsObj = res.data.question
+          this.questionAnswerDto = res.data.questionAnswerDto
+          this.$set(this.questionAnswerDto, 'whetherToFocusOnTheIssue', res.data.whetherToFocusOnTheIssue)
+          this.$set(this.questionAnswerDto, 'whetherLike', res.data.whetherLike)
+          this.$set(this.questionAnswerDto, 'whetherToCollect', res.data.whetherToCollect)
+          this.isfollow = res.data.whetherToFocusOnTheIssue
+          if (this.questionDetailsObj.stripHtmlContent) {
+            if (this.questionDetailsObj.stripHtmlContent.length > 150) {
+              this.questionDetailsObj.stripHtmlContent = this.questionDetailsObj.stripHtmlContent.substring(0, 148) + '...' + `<span style='color: rgba(226, 55, 50, 1);cursor:pointer;margin-left:7px;' onclick="expandDescription('1')"}>展开描述<img src=${require('../../../assets/images/Open.png')} alt="" style="margin-left:5px;"></span>`
+              this.questionDetailsObj.questionContent = this.questionDetailsObj.questionContent + `<p style="text-align:right"><span style='color: rgba(226, 55, 50, 1);cursor:pointer;margin-left:7px;' onclick="expandDescription('2')">收起描述<img src=${require('../../../assets/images/Retract.png')} alt="" style="margin-left:5px;"></span><p>`
+            } else {
+              this.desOpen = true
+            }
+          }
+          res.data.questionTagList.map(item => {
+            item.children.map(items => {
+              this.tagList.push({ tagName1: item.tagName, tagName2: items.tagName })
+            })
+          })
+          resolve(this.questionDetailsObj)
+        })
+      })
+    },
+    // 展开描述
+    expandDescription(val) {
+      val == 1 ? (this.desOpen = true) : (this.desOpen = false)
+    },
+    // 写回答
+    gotoWriting() {
+      this.$router.push({ path: `/writeAnswer/${this.questionDetailsObj.id}`, query: { editOrNew: 'new' } })
+    },
+    // 编辑问题
+    gotoEdit() {
+      this.$router.push({ path: `/writeAnswer/${this.questionAnswerDto.id}`, query: { editOrNew: 'edit' } })
+    },
+    // 删除问题
+    deleteAnswer() {
+      this.$confirm('是否确定删除?', '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          api.deleteAnswer(this.$route.params.id).then(res => {
+            this.$router.push('/myHome/myReply')
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消删除'
+          })
+        })
+    }
+  },
+  mounted() {
+    if (window.localStorage.userInfo) {
+      this.loginaccountId = JSON.parse(window.localStorage.getItem('userInfo')).accountId
+      this.publishUserImg = this.$store.state.imageDomain + JSON.parse(window.localStorage.getItem('userInfo')).avatar
+    }
+    this.answerDetails().then(res => {
+      this.getCommentList()
+    })
+  }
+}
+</script>
+<style lang="less" scoped>
+.pages {
+  position: relative;
+  .answerDetails-page::-webkit-scrollbar {
+    display: none;
+    overflow: hidden;
+  }
+  .answerDetails-page {
+    height: calc(100vh - 120px);
+    overflow-y: auto;
+    .questions-main-descrtion {
+      margin-top: 21px;
+      background: #fff;
+      padding: 21px 0 26px 20px;
+      border-radius: 10px;
+      .tag-list {
+        span {
+          display: inline-block;
+          padding: 0 12px 0 10px;
+          height: 20px;
+          line-height: 20px;
+          background: #f2f2f2;
+          border-radius: 3px;
+          font-size: 12px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          margin-bottom: 16px;
+          margin-right: 10px;
+        }
+      }
+      .descrtion-left {
+        width: 730px;
+        padding-right: 50px;
+        float: left;
+        .qusetions-title {
+          line-height: 24px;
+          font-size: 18px;
+          font-weight: bold;
+          color: rgba(74, 74, 74, 1);
+          margin-bottom: 17px;
+        }
+        .questions-details {
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          line-height: 19px;
+          margin-bottom: 20px;
+          .more-descrtion {
+            font-weight: 400;
+            color: rgba(226, 55, 50, 1) !important;
+          }
+        }
+      }
+      .descrtion-right {
+        float: right;
+        height: 110px;
+        width: 299px;
+        border-left: 1px solid #dddddd;
+        .data-statistics {
+          margin-top: 43px;
+          display: flex;
+          justify-content: center;
+          li {
+            margin-right: 41px;
+            p:nth-child(1) {
+              height: 15px;
+              line-height: 15px;
+              font-size: 18px;
+              font-weight: bold;
+              color: rgba(74, 74, 74, 1);
+              margin-bottom: 10px;
+            }
+            p:nth-child(2) {
+              height: 13px;
+              line-height: 13px;
+              font-size: 12px;
+              font-weight: 400;
+              color: rgba(153, 153, 153, 1);
+            }
+          }
+        }
+      }
+      .descrtion-footer {
+        /deep/.el-button {
+          width: 84px;
+          height: 34px;
+          line-height: 34px;
+          border-radius: 10px;
+          padding: 0;
+          font-size: 14px;
+          border-radius: 5px;
+        }
+        /deep/.el-button:nth-child(1) {
+          background: #e23732;
+        }
+        /deep/.el-button--primary:focus,
+        /deep/.el-button--primary:hover {
+          background: rgb(232, 95, 91);
+          border-color: rgb(232, 95, 91);
+          color: #fff;
+        }
+        .follow-false {
+          color: #e23732;
+          border: 1px solid #e23732 !important;
+          background-color: #fff !important;
+        }
+        .follow-false:focus,
+        .follow-false:hover {
+          color: #e23732;
+          border-color: rgb(246, 195, 194);
+          background-color: rgb(252, 235, 235);
+        }
+      }
+    }
+    .main-box {
+      margin-top: 20px;
+      .answers-and-comments {
+        width: 780px;
+        background: #fff;
+        padding-top: 22px;
+        border-radius: 10px;
+        .answers-box {
+          padding: 0 20px;
+          .answer-user-info {
+            img {
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              margin-right: 11px;
+            }
+            div {
+              p:nth-child(1) {
+                height: 12px;
+                line-height: 12px;
+                font-size: 14px;
+                font-weight: 400;
+                color: rgba(74, 74, 74, 1);
+                margin: 4px 0 11px 0;
+              }
+              p:nth-child(1):hover {
+                cursor: pointer;
+                color: #e23732;
+              }
+              p:nth-child(2) {
+                height: 9px;
+                font-size: 12px;
+                font-weight: 400;
+                color: rgba(153, 153, 153, 1);
+                line-height: 9px;
+              }
+            }
+          }
+          .answer-details {
+            margin: 11px 0;
+            // overflow: auto;
+          }
+          .answer-tips {
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(153, 153, 153, 1);
+          }
+        }
+        .comments-box {
+          .comments-title {
+            padding: 30px 0 10px 20px;
+            font-size: 16px;
+            color: rgba(74, 74, 74, 1);
+            border-bottom: 1px solid #dddddd;
+          }
+          .publish-comment {
+            padding: 20px 20px 0 20px;
+            border-bottom: 1px solid #ddd;
+            .publish-user-img {
+              width: 40px;
+              height: 40px;
+              border-radius: 50%;
+              margin-right: 10px;
+            }
+            .word-box {
+              textarea {
+                width: 684px;
+                height: 120px;
+                background: rgba(255, 255, 255, 1);
+                border: 1px solid rgba(221, 221, 221, 1);
+                border-radius: 10px;
+              }
+              div {
+                text-align: right;
+                button {
+                  width: 88px;
+                  height: 32px;
+                  background: rgba(255, 255, 255, 1);
+                  border: 1px solid rgba(221, 221, 221, 1);
+                  border-radius: 5px;
+                  cursor: pointer;
+                  color: #4a4a4a;
+                  font-size: 14px;
+                  margin-bottom: 20px;
+                }
+                button:hover {
+                  border: 1px solid #e23732;
+                  color: #e23732;
+                }
+              }
+            }
+          }
+          .comments-list {
+            margin-top: 20px;
+            max-height: 450px;
+            overflow: auto;
+            li {
+              padding: 0px 0 0px 20px;
+              img {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                margin-right: 10px;
+                margin-top: 11px;
+              }
+              div {
+                border-top: 1px solid #ddd;
+                width: 689px;
+                padding: 20px 20px 21px 0;
+                p:nth-child(1) {
+                  span:nth-child(1) {
+                    margin-top: 2px;
+                    height: 12px;
+                    line-height: 12px;
+                    font-size: 14px;
+                    font-weight: 400;
+                    color: rgba(74, 74, 74, 1);
+                  }
+                  span:nth-child(2) {
+                    height: 13px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: rgba(153, 153, 153, 1);
+                    line-height: 13px;
+                  }
+                }
+                p:nth-child(2) {
+                  margin-top: 12px;
+                  font-size: 14px;
+                  color: rgba(102, 102, 102, 1);
+                }
+              }
+            }
+            .tips {
+              border-top: 1px solid #ddd;
+              text-align: center;
+              padding: 10px 0 20px 0;
+              font-size: 16px;
+            }
+          }
+          .comments-list::-webkit-scrollbar {
+            display: none;
+            overflow: hidden;
+          }
+        }
+      }
+      .right-side-sidebar {
+        float: right;
+        .answer-user {
+          padding: 19px 11px 18px 20px;
+          width: 269px;
+          background: rgba(255, 255, 255, 1);
+          border-radius: 10px;
+          margin-bottom: 20px;
+          .answer-user-title {
+            height: 16px;
+            line-height: 16px;
+            font-size: 16px;
+            font-weight: 400;
+            color: rgba(74, 74, 74, 1);
+          }
+          > div {
+            margin-top: 11px;
+            span:nth-of-type(1) {
+              margin: 9px 0 0 10px;
+              width: 120px;
+              height: 20px;
+              line-height: 16px;
+              font-size: 16px;
+              font-weight: bold;
+              color: rgba(74, 74, 74, 1);
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+            .user-img {
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+            }
+            .user-more {
+              margin-top: 10px;
+              float: right;
+              width: 67px;
+              height: 15px;
+              line-height: 16px;
+              font-size: 14px;
+              font-weight: 400;
+              color: rgba(153, 153, 153, 1);
+              background: url(../../../assets/images/more.png) no-repeat center right;
+            }
+            .user-more:hover {
+              color: #e23732;
+              cursor: pointer;
+              background: url(../../../assets/images/morehover.png) no-repeat center right;
+            }
+          }
+          .user-introduce {
+            margin-top: 11px;
+            width: 260px;
+            height: 15px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            line-height: 15px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+        .share-box {
+          padding: 19px 15px 23px 20px;
+          width: 265px;
+          height: 64px;
+          background: rgba(255, 255, 255, 1);
+          border-radius: 10px;
+          img {
+            width: 63px;
+            height: 64px;
+            float: left;
+          }
+          .share-info {
+            float: left;
+            margin-left: 6px;
+            p:nth-child(1) {
+              margin: 10px 0;
+              height: 17px;
+              line-height: 17px;
+              font-size: 16px;
+              color: rgba(74, 74, 74, 1);
+            }
+            p:nth-child(2) {
+              height: 15px;
+              line-height: 15px;
+              font-size: 14px;
+              color: rgba(153, 153, 153, 1);
+            }
+          }
+        }
+      }
+    }
+  }
+  .article-operate {
+    position: absolute;
+    left: -57px;
+    top: 73px;
+    > li {
+      cursor: pointer;
+      position: relative;
+      &:hover {
+        > .canvas-wrapper {
+          display: block;
+        }
+      }
+      .canvas-wrapper {
+        display: none;
+        position: absolute;
+        width: 92px;
+        height: 92px;
+        background-color: #fff;
+        top: 10px;
+        left: 95%;
+        box-shadow: 0px 0px 4px 0px rgba(57, 63, 58, 0.35);
+      }
+      .badge {
+        font-size: 12px;
+        color: #fff;
+        background-color: #fd4040;
+        padding: 0 6px;
+        border-radius: 7px;
+        position: absolute;
+        top: 5px;
+        left: 35px;
+      }
+    }
+  }
+}
+</style>

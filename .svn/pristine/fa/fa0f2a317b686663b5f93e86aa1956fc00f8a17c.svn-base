@@ -1,0 +1,128 @@
+<template>
+    <div class='newsHot'>
+        <ul>
+            <li v-for='(item,index) in listData' :key='index'>
+                <dl>
+                    <dt>
+                        <img :src="item.image" />
+                    </dt>
+                    <dd>
+                        <h4 @click='goDetails(item)'>{{item.title}}</h4>
+                        <p v-html='item.roundup'></p>
+                        <div>
+                            <span>{{item.sourceName}}</span>
+                            <p>
+                                <span>
+                                    <i class="icon iconfont">&#xe606;</i>
+                                    </i>{{item.createTime}}</span>
+                                <span>
+                                    <i class="el-icon-view"></i>{{item.watchCount}}</span>
+                            </p>
+                        </div>
+                    </dd>
+                </dl>
+            </li>
+        </ul>
+    </div>
+</template>
+<script>
+import api from '@/fetch'
+export default {
+    data() {
+        return {
+            listData: [],
+            totalElement: 0,
+            params: {
+                "pageNum": 1,
+                "pageSize": 10,
+                "paramObject": {
+                    type: 1
+                },
+            }
+        }
+    },
+    mounted() {
+        //获取数据
+        this.getDataListFn(1);
+    },
+    methods: {
+        getDataListFn(e) {
+            console.log(e, 'e');
+            this.params.pageNum = e;
+            api.hotNewsList(this.params).then(res => {
+                this.listData = res.data.records;
+                this.totalElement = res.data.total;
+                this.$emit("toFatherData", res.data)
+            })
+        },
+        goDetails(item) {
+            this.$router.push({ path: '/hotmessage/newsHotDetails', query: { id: item.id } })
+        }
+    }
+}
+</script>
+<style lang="less" scope>
+.newsHot {
+    li {
+        padding-bottom: 32px;
+        dl {
+            position: relative;
+            dt {
+                img {
+                    width: 200px;
+                    height: 118px;
+                    border-radius: 5px;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                }
+            }
+            dd {
+                padding-left: 220px;
+                h4 {
+                    font-size: 16px;
+                    padding: 10px 0;
+                    color: #333333;
+                    font-weight: 600;
+                    white-space: nowrap;
+                    text-overflow: ellipsis;
+                    overflow: hidden;
+                    word-break: break-all;
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+                p {
+                    height: 35px;
+                    color: #666666;
+                    display: -webkit-box;
+                    -webkit-box-orient: vertical;
+                    -webkit-line-clamp: 2;
+                    overflow: hidden;
+                }
+                >div {
+                    display: flex;
+                    justify-content: space-between;
+                    padding-top: 20px;
+                    >span {
+                        color: #999999;
+                    }
+                    >p {
+                        span {
+                            color: #999999;
+                            i {
+                                color: #999999;
+                                padding-right: 6px;
+                            }
+                            &:nth-child(2) {
+                                padding-left: 12px;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+</style>
+

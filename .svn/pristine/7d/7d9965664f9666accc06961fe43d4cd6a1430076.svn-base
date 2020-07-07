@@ -1,0 +1,234 @@
+<template>
+  <div class="articleList">
+    <div class="list">
+      <img :src="$store.state.imageDomain + articleData.image" class="img" alt="">
+      <div class="text" id="NewsToolBox">
+        <div class="headline">
+          <h3 class="ellipsis">
+            <router-link to="/">{{articleData.title}}</router-link>
+          </h3>
+          <span class="article">{{articleData.description}}</span>
+        </div>
+        <div class="artBottom">
+          <div class="artIcon">
+            <p><span>{{articleData.publishTime.slice(0,10)}}</span></p>
+            <template v-if="$route.path!='/myHome/draftArt'">
+              <p @click="likeOperate(articleData)">
+                <img v-if="articleData.whetherLike" src="@/assets/images/yizan.png" alt="">
+                <img v-else src="@/assets/images/zan.png" alt="">
+                <span> {{articleData.likeCount}}</span>
+              </p>
+              <p @click="gotoDetail('/article/list/' + articleData.id + '#comment')">
+                <img src="@/assets/images/pinglun.png" alt="">
+                <span> {{articleData.commentCount}}</span>
+              </p>
+              <p @click="collectOperate(articleData)">
+                <img v-if="articleData.whetherToCollect" src="@/assets/images/yishoucang.png" alt="">
+                <img v-else src="@/assets/images/shoucang.png" alt="">
+                <span> 收藏</span>
+              </p>
+              <el-popover placement="bottom" trigger="click" @show="wxShare(articleData.id)" width="150">
+                <ul class="share-list">
+                  <li @click="copyText(articleData.id)" style="font-size: 12px;border-bottom: 1px solid #DDDDDD;padding-bottom: 9px;">
+                    <img src="@/assets/images/lianjie.png" alt="">
+                    <span style="vertical-align: middle;margin-left: 8px;">复制链接</span>
+                  </li>
+                  <li style="font-size: 12px;line-height: 30px">
+                    <img src="@/assets/images/weixin.png" alt="">
+                    <span style="vertical-align: middle;margin-left: 8px;">微信扫一扫</span>
+                    <canvas :ref="'canvas'+articleData.id" style="max-width: 74px;max-height: 74px;display: block;margin: 0 auto;"></canvas>
+                  </li>
+                </ul>
+                <p slot="reference">
+                  <img src="@/assets/images/share.png" alt="">
+                  <span> 转发</span>
+                </p>
+              </el-popover>
+            </template>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="button">
+      <el-button round @click="reEditArticle">编辑</el-button>
+      <el-button round @click="deleteArticle">删除</el-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import QRCode from 'qrcode'
+
+export default {
+  props: {
+    articleData: Object
+  },
+  data() {
+    return {
+      objType: 3,
+      operating: false
+    }
+  },
+  methods: {
+    // 重新编辑
+    reEditArticle() {
+      this.$router.push('/article/reEditArticle/' + this.articleData.id)
+    },
+    // 删除
+    deleteArticle() {
+      api.deleteArticle(this.articleData.id).then(res => {
+        this.$emit('getNewData', this.articleData)
+        this.$message.success('删除成功')
+      })
+    },
+    // 点赞
+    likeOperate(item) {
+      if (this.operating) return
+      this.operating = true
+      if (item.whetherLike) {
+        api
+          .likeDelete(this.objType, item.id)
+          .then(res => {
+            item.whetherLike = false
+            item.likeCount--
+          })
+          .finally(() => (this.operating = false))
+      } else {
+        api
+          .likeAdd({ objType: this.objType, objId: item.id })
+          .then(res => {
+            item.whetherLike = true
+            item.likeCount++
+          })
+          .finally(() => (this.operating = false))
+      }
+    },
+    // 收藏
+    collectOperate(item) {
+      if (item.whetherToCollect) {
+        api.cancelCollect({ objType: this.objType, objId: item.id }).then(res => {
+          item.whetherToCollect = false
+        })
+      } else {
+        api.addCollect({ objType: this.objType, objId: item.id }).then(res => {
+          item.whetherToCollect = true
+        })
+      }
+    },
+    // 复制链接
+    copyText(id) {
+      let text = `${window.location.origin}/article/list/${id}`
+      var textarea = document.createElement('textarea') //创建input对象
+      var currentFocus = document.activeElement //当前获得焦点的元素
+      var toolBoxwrap = document.getElementById('NewsToolBox') //将文本框插入到NewsToolBox这个之后
+      toolBoxwrap.appendChild(textarea) //添加元素
+      textarea.value = text
+      textarea.focus()
+      if (textarea.setSelectionRange) {
+        textarea.setSelectionRange(0, textarea.value.length) //获取光标起始位置到结束位置
+      } else {
+        textarea.select()
+      }
+      try {
+        var flag = document.execCommand('copy') //执行复制
+      } catch (eo) {
+        var flag = false
+      }
+      toolBoxwrap.removeChild(textarea) //删除元素
+      currentFocus.focus()
+      return flag ? this.$message.success('链接复制成功') : this.$message.warning('链接复制失败T_T')
+    },
+    // 微信分享
+    wxShare(id) {
+      QRCode.toCanvas(this.$refs['canvas' + id], `${window.location.origin}/article/list/${id}`, error => {
+        if (error) console.error(error)
+      })
+    },
+    gotoDetail(url) {
+      window.open(url)
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.articleList {
+  display: flex;
+  flex-direction: column;
+  .button {
+    text-align: right;
+    margin-top: 10px;
+    /deep/.el-button {
+      width: 70px;
+    }
+  }
+  .list {
+    position: relative;
+    height: 146px;
+    display: flex;
+    align-items: center;
+    .img {
+      width: 200px;
+      height: 118px;
+      border-radius: 5px;
+    }
+    .text::after {
+      position: absolute;
+      content: '';
+      display: block;
+      background-color: #ddd;
+      height: 1px;
+      width: 103%;
+      bottom: 0;
+      right: -20px;
+    }
+    .text {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+      width: 100%;
+      height: 100%;
+      padding: 20px 0 12px 15px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      .headline {
+        h3 {
+          font-size: 16px;
+          color: #333;
+        }
+        .article {
+          font-size: 14px;
+          color: #666;
+          margin-top: 10px;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          overflow: hidden;
+        }
+      }
+      .artBottom {
+        width: 100%;
+        .artIcon {
+          width: 100%;
+          color: #999;
+          font-size: 14px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          p {
+            vertical-align: middle;
+            cursor: pointer;
+            img {
+              width: 16px;
+              height: 16px;
+            }
+          }
+        }
+      }
+    }
+  }
+}
+</style>

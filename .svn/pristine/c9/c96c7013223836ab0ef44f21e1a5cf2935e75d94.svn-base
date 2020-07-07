@@ -1,0 +1,68 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import ElementUI from 'element-ui'
+import dragVerify from 'vue-drag-verify'
+import VideoPlayer from 'vue-video-player'
+
+import App from './App.vue'
+import router from './router'
+import store from './store'
+
+import './permission'
+
+// 样式
+// import 'element-ui/lib/theme-chalk/index.css'
+import 'vue-video-player/src/custom-theme.css'
+import 'video.js/dist/video-js.css'
+import '@/assets/iconfont/iconfont.css'
+import '@/assets/theme/index.css'
+import '@/assets/style/main.css'
+
+Vue.config.productionTip = false
+Vue.use(ElementUI, { size: 'small' })
+Vue.use(dragVerify)
+Vue.use(VideoPlayer)
+Vue.use(Router)
+// 当点击相同页面时防止报错
+const originalPush = Router.prototype.push
+Router.prototype.push = function push (location) {
+  return originalPush.call(this, location).catch(err => err)
+}
+new Vue({
+  router,
+  store,
+  render: h => h(App)
+}).$mount('#app')
+
+// 金额格式化过滤器
+Vue.filter('formatDate', function addCommas (datetime) {
+  var date = new Date(datetime) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
+  let year = date.getFullYear(),
+    month = ('0' + (date.getMonth() + 1)).slice(-2),
+    sdate = ('0' + date.getDate()).slice(-2),
+    hour = ('0' + date.getHours()).slice(-2),
+    minute = ('0' + date.getMinutes()).slice(-2)
+  // 拼接
+  var result = year + '-' + month + '-' + sdate + ' ' + hour + ':' + minute
+  // 返回
+  return result
+})
+// 首页时间过滤器，没有时分秒
+Vue.filter('DateIndex', function addCommas (datetime) {
+  var date = new Date(datetime) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
+  let year = date.getFullYear(),
+    month = ('0' + (date.getMonth() + 1)).slice(-2),
+    sdate = ('0' + date.getDate()).slice(-2),
+    hour = ('0' + date.getHours()).slice(-2),
+    minute = ('0' + date.getMinutes()).slice(-2)
+  // 拼接
+  var result = year + '-' + month + '-' + sdate 
+  // 返回
+  return result
+})
+// 播放量、收藏数格式化
+Vue.filter('formatNumbers', function addCommas (num) {
+var num = num > 9999 ? Math.round(num/10000) + "万" : num;
+  return num
+})
+

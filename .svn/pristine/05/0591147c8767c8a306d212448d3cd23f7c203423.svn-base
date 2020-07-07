@@ -1,0 +1,16 @@
+/**
+ * 工程圈
+ */
+export default [
+  {
+    path: '/layout',
+    name: 'layout',
+    component: () => import('../views/layout/layout.vue'),
+    children: [
+      {
+        path: '/article/publishArticle',
+        component: () => import('../views/article/publishArticle.vue')
+      }
+    ]
+  }
+]

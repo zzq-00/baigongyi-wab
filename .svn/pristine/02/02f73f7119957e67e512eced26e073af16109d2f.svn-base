@@ -1,0 +1,79 @@
+/**
+ * 封装axios模块
+ */
+import axios from 'axios'
+import { Message } from 'element-ui'
+
+axios.defaults.timeout = 0
+// axios.defaults.withCredentials = true
+// axios.defaults.baseURL = process.env.VUE_APP_API || window.location.origin
+axios.defaults.baseURL = process.env.NODE_ENV === 'development' ? '/proxyHeader' : process.env.VUE_APP_API
+
+// axios拦截器
+axios.interceptors.request.use(
+  config => {
+    if (window.localStorage.token) config.headers.Authentication = window.localStorage.token
+    if (!config.url.includes('aliyuncs')) config.withCredentials = true
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// 返回状态判断
+axios.interceptors.response.use(
+  response => {
+    if (response.data && response.data.code !== 200) {
+      Message.error(response.data.message)
+      return Promise.reject(response.data)
+    }
+    return response.data
+  },
+  error => {
+    if (error.response.status === 401) {
+      if (error.response.data.code === 403) {
+        // token非法或者要求登录  返回403
+        Message.error(error.response.data.message)
+        setTimeout(() => {
+          window.localStorage.clear()
+          window.location.replace('/login?redirectUrl=' + window.location.href)
+        }, 1000)
+      } else if (error.response.data.code === 401) {
+        if (window.localStorage.token.startsWith('noLogin.')) {
+          // token过期  返回401
+          refreshToken()
+        } else {
+          window.location.replace('/login?redirectUrl=' + window.location.href)
+        }
+      }
+    }
+    return Promise.reject(error.message)
+  }
+)
+
+async function refreshToken () {
+  const { data: token } = await axios.post('/refreshToken')
+  window.localStorage.token = token
+  window.location.reload()
+}
+
+let apiObject = {
+  // 获取授权码
+  aliyunConfig: () => axios.get('aliyun/config'),
+  // 获取上传token
+  getUploadToken: () => axios.get('/qiniu/config'),
+  getIndexPageData: () => axios.get('/index')
+}
+// 自动导入当前文件夹下的文件内容，合并为一个Object。
+// 不太好，以后放弃
+const apiFiles = require.context('.', false, /\.js$/)
+apiFiles.keys().forEach(key => {
+  if (key === './index.js') return
+  apiObject = {
+    ...apiObject,
+    ...apiFiles(key).default
+  }
+})
+
+export default apiObject

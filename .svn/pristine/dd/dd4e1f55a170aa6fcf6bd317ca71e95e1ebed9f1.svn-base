@@ -1,0 +1,298 @@
+<template>
+    <div class="Collect" >
+    <!-- <el-button @click="click">批量管理</el-button> -->
+    <button class="click-btn" @click="manageStatus=!manageStatus" v-if="manageStatus">批量管理</button>
+    <div v-if="manageStatus" >
+      <div class="list" v-for="item in collectData" :key="item.id" >
+        <img :src="item.image" class="img" @click="goDetail(item.id,item.price)">
+        <div class="text">
+          <div class="headline">
+            <h3>{{item.name}}</h3>
+            <span v-if="nowIndex===3" class="article">文章内容</span>
+          </div>
+          <div class="tag">
+            <span :class="item.price>0 ? 'red' : 'price'">{{item.price>0 ? '￥' + item.price : '免费'}}</span>
+            <span class="video" v-if="nowIndex===0 ">{{item.type===1 ? '音频': '视频'}}</span>
+            <span class="video" v-if="nowIndex===1">{{item.upToTime}}</span>
+          </div>
+          <div class="botTag"  v-if="nowIndex!==3">
+            <p>{{item.auditTime}}</p>
+            <el-button size="mini" v-if="nowIndex===0" @click="changeCollect(item.id)">{{item.collectStatus ? '取消收藏' : '收藏'}}</el-button>
+            <el-button size="mini" v-if="nowIndex===1" @click="changeCollect(item.id)">{{item.hasCollected ? '取消收藏' : '收藏'}}</el-button>
+          </div>
+          <div v-if="nowIndex===3" class="artIcon">
+            <p><span>名字  | </span><span>发布时间</span></p>
+            <p><img src="@/assets/images/good.png" alt=""><span>1200</span></p>
+            <p><img src="@/assets/images/collection.png" alt=""><span>100</span></p>
+            <p><img src="@/assets/images/xiaoxi.png" alt=""><span>100</span></p>
+            <p><img src="@/assets/images/fenxiang.png" alt=""><span>100</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- <p v-if="loading">加载中...</p>
+    <p v-if="noMore">没有更多了</p> -->
+    <div class="video-list" v-else>
+      <p class="titles">
+        <span>全部</span>
+        <button class="click-btn" @click="cancelCollection()">取消收藏</button>
+        <button class="click-btn" @click="manageStatus=true">退出批量管理</button>
+      </p>
+      <el-table class="video-tables" ref="multipleTable" :data="collectData" style="width: 100%" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" label="" width="30">
+        </el-table-column>
+        <el-table-column label="" width="200">
+          <template slot-scope="scope">
+            <img :src="scope.row.image" alt="" class="video-imgs">
+          </template>
+        </el-table-column>
+        <el-table-column label="">
+          <template slot-scope="scope">
+            <div class="text">
+              <div class="headline">
+                <h3>{{scope.row.name}}</h3>
+              </div>
+              <div class="tag">
+                <span :class="scope.row.price>0 ? 'red' : 'price'">{{scope.row.price>0 ? '￥' + scope.row.price : '免费'}}</span>
+                <span class="video" v-if="nowIndex===0">{{scope.row.type===1 ? '音频': '视频'}}</span>
+                <span class="video" v-if="nowIndex===1">{{scope.row.upToTime}}</span>
+              </div>
+              <div class="botTag">
+                <p>{{scope.row.auditTime}}</p>
+                <el-button size="mini" v-if="nowIndex===0">{{scope.row.collectStatus ? '取消收藏' : '收藏'}}</el-button>
+                <el-button size="mini" v-if="nowIndex===1">{{scope.row.hasCollected ? '取消收藏' : '收藏'}}</el-button>
+              </div>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'CollectCom',
+  props: {
+    collectData: Array,
+    nowIndex: Number
+  },
+  data () {
+    return {
+      manageStatus: true, // 是否是勾选状态
+      multipleSelection: [],
+      tableData: [
+        {
+          imgs: require('@/assets/images/live.png'),
+          name: '1Z203030建设工程项目进度计划的编制和调整方法（一）',
+          auditTime: '2019-20-20',
+          type: '视频',
+          price: '免费'
+        }
+      ],
+      // 收藏
+      collectParams: {
+        objId: '',
+        objType: ''
+      },
+      loading: false
+    }
+  },
+  computed: {
+    noMore () {
+      return this.count >= 20
+    },
+    disabled () {
+      return this.loading || this.noMore
+    }
+  },
+  methods: {
+    // 收藏
+    changeCollect (id) {},
+    // 跳转详情
+    goDetail (id, price) {
+      if (this.nowIndex === 0) { // 课程
+        if (price === 0) {
+          this.$router.push(`/freecourseDetail/${id}`)
+        } else {
+          this.$router.push(`/myBuy/courseDetail/${id}`)
+        }
+      } else if (this.nowIndex === 1) { // 专栏
+        if (price === 0) {
+          this.$router.push(`/freecolumnDetail/${id}`)
+        } else {
+          this.$router.push(`/myBuy/columnDetail/${id}`)
+        }
+      } else if (this.nowIndex === 2) { // 直播
+
+      } else { // 文章
+
+      }
+    },
+    // 批量管理
+    handleSelectionChange (val) {
+      this.multipleSelection = val
+    },
+    load () {
+      this.loading = true
+      // setTimeout(() => {
+      //   this.count += 2
+      //   this.loading = false
+      // }, 2000)
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .Collect {
+    // height: 100vh;
+    .click-btn {
+      padding: 0 16px;
+      height: 32px;
+      line-height: 32px;
+      background: rgba(255, 255, 255, 1);
+      border: 1px solid rgba(153, 153, 153, 1);
+      border-radius: 5px;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .list:after{
+      position: absolute;
+      content: '';
+      display: block;
+      height: 1px;
+      width:360px;
+      background-color: #ddd;
+      right: -20px;
+      bottom: 0px;
+    }
+    .list{
+      position: relative;
+      height: 146px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      .img {
+        width: 200px;
+        height: 118px;
+        border-radius: 5px;
+      }
+    }
+    .video-list {
+      position: relative;
+      .titles {
+        position: absolute;
+        top: 7px;
+        left: 21px;
+        z-index: 1;
+        > span {
+          height: 14px;
+          font-size: 14px;
+          color: rgba(74, 74, 74, 1);
+          margin-right: 30px;
+        }
+      }
+      .video-tables {
+        .video-imgs {
+          width: 200px;
+          height: 118px;
+          border-radius: 10%;
+        }
+        .el-table__header {
+          .el-table-column--selection {
+            .cell {
+              padding: 0;
+            }
+          }
+        }
+        .cell {
+          padding: 0;
+        }
+        /deep/td,
+        /deep/th.is-leaf {
+          border: none;
+        }
+      }
+    }
+    .text {
+      width: 100%;
+      height: 100%;
+      padding: 20px 0 12px 15px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      .headline {
+        h3 {
+          font-size: 16px;
+          color:#333;
+          font-weight:bold;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 1;
+          overflow: hidden;
+        }
+        h3:hover {
+          cursor: pointer;
+          color: #E23732;
+        }
+        .article {
+          font-size: 14px;
+          color:#666;
+          margin-top: 10px;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          overflow: hidden;
+        }
+      }
+      .tag {
+        width: 100%;
+        .video {
+          padding: 3px 10px;
+          border-radius: 6px;
+          background-color: #F2F2F2;
+          font-size: 12px;
+        }
+        .price {
+          color:#7355F6;
+          font-size: 16px;
+          margin-right: 20px;
+        }
+        .red {
+          font-size: 16px;
+          color: #f00;
+          margin-right: 20px;
+        }
+      }
+      .botTag {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        p{
+          font-size: 12px;
+          color:#999;
+        }
+      }
+      .artIcon {
+        width: 100%;
+        color:#999;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        p {
+          color:#999;
+          img {
+            vertical-align: bottom;
+            width: 16px;
+            height: 16px;
+          }
+        }
+      }
+    }
+  }
+</style>

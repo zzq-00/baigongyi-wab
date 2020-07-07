@@ -1,0 +1,254 @@
+<template>
+  <div class="Live">
+    <div class="hint">提示：直播回放不支持编辑和下架</div>
+    <!-- <button class="click-btn" @click="manageStatus=!manageStatus" v-if="manageStatus">批量管理</button> -->
+    <div v-if="manageStatus">
+      <div class="list">
+        <img src="@/assets/images/live.png" >
+        <div class="text">
+          <div class="headline">
+            <h3>1Z203030建设工程项目进度计划的编制和调整方法（一）</h3>
+            <p>2019-20-20</p>
+          </div>
+          <div class="video">视频</div>
+          <div class="price">免费</div>
+        </div>
+      </div>
+    </div>
+    <!-- <div class="video-list" v-else>
+      <p class="titles">
+        <span>全部</span>
+        <button class="click-btn" @click="cancelCollection()">取消收藏</button>
+        <button class="click-btn" @click="manageStatus=true">退出批量管理</button>
+      </p>
+      <el-table class="video-tables" ref="multipleTable" :data="tableData" style="width: 100%" @selection-change="handleSelectionChange">
+        <el-table-column type="selection" label="" width="30">
+        </el-table-column>
+        <el-table-column label="" width="200">
+          <template slot-scope="scope">
+            <img :src="scope.row.image" alt="" class="video-imgs">
+          </template>
+        </el-table-column>
+        <el-table-column label="">
+          <template slot-scope="scope">
+            <div class="text">
+              <div class="headline">
+                <h3>{{scope.row.name}}</h3>
+                <p>{{scope.row.auditTime}}</p>
+              </div>
+              <div class="video">{{scope.row.type}}</div>
+              <div class="price">{{scope.row.price}}</div>
+            </div>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div> -->
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  data () {
+    return {
+      manageStatus: true, // 是否是勾选状态
+      tableData: [
+        {
+          imgs: require('@/assets/images/live.png'),
+          name: '1Z203030建设工程项目进度计划的编制和调整方法（一）',
+          auditTime: '2019-20-20',
+          type: '视频',
+          price: '免费'
+        },
+        {
+          imgs: require('@/assets/images/live.png'),
+          name: '1Z203030建设工程项目进度计划的编制和调整方法（二）',
+          auditTime: '2019-20-20',
+          type: '视频',
+          price: '免费'
+        },
+        {
+          imgs: require('@/assets/images/live.png'),
+          name: '1Z203030建设工程项目进度计划的编制和调整方法（三）',
+          auditTime: '2019-20-20',
+          type: '视频',
+          price: '免费'
+        },
+        {
+          imgs: require('@/assets/images/live.png'),
+          name: '1Z203030建设工程项目进度计划的编制和调整方法（四）',
+          auditTime: '2019-20-20',
+          type: '视频',
+          price: '免费'
+        }
+      ],
+      multipleSelection: [],
+      params: {
+        asc: true,
+        keywords: '',
+        orderBy: '',
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          accountId: '',
+          auditRemark: '',
+          description: '',
+          homeImage: '',
+          originalFile: '',
+          price: '',
+          title: '',
+          url: ''
+        },
+        searchKey: ''
+      }
+    }
+  },
+  methods: {
+    // 收藏直播列表
+    liveHomeCollectionList () {
+      api
+        .liveHomeCollectionList(this.params)
+        .then(res => {
+          this.tableData = res.data.records
+        })
+        .catch(res => {})
+    },
+    // 取消收藏
+    cancelCollection () {
+      const data = {
+        objId: '',
+        objType: 0
+      }
+      api
+        .cancelCollect(data)
+        .then(res => {
+          this.$message({
+            message: '取消成功',
+            type: 'success'
+          })
+        })
+        .catch(res => {
+          this.$message.error(res.message)
+        })
+      this.liveHomeCollectionList()
+      console.log(this.multipleSelection, 'multipleSelection')
+    },
+    handleSelectionChange (val) {
+      this.multipleSelection = val
+    }
+  },
+  mounted () {
+    this.liveHomeCollectionList()
+  }
+}
+</script>
+
+<style lang="less"  scope>
+.Live {
+  height: 100vh;
+  padding: 10px 20px 0;
+  .click-btn {
+    padding: 0 16px;
+    height: 32px;
+    line-height: 32px;
+    background: rgba(255, 255, 255, 1);
+    border: 1px solid rgba(153, 153, 153, 1);
+    border-radius: 5px;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+  .hint {
+    color: #e23732;
+    font-size: 12px;
+  }
+  .list:after {
+    position: absolute;
+    content: '';
+    display: block;
+    height: 1px;
+    width: 360px;
+    background-color: #ddd;
+    right: -20px;
+    bottom: 0px;
+  }
+  .list {
+    position: relative;
+    height: 146px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    img {
+      width: 200px;
+      height: 118px;
+      border-radius: 5%;
+    }
+  }
+  .video-list {
+    position: relative;
+    .titles {
+      position: absolute;
+      top: 7px;
+      left: 21px;
+      z-index: 1;
+      > span {
+        height: 14px;
+        font-size: 14px;
+        color: rgba(74, 74, 74, 1);
+        margin-right: 30px;
+      }
+    }
+    .video-tables {
+      .video-imgs {
+        width: 200px;
+        height: 118px;
+      }
+      .el-table__header {
+        .el-table-column--selection {
+          .cell {
+            padding: 0;
+          }
+        }
+      }
+      .cell {
+        padding: 0;
+      }
+      /deep/td,
+      /deep/th.is-leaf {
+        border: none;
+      }
+    }
+  }
+  .text {
+    height: 100%;
+    padding: 20px 0 12px 20px;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    .headline {
+      h3 {
+        font-size: 16px;
+        color: #333;
+        font-weight: bold;
+      }
+      p {
+        margin-top: 5px;
+        color: #999;
+        font-size: 14px;
+      }
+    }
+    .video {
+      padding: 3px 10px;
+      border-radius: 6px;
+      background-color: #f2f2f2;
+      font-size: 12px;
+    }
+    .price {
+      color: #7355f6;
+      font-size: 16px;
+    }
+  }
+}
+</style>

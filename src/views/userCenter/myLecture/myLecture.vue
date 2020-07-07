@@ -1,0 +1,315 @@
+<template>
+  <div class="myLecture">
+    <div class="content">
+      <div class="tabChange clearfix">
+        <span
+          v-for="(item,index) in tabsColumn"
+          :key="index"
+          @click="toggleTabs(index)"
+          :class="{active:index==nowIndex}"
+        >{{item}}</span>
+      </div>
+      <div class="list-box">
+        <courseList
+          :dataList="dataList"
+          @getCurrentPage="getCurrentPage"
+          @courseDetail="courseDetail"
+          @downCourse="downCourse"
+          @onDelete="onDeleteCourse"
+          v-show="nowIndex===0&&dataList.course.total>0"
+        ></courseList>
+        <columnList
+          :dataList="dataList"
+          @getCurrentPage="getCurrentPage"
+          @columnDetail="columnDetail"
+          @downColumn="downColumn"
+          @onDelete="onDeleteColumn"
+          v-show="nowIndex===1&&dataList.column.total>0"
+        ></columnList>
+      </div>
+      <div
+        class="no-data-style"
+        v-if="(dataList.course.total==0&&nowIndex==0)||(dataList.column.total==0&&nowIndex==1)"
+      >
+        <img src="@/assets/images/No-courses.png" alt v-if="nowIndex==0" />
+        <img src="@/assets/images/No-column.png" alt v-if="nowIndex==1" />
+        <p>{{nowIndex==0?'暂无课程':'暂无专栏'}}</p>
+      </div>
+      <!-- 创建 -->
+      <div class="create" v-show="nowIndex===0">
+        <el-button type="danger" @click="pushEditCourse">创建课程</el-button>
+      </div>
+      <div class="create" v-show="nowIndex===1">
+        <el-button type="danger" @click="pushEditColumn">创建专栏</el-button>
+      </div>
+    </div>
+    <perfectTeacherInfo :dialogVisible="dialogVisible"></perfectTeacherInfo>
+  </div>
+</template>
+
+<script>
+import courseList from "@/components/myCourseList";
+import columnList from "@/components/myColumnList";
+import perfectTeacherInfo from "@/components/perfectTeacherInfo";
+import api from "@/fetch";
+export default {
+  name: "MyLecture",
+  components: {
+    courseList,
+    columnList,
+    perfectTeacherInfo
+  },
+  data() {
+    return {
+      dialogVisible: false,
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ["课程", "专栏"],
+      dataList: {
+        course: {},
+        column: {}
+      },
+      // 课程参数
+      courseParams: {
+        pageNum: 1,
+        pageSize: 6,
+        paramObject: {
+          recommendFlag: 2
+        }
+      },
+      // 专栏参数
+      columnParams: {
+        pageNum: 1,
+        pageSize: 6,
+        paramObject: {}
+      }
+    };
+  },
+  created() {
+    this.getMyclassCourse();
+    this.$watch("nowIndex", (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.getMyclassCourse();
+      } else {
+        this.getMyclassColumn();
+      }
+    });
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs(index) {
+      this.$router.replace("/myLecture?activeIndex=" + index);
+      this.nowIndex = index;
+    },
+    // 课程
+    async getMyclassCourse() {
+      const res = await api.getMyclassCourse(this.courseParams);
+      this.dataList.course = res.data;
+    },
+    // 专栏
+    async getMyclassColumn() {
+      const res = await api.getMyclassColumn(this.columnParams);
+      this.dataList.column = res.data;
+    },
+    // 翻页
+    getCurrentPage(currentPage) {
+      if (this.nowIndex === 0) {
+        this.courseParams.pageNum = currentPage;
+        this.getMyclassCourse();
+      } else {
+        this.columnParams.pageNum = currentPage;
+        this.getMyclassColumn();
+      }
+    },
+
+    //创建课程
+    pushEditCourse() {
+      this.infoWasCompleteFn(() => {
+        if (this.dialogVisible == false) {
+          this.$router.push("/myLecture/editCourse");
+        }
+      });
+    },
+    //创建专栏
+    pushEditColumn() {
+      this.infoWasCompleteFn(() => {
+        if (this.dialogVisible == false) {
+          this.$router.push("/myLecture/editColumn");
+        }
+      });
+    },
+    // 跳转到---课程详情页--我的讲堂
+    courseDetail(courseItem) {
+      window.open(`/courseDetail/${courseItem.id}`);
+    },
+    // 跳转到---专栏详情页--我的讲堂
+    columnDetail(columnItem) {
+      window.open(`/columnDetail/${columnItem.id}`);
+    },
+    // 下架专栏
+    downColumn(id) {
+      this.$confirm(
+        "下架后，将不保留专栏中的课程，再次发布需重新审核，是否确认下架该专栏?",
+        {
+          confirmButtonText: "确定",
+          cancelButtonText: "取消",
+          type: "warning"
+        }
+      ).then(() => {
+        api.downColumn(id).then(() => {
+          this.$message({
+            type: "success",
+            message: "下架成功!"
+          });
+          this.getMyclassColumn();
+        });
+      });
+    },
+    // 删除专栏
+    onDeleteColumn(id) {
+      this.$confirm("确定删除该专栏?", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      }).then(() => {
+        api.delColumn(id).then(() => {
+          this.$message({
+            type: "success",
+            message: "删除成功!"
+          });
+          this.getMyclassColumn();
+        });
+      });
+    },
+    // 下架课程
+    downCourse(id) {
+      this.$confirm("下架后，再次发布需重新审核，是否确认下架该课程?", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      }).then(() => {
+        api.downCourse(id).then(() => {
+          this.$message({
+            type: "success",
+            message: "下架成功!"
+          });
+          this.getMyclassCourse();
+        });
+      });
+    },
+    // 删除课程
+    onDeleteCourse(id) {
+      this.$confirm("确定删除该课程?", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning"
+      }).then(() => {
+        api.delCourse(id).then(() => {
+          this.$message({
+            type: "success",
+            message: "删除成功!"
+          });
+          this.getMyclassCourse();
+        });
+      });
+    },
+    //判断讲师信息是否完善
+    infoWasCompleteFn(fun) {
+      api.myLecturerInfo(this.$store.state.userInfo.accountId).then(res => {
+        if (res.data) {
+          if(!res.data.teacherInfoWasComplete){
+            if(res.data.applyType == 3 && res.data.status != 1002){
+              fun();
+              return;
+            }
+            this.dialogVisible = true;
+          } else {
+            fun()
+          }
+        }
+      })
+    }
+  },
+  beforeRouteEnter(to, from, next) {
+    if (to.query.activeIndex === "1") {
+      next(vm => (vm.nowIndex = 1));
+    } else {
+      next();
+    }
+  }
+};
+</script>
+
+<style lang="less" scoped>
+.myLecture {
+  box-sizing: border-box;
+  background-color: #fff;
+  .content {
+    position: relative;
+    min-height: 500px;
+    .tabChange {
+      font-size: 16px;
+      padding: 20px 20px 9px 20px;
+      border-bottom: 1px solid #dddddd;
+      > span {
+        cursor: pointer;
+        margin-right: 20px;
+      }
+      .active {
+        position: relative;
+        color: #e43c31;
+      }
+      .active::after {
+        content: "";
+        display: inline-block;
+        position: absolute;
+        bottom: -10px;
+        left: 5px;
+        height: 3px;
+        width: 24px;
+        background-color: #e43c31;
+        border-radius: 2px;
+      }
+    }
+    .list-box {
+      margin-top: 20px;
+      padding: 0 20px;
+    }
+    .no-data-style {
+      text-align: center;
+      margin-top: 82px;
+      p {
+        margin-top: 10px;
+        height: 14px;
+        line-height: 14px;
+        font-size: 15px;
+        color: rgba(188, 188, 196, 1);
+      }
+    }
+    // 创建
+    .create {
+      position: absolute;
+      top: 8px;
+      right: 20px;
+      /deep/.el-button {
+        width: 90px;
+        height: 34px;
+        line-height: 34px;
+        padding: 0;
+        span {
+          margin: 0;
+          font-size: 14px;
+        }
+      }
+    }
+    .create::after {
+      content: "";
+      display: block;
+      height: 2px;
+      background-color: #f4f4f4;
+      position: absolute;
+      bottom: -10px;
+      right: -20px;
+    }
+  }
+}
+</style>

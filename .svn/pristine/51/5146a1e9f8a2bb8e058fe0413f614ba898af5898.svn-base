@@ -1,0 +1,15 @@
+import { post, get } from 'axios'
+
+/**
+ * 讲堂
+ */
+export default {
+  // 讲师
+  getTeacher (params) {
+    return post('/lecturer/list', params)
+  },
+  // 讲师--id查询
+  getTeacherDetail (id) {
+    return get(`/lecturer/${id}`)
+  }
+}

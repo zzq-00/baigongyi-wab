@@ -1,0 +1,259 @@
+<template>
+    <el-scrollbar class="scroll-wrap">
+        <ul class="qa-list-box" v-infinite-scroll="loadArticle" infinite-scroll-disabled="disabled">
+            <li v-for="(item,index) in qaList" :key="index">
+                <p class="qa-box-title" @click="gotoDetails(item,'questions')">{{item.title}}</p>
+                <div class="qa-person-info">
+                    <img :src="item.avatar" alt="" @click="gotoUser(item.accountId)">
+                    <div>
+                        <p @click="gotoUser(item.accountId)" class="answer-name">{{item.userName}}</p>
+                        <p class="answer-time">{{item.lastAnswerTime}}</p>
+                    </div>
+                    <button class="already" v-if="item.concernStatus==1&&loginaccountId!=item.answerAccountId" @click="follow('1',item,index)">已关注</button>
+                    <button class="not" v-if="item.concernStatus==2&&loginaccountId!=item.answerAccountId" @click="follow('2',item,index)">关注</button>
+                    <button class="already" v-if="item.concernStatus==3&&loginaccountId!=item.answerAccountId" @click="follow('3',item,index)">互相关注</button>
+                </div>
+                <div class="qa-content" @click="gotoDetails(item,'qa')" v-if="item.answerCount!=0">{{item.stripHtmlContent}}</div>
+                <p class="tagging" v-if="item.answerCount!=0">
+                    <span>{{item.likeCount}}个赞</span>
+                    <span>·</span>
+                    <span>{{item.commentCount}}条评论</span>
+                </p>
+                <p class="no-answer" v-if="item.answerCount==0">暂无回答...</p>
+            </li>
+        </ul>
+        <p v-if="loading" class="nomore-data">加载中...</p>
+        <p v-if="noMore" class="nomore-data">没有更多了</p>
+    </el-scrollbar>
+</template>
+<script>
+import api from '@/fetch'
+export default {
+    name: 'questions',
+    components: {},
+    data() {
+        return {
+            qaParams: {
+                pageNum: 1,
+                pageSize: 10,
+                "keywords": ""
+            },
+            qaList: [], //问答列表
+            fabulousUser: [], //最赞用户列表
+            loginaccountId: '', //登录人id
+            loading: false,
+            totals: 0,
+            attentionParams: {
+                objId: this.$route.params.id,
+                objType: 6
+            }
+        }
+    },
+    computed: {
+        noMore() {
+            return this.qaList.length >= this.totals
+        },
+        disabled() {
+            return this.loading || this.noMore
+        }
+    },
+    watch: {
+        $route(to, from) {
+            this.qaList = [];
+            this.getQuestionList(this.$route.query.id)
+        }
+    },
+    methods: {
+        // 数据瀑布流
+        loadArticle() {
+            this.getQuestionList(this.$route.query.id)
+        },
+        gotoUser(accountId) {
+            // 本人
+            if (accountId == this.loginaccountId) {
+                let routeUrl = this.$router.resolve('/myHome/myReply')
+                window.open(routeUrl.href, '_blank')
+            } else {
+                alert('他人主页暂未完成')
+                // this.$router.push()
+            }
+        },
+        gotoDetails(item, val) {
+            // qa 点击回答内容进入回答详情  questions 点击问题标题进入问题详情
+            let routeUrl
+            if (item.accountId == this.loginaccountId) {
+                if (val == 'qa') {
+                    routeUrl = this.$router.resolve({ path: `/myReplyDetails/${item.id}`, query: { detailsOwn: 'own' } })
+                } else {
+                    routeUrl = this.$router.resolve({ path: `/questionsDetails/${item.id}`, query: { own: 'own' } })
+                }
+            } else {
+                if (val == 'qa') {
+                    routeUrl = this.$router.resolve({ path: `/myReplyDetails/${item.id}`, query: { detailsOwn: 'Others' } })
+                } else {
+                    routeUrl = this.$router.resolve({ path: `/questionsDetails/${item.id}`, query: { own: 'Others' } })
+                }
+            }
+            window.open(routeUrl.href, '_blank')
+        },
+        getQuestionList(id) {
+            this.loading = true
+            this.qaParams.keywords = id;
+            this.qaParams.pageNum = 1;
+            //if (this.qaParams.pageNum != 0) {
+                api
+                    .tagsQuestionList(this.qaParams)
+                    .then(res => {
+                        this.loading = false
+                        this.totals = res.data.total
+                        this.qaList = this.qaList.concat(res.data.records)
+                        this.qaParams.pageNum++;
+                        this.qaList.map(itmem => {
+                            if (item.stripHtmlContent.length > 150) {
+                                item.stripHtmlContent = item.stripHtmlContent.substring(0, 150) + '...'
+                            }
+                        })
+                    })
+                    .catch(res => { })
+            //}
+        },
+        // 关注
+        follow(val, item, index) {
+            // val:1:已关注;2:关注;3:互相关注;
+            if (!this.loginaccountId) {
+                let routeUrl = this.$router.resolve('/login')
+                window.open(routeUrl.href, '_blank')
+            } else {
+                let objId = item.answerAccountId
+                let objType = 6
+                if (val == 1) {
+                    api.delAttention({ objId: objId, objType: objType }).then(res => {
+                        item.concernStatus = 2
+                    })
+                } else if (val == 2) {
+                    api.addAttention({ objId: objId, objType: objType }).then(res => {
+                        item.concernStatus = 1
+                    })
+                } else if (val == 3) {
+                    api.delAttention({ objId: objId, objType: objType }).then(res => {
+                        item.concernStatus = 2
+                    })
+                }
+            }
+        }
+    },
+    mounted() {
+        this.loginaccountId = JSON.parse(window.localStorage.getItem('userInfo')).accountId
+        this.getQuestionList(this.$route.query.id) //问答列表
+    }
+}
+</script>
+<style lang="less" scoped>
+.qa-list-box {
+    li {
+        padding: 20px;
+        border-bottom: 1px solid #dddddd;
+        .qa-box-title {
+            max-width: 740px;
+            overflow: hidden;
+            height: 17px;
+            line-height: 17px;
+            font-size: 16px;
+            font-weight: bold;
+            color: rgba(51, 51, 51, 1);
+            cursor: pointer;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+        .qa-box-title:hover {
+            color: #e23732;
+        }
+        .qa-person-info {
+            margin-top: 10px;
+            img {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                margin-right: 10px;
+                float: left;
+                cursor: pointer;
+            }
+            div {
+                display: inline-block;
+                .answer-name {
+                    height: 12px;
+                    line-height: 12px;
+                    font-size: 14px;
+                    font-weight: 400;
+                    color: rgba(74, 74, 74, 1);
+                    margin-top: 4px;
+                }
+                .answer-name:hover {
+                    color: #e23732;
+                    cursor: pointer;
+                }
+                .answer-time {
+                    margin-top: 11px;
+                    height: 9px;
+                    line-height: 9px;
+                    font-size: 12px;
+                    font-weight: 400;
+                    color: rgba(153, 153, 153, 1);
+                }
+            }
+            button {
+                padding: 0 13px;
+                float: right;
+                height: 34px;
+                border-radius: 5px;
+                background-color: #ffffff;
+                cursor: pointer;
+            }
+            .not {
+                border: 1px solid #e23732;
+                color: #e23732;
+            }
+            .already {
+                border: 1px solid #666666;
+                color: #666666;
+            }
+        }
+        .qa-content {
+            margin-top: 12px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            line-height: 19px;
+            max-height: 55px;
+            cursor: pointer;
+            overflow: hidden;
+        }
+        .tagging {
+            margin-top: 10px;
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(153, 153, 153, 1);
+            span:nth-child(2) {
+                margin: 0 3px;
+            }
+        }
+        .no-answer {
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(153, 153, 153, 1);
+            margin-top: 10px;
+        }
+    }
+}
+
+.nomore-data {
+    text-align: center;
+    margin: 20px 0 10px;
+    color: #999;
+}
+</style>
+

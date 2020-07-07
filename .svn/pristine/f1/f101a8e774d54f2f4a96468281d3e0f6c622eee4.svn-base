@@ -1,0 +1,155 @@
+<template>
+    <div class='seeInformation'>
+        <ul>
+            <li>
+                <span>讲师姓名 </span>
+                <span>讲师姓名</span>
+            </li>
+            <li>
+                <span>讲师头像</span>
+                <img src="" alt="讲师头像" class='hov'>
+                <em class='hov' @click='dialogTableVisible = true'>调整头像位置</em>
+            </li>
+            <li>
+                <span>身份证明</span>
+                <span>身份证</span>
+            </li>
+            <li>
+                <span>手持证件正面照</span>
+                <span>身份证</span>
+            </li>
+            <li>
+                <span>手持证件反面照</span>
+                <span>身份证</span>
+            </li>
+            <li>
+                <span>资格证书</span>
+                <span>身份证</span>
+            </li>
+            <li>
+                <span style='margin-top:4px;'>讲师简介</span>
+                <span style='width:calc(100% - 220px);line-height:24px;'>讲师简介</span>
+            </li>
+        </ul>
+        <div id='set-mask'>
+            <el-dialog title="调整头像位置" :visible.sync="dialogTableVisible">
+                <div class="cropper-img" style='height:380px;'>
+                    <vueCropper ref="cropper" :img="option.img" :outputSize="option.size" :outputType="option.outputType" :info="true" :full="option.full" :canMove="option.canMove" :canMoveBox="option.canMoveBox" :original="option.original" :autoCrop="option.autoCrop" :fixed="option.fixed" :fixedNumber="option.fixedNumber" :centerBox="option.centerBox" :infoTrue="option.infoTrue" :fixedBox="option.fixedBox" :autoCropWidth="option.autoCropWidth" :autoCropHeight='option.autoCropHeight' :maxImgSize="option.maxImgSize" @realTime="realTime"></vueCropper>
+                </div>
+                <p class="submit-img">
+                    <input type="button" class="btn btn-blue" value="保存" @click="finish('blob')">
+                </p>
+            </el-dialog>
+        </div>
+    </div>
+</template>
+<script>
+import { VueCropper } from "vue-cropper";
+export default {
+    components: {
+        VueCropper
+    },
+    data() {
+        return {
+            dialogTableVisible: false,
+            option: {
+                img: "https://dss0.bdstatic.com/70cFvHSh_Q1YnxGkpoWK1HF6hhy/it/u=216605226,3652567530&fm=111&gp=0.jpg",
+                outputSize: 0.8, //剪切后的图片质量（0.1-1）
+                full: false, //输出原图比例截图 props名full
+                outputType: "jpeg", // 裁剪生成图片的格式
+                canMove: true,
+                original: false,
+                canMoveBox: true,
+                autoCrop: true,
+                autoCropWidth: 300,
+                autoCropHeight: 300,
+                centerBox: true,
+                maxImgSize: 3000
+            },
+        }
+    },
+    methods: {
+        //上传图片（点击上传按钮）
+        finish(type) {
+            console.log(type, 'kkk');
+            this.dialogTableVisible = false;
+        },
+        // 实时预览函数
+        realTime(data) {
+            console.log(data, 'mmm');
+        },
+    }
+
+}
+</script>
+<style lang="less" scoped>
+.seeInformation {
+    height: calc(100vh - 220px); // background: #fff;
+    >ul {
+        padding-left: 32px;
+        padding-top: 32px;
+        >li {
+            vertical-align: top;
+            display: flex;
+            span {
+                display: block;
+                padding: 15px 0;
+                &:nth-child(1) {
+                    color: #666666;
+                    width: 98px;
+                    text-align: right;
+                    padding-right: 38px;
+                    font-weight: 500;
+                    vertical-align: top;
+                }
+                &:nth-child(2) {
+                    color: #333333;
+                    font-weight: 500;
+                }
+            }
+            img {
+                display: block;
+                width: 120px;
+                height: 120px;
+                margin-top: 15px;
+                margin-bottom: 15px;
+                border-radius: 50%;
+            }
+            em {
+                line-height: 140px;
+                padding-left: 20px;
+                color: #E23732;
+                text-decoration: underline;
+            }
+        }
+        .hov:hover {
+            cursor: pointer;
+        }
+    }
+}
+
+#set-mask {
+    /deep/.el-dialog {
+        width: 600px !important;
+    }
+}
+
+.el-dialog {
+    .submit-img {
+        display: flex;
+        justify-content: center;
+        input {
+            width: 120px;
+            height: 34px;
+            background: #E23732;
+            color: #fff;
+            margin-top: 20px;
+            border-radius: 5px;
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+}
+</style>
+

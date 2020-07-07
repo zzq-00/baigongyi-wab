@@ -1,0 +1,110 @@
+<!--关注的人-->
+<template>
+  <div class="Attention">
+    <div class="list">
+      <div class="photo">
+        <img src="../assets/images/cd-teacherPhoto.png" style="width：70px; height:70px;" />
+      </div>
+      <div class="info">
+        <div class="text">
+          <div>
+            <div>
+              <span class="name"> 易志亮 </span>
+              <el-tooltip class="item" effect="dark" content="显示讲师信息" placement="top">
+                <!-- @click="$router.push('/teacherHome/'+ id )" -->
+                <el-button class="hintMess" >讲师</el-button>
+              </el-tooltip>
+            </div>
+            <p><span>高级工程师  </span><span>  |  xxx公司</span></p>
+          </div>
+          <div class="describe">好答案不在对错，在于让心智获得更多自由！
+            好答案不在对错，在于让心智获得更多自由！
+            好答案不在对错，在于让心智获得更多自由！
+            好答案不在对错，在于让心智...
+          </div>
+          <div class="tag">
+            <i>{{num }} 回答</i> <i>{{num }} 文章</i> <i>{{num }} 关注者</i>
+          </div>
+        </div>
+        <div>
+          <el-button>关注</el-button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'Attention',
+  data () {
+    return {
+      num: 10 // 数据 后期修改
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.Attention {
+  height: 100vh;
+  padding: 0px 30px;
+  .list:after {
+    position: absolute;
+    content: '';
+    display: block;
+    width: 670px;
+    height: 1px;
+    background-color: #ddd;
+    right:-30px;
+    bottom:0;
+  }
+  .list {
+    position: relative;
+    padding: 20px 0;
+    height: 123px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    .info {
+      height: 133px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      .text {
+        height: 100%;
+        margin-left:20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .name {
+          font-size: 16px;
+          color: #4a4a4a;
+        }
+        .hintMess {
+          color: #CB860F;
+          font-size: 12px;
+          padding: 5px 10px;
+          margin-top: -5px;
+          margin-left: 10px;
+          background-color: #FAF3E7;
+          border:none;
+        }
+        p, .tag{
+          font-size: 12px;
+          color:#999;
+          i + i {
+            margin-left: 10px;
+          }
+        }
+        .describe {
+          font-size: 14px;
+          color:#666;
+        }
+      }
+    }
+  }
+}
+</style>

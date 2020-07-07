@@ -1,0 +1,79 @@
+<template>
+    <div class="main">
+        <div class="title">常见问题</div>
+        <p class="bold">一、什么是“金”？</p>
+        <p>金是百工驿平台的虚拟货币，“金”用于购买平台内的付费内容及支付悬赏。“金”只能消费，不能提现或转让。</p>
+
+        <p class="bold">二、充值的“金”会不会过期？</p>
+        <p>在百工驿平台的“金”不会过期，会一直存在账户中，您可随时使用。</p>
+
+        <p class="bold">三、为什么我无法充值？</p>
+        <p>1. 请确保您的手机网络正常。</p>
+        <p>2. 请确保您充值使用的Apple ID和下载百工驿App的Apple ID是同一个。</p>
+        <p>3. 检查APP购买项目的访问限制是否打开：</p>
+        <p>（步骤：设置－通用－限制），如下图</p>
+        <img :src="require('@/assets/images/applepay/applePay1.jpg')">
+        <p></p>
+        <p>4.iOS平台用户可参考<router-link to="/protocol/applePayHelp" class="link">&nbsp;充值流程说明</router-link>。</p>
+
+        <p class="bold">四、为什么我只能充值指定金额的“金”？</p>
+        <p>按照规定，充值时，只能选择预设好的充值金额。给你带来的不便敬请谅解。</p>
+
+        <p class="bold">五、为什么提示扣款成功，“金”却没有到账？</p>
+        <p>1. 请检查您当前账户和充值的账户是否一致，您可对照查看用户名或播放历史等信息。</p>
+        <p>2. 尝试退出APP，再打开进入“金”账户：</p>
+        <p>（步骤：我的一我的钱包一“金”余额－点击“找回未到账的金”）</p>
+        <p>3. 如果3小时后仍没有到账</p>
+        <p>请联系我们与客服直接沟通，我们会在第一时间为您解决</p>
+        <p>（步骤：我—设置—联系我们）</p>
+
+    </div>
+</template>
+<script>
+require('@/assets/js/lib-flexible/index.min.js')
+export default {
+    
+}
+</script>
+<style lang="less">
+body{
+    font-family: "PingFangSC-Regular";
+    min-width: 8.5rem !important;
+    max-width: 10rem !important;
+    margin: 0 auto;
+}
+.main {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    box-sizing: border-box;
+    padding: .35rem .35rem 0 .35rem;
+    overflow: hidden;
+    font-weight: 400;
+    background: #fff;
+    font-size: .37rem;
+    line-height: .53rem;
+    color: #666;
+    p{
+        font-size: .37rem;
+        margin-bottom: .4rem;
+    }
+    .title{
+        font-size: .4rem;
+        line-height: .64rem;
+        color: #333;
+        text-align: center;
+    }
+    .bold{
+        font-weight: 600;
+    }
+    .link{
+        color: #2878ff;
+    }
+    img{
+        display: block;
+        max-width: 80%;
+        margin: 0 auto;
+    }
+}
+</style>

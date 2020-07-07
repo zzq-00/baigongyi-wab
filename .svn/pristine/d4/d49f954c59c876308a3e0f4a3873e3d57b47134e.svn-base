@@ -1,0 +1,41 @@
+<template>
+  <div class="myLive">
+    <div class="title">{{isOwn?'我的直播':'他的直播'}}</div>
+    <div class="content">
+      <Live></Live>
+    </div>
+  </div>
+</template>
+
+<script>
+import Live from '@/components/Live'
+export default {
+  name: 'MyLive',
+  components: {
+    Live
+  },
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  data() {
+    return {}
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.myLive {
+  .title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+  }
+  .content {
+    background-color: #fff;
+  }
+}
+</style>

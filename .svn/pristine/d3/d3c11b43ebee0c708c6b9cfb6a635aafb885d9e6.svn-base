@@ -1,0 +1,92 @@
+<template>
+  <div>
+    <el-carousel height="336px" class="self-carousel" arrow="never" :interval="8000">
+      <el-carousel-item v-for="(item,index) in swiperImg" :key="index">
+        <a :href="item.url" target="_blank">
+        <img :src="item.img" alt="" height="100%" width="100%">
+        </a>
+      </el-carousel-item>
+    </el-carousel>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  data() {
+    return {
+      swiperImg: [],
+      swiperImg: [
+        { img: require('@/assets/images/index-banner1.png'),url: '/community?id=3632299a4a15913a043d39a5e5f781db', }, 
+        { img: require('@/assets/images/index-banner2.png'),url: '/engineering',}, 
+        { img: require('@/assets/images/index-banner3.png'),url:'/lectureRoom', }]
+    }
+  },
+  methods: {
+    getAllImg() {
+      api.getAllImg().then(res => {
+        this.swiperImg = res.dataList
+      })
+    }
+  },
+  mounted() {
+    // this.getAllImg()
+  }
+}
+</script>
+
+<style lang='less' scoped>
+.self-carousel {
+  img {
+    border-radius: 4px;
+  }
+}
+</style>
+<style type="text/css">
+/*改变的公共饿了么的轮播样式*/
+.self-carousel .el-carousel__arrow--right {
+  /* background: url('../assets/img/index-right-icon.png') no-repeat; */
+  width: 34px;
+  height: 70px;
+}
+.self-carousel .el-carousel__arrow--right:hover {
+  background-color: transparent;
+}
+.self-carousel .el-icon-arrow-right:before {
+  content: '';
+}
+.self-carousel .el-carousel__arrow--left {
+  /* background: url('../assets/img/index-left-icon.png') no-repeat; */
+  width: 34px;
+  height: 70px;
+}
+.self-carousel .el-carousel__arrow--left:hover {
+  background-color: transparent;
+}
+.self-carousel .el-icon-arrow-left:before {
+  content: '';
+}
+.self-carousel .el-carousel__button {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background-color: #bfbfbf;
+}
+.self-carousel .el-carousel__indicator.is-active button {
+  background-color: #fff;
+  opacity: 1;
+}
+.self-carousel .el-carousel__indicator + .el-carousel__indicator {
+  margin-left: 8px;
+  width: 10px;
+}
+.self-carousel .el-carousel__indicators {
+  right: 0;
+  left: initial;
+  bottom: 8px;
+}
+.self-carousel .el-carousel__indicators--horizontal {
+  transform: none;
+  margin-right: 18px;
+}
+</style>

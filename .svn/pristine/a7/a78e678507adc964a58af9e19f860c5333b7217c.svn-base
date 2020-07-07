@@ -1,0 +1,329 @@
+<template>
+  <div>
+    <div class='myTeacher_nav'>
+      <p>编辑个人资料</p>
+    </div>
+    <div class="fillInMessage">
+      <div class="fillInMessage_main">
+        <el-form
+          ref="ruleForm"
+          :model="ruleForm"
+          label-width="80px"
+          label-position="top"
+          :inline="true"
+          size="small"
+        >
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="用户名" required prop="nickName">
+                <el-input v-model="ruleForm.nickName"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="用户头像" required>
+                <div class="recommed">请上传本人真实照片。照片jpg/jpeg/png/bmp格式图片，最大4M，要求居中晰。</div>
+                <div class="upload-tx">
+                  <label for="TX">
+                    <span class="iconTx">
+                      <i class="el-icon-plus"></i>
+                    </span>
+                    <p>上传头像</p>
+                    <input id="TX" accept="image/*" type="file" @change="onFileChangeTX($event)" />
+                  </label>
+                  <img
+                    v-if="avatarImg || ruleForm.avatar"
+                    :src="avatarImg ? avatarImg : ruleForm.avatar"
+                  />
+                </div>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="职位" required prop="position">
+                <el-input v-model="ruleForm.position"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="公司" required prop="company">
+                <!-- prop="qualification"-->
+                <el-input v-model="ruleForm.company"></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+          <el-row :gutter="20">
+            <el-col :span="24">
+              <el-form-item label="个人介绍" required prop="introduction">
+                <div
+                  class="recommed"
+                  style="margin-left:0;margin-top:-10px;"
+                >填写职业技能，擅长的事情，喜欢的事情等，100字以内</div>
+                <el-input
+                  type="textarea"
+                  placeholder="请输入内容"
+                  v-model="ruleForm.introduction"
+                  maxlength="100"
+                  show-word-limit
+                ></el-input>
+              </el-form-item>
+            </el-col>
+          </el-row>
+        </el-form>
+      </div>
+
+      <div class="fillInMessage_footer">
+        <button @click="submitForm()">提交审核</button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  name: 'EditPersonal',
+  data () {
+    return {
+      ruleForm: {
+        nickName: '', // 昵称
+        avatar: '', // 头像
+        position: '', // 职位
+        company: '', // 公司
+        introduction: '' // 介绍
+      },
+      avatarImg: ''
+    }
+  },
+  created () {
+    this.getuserInfo()
+  },
+  methods: {
+    // 个人信息
+    async getuserInfo () {
+      const res = await api.userInfo(this.$store.state.user.accountId)
+      console.log(res)
+      this.ruleForm = res.data
+    },
+    // 提交
+    submitForm () {
+      this.$refs.ruleForm.validate(isOk => {
+        if (isOk) {
+
+        }
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .myTeacher_nav {
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #DDDDDD;
+    >p {
+      color: #4A4A4A;
+      font-size: 16px;
+    }
+    >button {
+      width: 120px;
+      height: 34px;
+      background: #E23732;
+      color: #fff;
+      margin-top: 8px;
+      border-radius: 5px;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    >div {
+      display: flex;
+      box-sizing: border-box;
+      >p {
+        >em {
+          width: 21px;
+          height: 21px;
+          border: 1px solid #E23732;
+          border-radius: 50%;
+          color: #FFFFFF;
+          display: inline-block;
+          background: #E23732;
+          margin-top: 14px;
+          line-height: 22px;
+          text-align: center;
+        }
+        >span {
+          font-weight: 500;
+          color: #333333;
+          padding-left: 10px;
+          display: inline-block;
+          margin-top: 14px;
+          line-height: 22px;
+        }
+      }
+      .redBorder {
+        em {
+          border: 1px solid #E23732;
+          color: #E23732;
+          background: #fff;
+        }
+      }
+      >span {
+        display: inline-block;
+        height: 2px;
+        width: 40px;
+        background: #666666;
+        margin: 24px 10px 0;
+      }
+    }
+  }
+  .fillInMessage {
+    overflow-x: hidden;
+    padding: 12px 32px;
+    display: flex;
+    flex-direction: column;
+    /deep/ .el-form {
+      .el-form-item__label {
+        line-height: 14px;
+        padding-bottom: 12px !important;
+      }
+      .el-form-item__label:before {
+        margin-right: 2px;
+        color: #e23732;
+      }
+      .el-input {
+        width: 260px;
+        height: 30px;
+      }
+      .el-input__inner {
+        border-radius: 0;
+      }
+      .el-form-item {
+        position: relative;
+        width: 100%;
+      }
+      .el-textarea__inner {
+        height: 150px;
+      }
+      .recommed {
+        font-size: 12px;
+        color: #999999;
+        margin-top: -35px;
+        margin-left: 80px;
+      }
+      .recommedRinght {
+        position: absolute;
+        left: 150px;
+        top: 50px;
+        width: 280px;
+        line-height: 24px;
+      }
+      .upload-tx {
+        width: 120px;
+        height: 120px;
+        position: relative;
+        > label {
+          display: block;
+          width: 100%;
+          height: 120px;
+          background: #dddddd;
+          border: 1px solid #eeeeee;
+          border-radius: 10px;
+          position: relative;
+          > .iconTx {
+            display: inline-block;
+            width: 28px;
+            height: 28px;
+            background: #e23732;
+            color: #fff;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 28px;
+            position: absolute;
+            left: 50%;
+            margin-left: -14px;
+            top: 42px;
+          }
+          > input {
+            width: 100%;
+            height: 120px;
+            background: red;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            z-index: 99;
+            &:hover {
+              cursor: pointer;
+            }
+          }
+          > p {
+            position: absolute;
+            color: #4a4a4a;
+            top: 80px;
+            left: 32px;
+          }
+        }
+        > img {
+          width: 100%;
+          height: 120px;
+          border-radius: 10px;
+          position: absolute;
+          left: 0;
+          top: 0;
+        }
+      }
+      .upload-sfz {
+        width: 200px;
+        > label {
+          > p {
+            left: 51px;
+          }
+        }
+      }
+    }
+  }
+
+  .fillInMessage_main {
+    flex: 1;
+  }
+
+  .fillInMessage_footer {
+    width: 100%;
+    height: 50px;
+    border-top: 1px solid #dddddd;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    button {
+      width: 90px;
+      height: 34px;
+      color: #fff;
+      background: #e23732;
+      border-radius: 5px;
+      box-sizing: border-box;
+      border: 1px solid #e23732;
+      &:nth-child(2) {
+        margin-left: 5px;
+      }
+      &:hover {
+        cursor: pointer;
+      }
+    }
+    .write {
+      background: #fff;
+      border: 1px solid #dddddd;
+      color: #4a4a4a;
+      margin-right: 5px;
+    }
+  }
+</style>

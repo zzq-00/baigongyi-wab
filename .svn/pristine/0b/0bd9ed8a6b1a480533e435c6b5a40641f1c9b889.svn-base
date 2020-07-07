@@ -1,0 +1,10 @@
+import router from '@/router'
+import api from '@/fetch'
+
+router.beforeEach(async (to, from, next) => {
+  if (!window.localStorage.token) {
+    const { data: token } = await api.refreshToken()
+    window.localStorage.token = token
+  }
+  next()
+})

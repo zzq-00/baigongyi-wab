@@ -1,0 +1,26 @@
+<template>
+  <div class="myQuestion">
+    <div class="title">我的提问</div>
+    <div class="content"></div>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style lang="less" scope>
+  .myQuestion {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

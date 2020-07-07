@@ -1,0 +1,120 @@
+<template>
+    <div id="idea" class="main">
+        <template v-if="loaded">
+            <div class="author">
+                <div>
+                    <div class="avatar fl" :style="{backgroundImage: 'url('+ (idea.avatar ? $store.state.imageDomain + idea.avatar : '') +')'}"></div>
+                    <div class="author-name fl">
+                        <span>{{idea.nickName}}</span><br>
+                        <span class="date">{{idea.createTime | formatDate}}</span>
+                    </div>
+                </div>
+                <div class="watch-btn">关注</div>
+            </div>
+            <div class="content">
+                <div class="idea-content">{{idea.content}}</div>
+                <div class="idea-images" v-if="idea.ideaImgs.length > 0">
+                    <template v-for="(img, index) in idea.ideaImgs">
+                        <img class="img1" v-if="idea.ideaImgs.length == 1" :src="img.url ? $store.state.imageDomain + img.url : ''" alt="" :key="index">
+                        <img class="img2" v-if="idea.ideaImgs.length >= 2 && idea.ideaImgs.length < 7" :src="img.url ? $store.state.imageDomain + img.url : ''" alt="" :key="index">
+                        <img class="img3" v-if="idea.ideaImgs.length >= 7" :src="img.url ? $store.state.imageDomain + img.url : ''" alt="" :key="index">
+                    </template>
+                </div>
+            </div>
+            <div class="comment">
+                <div class="comm-label">评论（{{idea.commentCount}}条）</div>
+                <input type="text" placeholder="写评论...">
+                <ul>
+                    <li v-for="(comment, index) in comments" :key="index">
+                        <div class="avatar" :style="{backgroundImage: 'url('+ (comment.avatar ? $store.state.imageDomain + comment.avatar : require('@/assets/images/icon-fang.png')) +')'}"></div>
+                        <div class="comm-box" :class="{'comm-box_line' : index != comments.length - 1}">
+                            <div class="comm-author">
+                                <span>{{comment.nickName}}</span>
+                                <span class="comm-date">{{comment.commentsTime}}</span>
+                            </div>
+                            <div class="comm-content">{{comment.comment}}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="app-open">
+                <div class="app-open-btn" @click="openApp">App内打开</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="like-comm-count">
+                <div class="like-comm-count_box">
+                    <i class="like-icon"></i>
+                    <span>{{idea.likeCount}}</span>
+                </div>
+                <div class="like-comm-count_box">
+                    <i class="comm-icon"></i>
+                    <span>{{idea.commentCount}}</span>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+
+<script type="text/javascript">
+require('@/assets/style/share.css')
+require('@/assets/js/lib-flexible/index.min.js')
+
+import api from "@/fetch"
+import { openApp, share} from '@/assets/js/shareUtil.js'
+export default {
+    data() {
+        return {
+            loaded: false,
+            idea: {
+                ideaImgs: []
+            },
+            comments: [],
+            commentParam: {
+                pageNum: 1,
+                pageSize: 3,
+                paramObject: {
+                    objId: "",
+                    objType: 10
+                }
+            },
+            shareConfig: {}
+        }
+    },
+  async created() {
+    let _this = this;
+    _this.ideaId = _this.$route.query.id;
+    _this.commentParam.paramObject.objId = _this.ideaId;
+    let {data: _idea} = await api.getIdeaById(_this.ideaId);
+    _this.idea = _idea;
+
+    _this.shareConfig.wechat_title = _idea.content;
+    _this.shareConfig.wechat_desc = "_来自百工驿的分享";
+    _this.shareConfig.wechat_images0 = _this.$store.state.imageDomain + "images/baigongyi.png";
+    // 分享参数
+    let {data: _shareConfig} = await api.getShareConfig();
+    _this.shareConfig.appId = _shareConfig.appId;
+    _this.shareConfig.timestamp = _shareConfig.timestamp;
+    _this.shareConfig.nonceStr = _shareConfig.nonceStr;
+    _this.shareConfig.signature = _shareConfig.signature;
+    _this.shareConfig.url = _shareConfig.url;
+    share(_this.shareConfig);
+    // 评论列表
+    api.getCommentList(_this.commentParam)
+    .then(function(res) {
+        _this.comments = res.data.records;
+        _this.loaded = true;
+    });
+  },
+  methods: {
+    openApp() {
+        openApp();
+    }
+  }
+}
+
+
+</script>
+
+<style lang="less">
+
+</style>

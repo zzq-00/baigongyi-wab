@@ -1,0 +1,213 @@
+<template>
+  <div class="Attention">
+    <user-header class="headerCom"></user-header>
+    <div class="box">
+      <div class="left">
+        <el-menu router :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+          <el-menu-item index="/myHome/myReply">回答 {{num}}</el-menu-item>
+          <el-menu-item index="/myHome/myQuestion">提问 {{num}}</el-menu-item>
+          <el-submenu index="3">
+            <template slot="title">文章 {{num}}</template>
+            <el-menu-item index="/myHome/publishArt">已发布</el-menu-item>
+            <el-menu-item index="/myHome/draftArt">草稿</el-menu-item>
+          </el-submenu>
+          <el-menu-item index="/myHome/myIdea">想法 {{num}}</el-menu-item>
+          <el-menu-item index="/myHome/myLive">直播 {{num}}</el-menu-item>
+          <el-submenu index="6">
+            <template slot="title">更多</template>
+            <el-menu-item index="/myHome/myCollectCourse">收藏</el-menu-item>
+            <el-menu-item index="/myHome/myAttention">关注</el-menu-item>
+          </el-submenu>
+        </el-menu>
+
+        <div class="content">
+          <router-view />
+        </div>
+
+      </div>
+      <div class="right">
+        <div class="r-top">
+          <div @click="$router.push('/attention')"><p>关注了</p><span>10</span></div>
+          <div @click="$router.push('/fans')"><p>关注者</p><span>20</span></div>
+        </div>
+        <ul class="r-bottom">
+          <li>
+            <div>
+              <img src="@/assets/images/kecheng.png" alt="">
+              <span>收藏的课程</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/icon_shoucang.png" alt="">
+              <span>收藏的专栏</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/zhibo.png" alt="">
+              <span>收藏的直播</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/wenzhang.png" alt="">
+              <span>收藏的文章</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/wenti.png" alt="">
+              <span>关注的问题</span>
+            </div>
+            <div>13</div>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import UserHeader from '@/components/userHeader'
+export default {
+  name: 'Attention',
+  props: {},
+  components: {
+    UserHeader
+  },
+  data () {
+    return {
+      num: 3, // 数量--后期修改
+      activeName: 'first',
+      activeIndex: '1'
+    }
+  },
+  watch: {
+    activeIndex () {
+      return this.activeIndex
+    }
+  },
+  methods: {
+    handleSelect (key, keyPath) {
+      this.activeIndex = key
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .Attention {
+    .headerCom {
+      margin-top:20px;
+    }
+    .box {
+      margin-top: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      .left {
+        width: 780px; // 根据页面定宽度
+        border-radius: 10px;
+        // 可删--
+        .el-tabs__header {
+          margin:0;
+          background-color: #fff;
+        }
+        .el-tabs__nav {
+          margin-left: 20px;
+        }
+        .el-tabs__item:hover {
+          color:#E23732;
+        }
+        .el-tabs__item.is-active {
+          color:#E23732;
+        }
+        .el-tabs__active-bar {
+          background-color:#E23732;
+        }
+        .el-tabs__content {
+          padding:10px;
+          background-color: #FFF3F3;
+        }
+        // --可删
+
+        .el-menu {
+          height: 50px;
+          .el-menu-item, .el-submenu__title {
+            padding: 0px;
+            margin:0 20px;
+          }
+        }
+        .el-menu--horizontal>.el-menu-item {
+          height: 50px;
+          line-height: 60px;
+        }
+        .el-menu--horizontal>.el-submenu .el-submenu__title {
+          height: 50px;
+        }
+        .el-menu--horizontal>.el-menu-item.is-active{
+          border-bottom: 2px solid #E23732;
+          font-size: 16px;
+          color:#4A4A4A
+        }
+        .el-menu--horizontal>.el-submenu:focus .el-submenu__title, .el-menu--horizontal>.el-submenu:hover .el-submenu__title {
+          font-size: 16px;
+          color:#4A4A4A
+        }
+        .el-menu--horizontal>.el-submenu.is-active .el-submenu__title {
+          border-bottom: 2px solid #E23732;
+          font-size: 16px;
+          color:#4A4A4A
+        }
+      }
+      .right {
+       .r-top {
+         width: 300px;
+         height: 80px;
+         border-radius: 10px;
+         box-sizing: border-box;
+         background-color: #fff;
+         display: flex;
+        justify-content: space-around;
+        align-items: center;
+        div{
+          text-align: center;
+          p{
+            color:#666;
+            margin-bottom:6px;
+          }
+          span {
+            color:#333;
+            font-size: 16px;
+          }
+        }
+       }
+       .r-bottom{
+         margin-top: 20px;
+         padding:20px;
+         box-sizing: border-box;
+         width: 300px;
+         height: 220px;
+         background-color: #fff;
+         border-radius: 10px;
+         li {
+           display: flex;
+           justify-content: space-between;
+           align-items: flex-start;
+           img {
+             margin-right:10px;
+           }
+         }
+         li + li {
+           margin-top:20px;
+         }
+       }
+      }
+    }
+  }
+</style>

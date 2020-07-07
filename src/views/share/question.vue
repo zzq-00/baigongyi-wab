@@ -1,0 +1,246 @@
+<template>
+    <div id="question" class="main">
+        <template v-if="loaded">
+            <div class="ques-box">
+                <div class="ques-tags">
+                    <span v-for="(item,index) in questionTagList" :key="index">{{item.tagName1}}-{{item.tagName2}}</span>
+                </div>
+                <div class="ques-title">{{question.title}}</div>
+                <div class="ques-desc-box" v-if="question.questionContent">
+                    <template v-if="!descOpen">
+                        <div class="desc-text">{{question.stripHtmlContent.substr(0, 46) + "..."}}</div>
+                        <span class="desc-btn" @click="descOpen = true">展开描述<i class="open-icon"></i></span>
+                    </template>
+                    <template v-else>
+                        <div v-if="descOpen" class="desc-html" v-html="question.questionContent"></div>
+                        <span class="desc-btn" @click="descOpen = false">收起描述<i class="retract-icon"></i></span>
+                    </template>
+                </div>
+                <div class="fllowers-watch-count">{{question.followers +"人关注 · "+ question.watchCount +"次浏览"}}</div>
+            </div>
+            <div class="separate-box"></div>
+            <div class="answer-box">
+                <div class="answer-label">
+                    <span>{{"回答（"+ answerTotal +"条）"}}</span>
+                    <div class="sort-btns">
+                        <span class="best-btn" :class="{'active': bestActive}" @click="best()">最赞</span>
+                        <span @click="newset()" :class="{'active': newestActive}" >最新</span>
+                    </div>
+                </div>
+                <ul>
+                    <li v-for="(answer, index) in answerList" :key="index">
+                        <div class="author">
+                            <div>
+                                <div class="avatar fl" :style="{backgroundImage: 'url('+ (answer.avatar ? $store.state.imageDomain + answer.avatar : require('@/assets/images/err-header-icon01.png')) +')'}"></div>
+                                <div class="author-name fl">
+                                    <span>{{answer.nickName}}</span><br>
+                                    <span class="date">{{convertDate(answer.createTime)}}</span>
+                                </div>
+                            </div>
+                            <div class="watch-btn" @click="openApp">关注</div>
+                        </div>
+                        <div class="answer-con">{{answer.stripHtmlContent}}</div>
+                        <div class="answer-like-comm">{{answer.likeCount +"个赞 · "+ answer.commentCount +"条评论"}}</div>
+                        <div class="separate-line"></div>
+                    </li>
+                </ul>
+                <div style="text-align: center;" v-if="answerTotal > 0 && answerTotal != answerList.length" >
+                    <span class="more-btn" @click="loadMoreAnswers">查看更多回答>></span>
+                </div>
+                <div v-else class="noMore">哎呀，没有更多了...</div>
+            </div>
+            <div class="app-open">
+                <div class="app-open-btn" @click="openApp">App内打开</div>
+            </div>
+        </template>
+    </div>
+</template>
+<script>
+require('@/assets/style/share.css')
+require('@/assets/js/lib-flexible/index.min.js')
+
+import api from "@/fetch"
+import { openApp, convertDate, share} from '@/assets/js/shareUtil.js'
+export default {
+    data() {
+        return {
+            loaded: false,
+            questionId: "",
+            question: {},
+            questionTagList: [],
+            answerList: [],
+            descOpen: false,
+            bestActive: true,
+            newestActive: false,
+            answerTotal: 0,
+            answerParam: {
+                pageNum: 1,
+                pageSize: 3,
+                asc: false,
+                orderBy: "like_count",
+                paramObject: {
+                    questionId: ""
+                }
+            },
+            shareConfig: {}
+        };
+    },
+    async created() {
+        document.title = "百工驿-问题"
+        let _this = this;
+        _this.questionId = _this.$route.query.id;
+        _this.answerParam.paramObject.questionId = _this.questionId;
+        let {data: {question: _question, questionTagList: _questionTagList}} = await api.questionDetails(_this.questionId);
+        _this.question = _question;
+        _questionTagList.map(item => {
+            item.children.map(items => {
+              _this.questionTagList.push({ tagName1: item.tagName, tagName2: items.tagName })
+            })
+        });
+        if (_this.question.stripHtmlContent.length > 150) {
+            _this.question.stripHtmlContent = _this.question.stripHtmlContent.substring(0, 53) + '...';
+        } else {
+            _this.descOpen = true;
+        }
+        _this.shareConfig.wechat_title = _question.title;
+        _this.shareConfig.wechat_desc = _question.stripHtmlContent ? _question.stripHtmlContent : '';
+        _this.shareConfig.wechat_images0 = _this.$store.state.imageDomain + "images/baigongyi.png";
+
+        let {data: {records: _answerList, total: _answerTotal}} = await api.answerList(_this.answerParam);
+        _this.answerList = _answerList;
+        _this.answerTotal = _answerTotal;
+        _this.loaded = true;
+        // 分享参数
+        let {data: _shareConfig} = await api.getShareConfig();
+        _this.shareConfig.appId = _shareConfig.appId;
+        _this.shareConfig.timestamp = _shareConfig.timestamp;
+        _this.shareConfig.nonceStr = _shareConfig.nonceStr;
+        _this.shareConfig.signature = _shareConfig.signature;
+        _this.shareConfig.url = _shareConfig.url;
+        share(_this.shareConfig);
+
+    },
+    methods: {
+        async best() {
+            this.answerParam.orderBy = "like_count";
+            this.bestActive = true;
+            this.newestActive = false;
+            this.answerParam.pageNum = 1;
+            let {data: {records: _answerList}} = await api.answerList(this.answerParam);
+            this.answerList = _answerList;
+        },
+        async newset() {
+            this.answerParam.orderBy = "update_time";
+            this.bestActive = false;
+            this.newestActive = true;
+            this.answerParam.pageNum = 1;
+            let {data: {records: _answerList}} = await api.answerList(this.answerParam);
+            this.answerList = _answerList;
+        },
+        loadMoreAnswers() {
+            if(this.noMore) return;
+            this.answerParam.pageNum++;
+            api.answerList(this.answerParam)
+            .then(res => {
+                this.answerList = this.answerList.concat(res.data.records);
+            })
+        },
+        openApp() {
+            openApp();
+        },
+        convertDate(date) {
+            return convertDate(date);
+        }
+    }
+}
+</script>
+<style lang="less">
+.ques-title{
+    font-size: .4rem;
+    line-height: .56rem;
+    color: #333;
+    margin-bottom: .29rem;
+    font-weight: bold;
+}
+.ques-desc-box{
+    margin-bottom: .28rem;
+    position: relative;
+    .desc-text{
+        font-size: .35rem;
+        line-height: .48rem;
+        color: #666;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        position: relative;
+    }
+    .desc-html{
+        word-wrap: break-word;
+    }
+    .desc-btn{
+        font-size: .35rem;
+        line-height: .48rem;
+        color: #666;
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        color: #f33535;
+        cursor: pointer;
+        img{
+            width: .32rem;
+            height: .19rem;
+        }
+    }
+}
+.fllowers-watch-count{
+    font-size: .29rem;
+    line-height: .48rem;
+    color: #999;
+    margin-bottom: .32rem;
+}
+.answer-label{
+    font-size: .35rem;
+    line-height: .48rem;
+    color: #333;
+    margin-top: .32rem;
+    display: -webkit-flex;
+    display: flex;
+    justify-content: space-between;
+    .active{
+        color: #f33535;
+    }
+    .sort-btns{
+        span{
+            cursor: pointer;
+        }
+    }
+    .best-btn{
+        margin-right: .4rem;
+    }
+}
+.answer-con{
+    font-size: .35rem;
+    line-height: .48rem;
+    color: #666;
+    margin-bottom: .28rem;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+.answer-like-comm{
+    font-size: .29rem;
+    line-height: .48rem;
+    color: #999;
+    margin-bottom: .27rem;
+    text-align: left;
+}
+.author{
+    margin-top: .45rem;
+}
+</style>

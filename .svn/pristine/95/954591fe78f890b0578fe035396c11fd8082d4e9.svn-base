@@ -1,0 +1,242 @@
+<template>
+  <div class="container">
+    <h4>{{$route.path.includes('publishArticle')?'创建文章':'重新编辑'}}</h4>
+    <div class="clearfix content-area">
+      <!-- 左侧上传封面图 -->
+      <div class="left-content fl">
+        <uploadPic type="hasButton" v-model="ruleForm.image" :description="uploadDesc" />
+      </div>
+      <!-- 右侧填写文章内容 -->
+      <div class="right-content fl">
+        <el-form label-position="top" :model="ruleForm" :rules="rules" ref="ruleForm" label-width="100px" class="demo-ruleForm">
+          <el-form-item label="文章名称" prop="title">
+            <el-input v-model.trim="ruleForm.title" maxlength="50" show-word-limit></el-input>
+          </el-form-item>
+          <el-form-item label="文章摘要" prop="description">
+            <el-input type="textarea" v-model.trim="ruleForm.description" :autosize="{minRows: 5}" maxlength="500" show-word-limit></el-input>
+          </el-form-item>
+          <el-form-item prop="tagIds">
+            <template slot="label">
+              文章标签 <span style="font-size: 12px;color: #999999;">添加标签后，您的文章将显示在对应标签分区中，方便用户进行检索；标签不分先后，最多可添加5个标签</span>
+            </template>
+            <addTagDialog v-model="confirmTags" />
+          </el-form-item>
+          <el-form-item label="编辑正文" prop="content">
+            <Editor v-model="ruleForm.content" />
+          </el-form-item>
+        </el-form>
+      </div>
+    </div>
+    <div class="footer-release">
+      <el-button @click="previewArticle('ruleForm')">预览</el-button>
+      <el-button @click="saveOrUpdateDraftArticle('ruleForm')">存草稿</el-button>
+      <el-button type="danger" @click="saveOrUpdateArticle('ruleForm')">发布</el-button>
+    </div>
+
+    <el-dialog title="文章预览" :visible.sync="articleDialogVisible" width="785px" class="label-dialog">
+      <div class="dialog-content">
+        <div class="clearfix user-info">
+          <img class="fl" :src="userInfo.avatar?$store.state.imageDomain + userInfo.avatar : require('@/assets/images/err-header-icon01.png')" alt="" width="40px" height="40px">
+          <div class="fl">
+            <span>{{userInfo.nickName}}</span>
+            <br>
+            <span>1分钟前</span>
+          </div>
+        </div>
+        <div class="preview-article">
+          <h5>{{ruleForm.title}}</h5>
+          <p>摘要：{{ruleForm.description}}</p>
+          <div class="ql-container ql-snow" style="border: none;margin: 15px 0;">
+            <p v-html="ruleForm.content" class="ql-editor" style="padding: 0;"></p>
+          </div>
+        </div>
+      </div>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="articleDialogVisible = false">继续编辑</el-button>
+        <el-button type="primary" @click="saveOrUpdateArticle('ruleForm')">发 布</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import Editor from '@/components/Editor.vue'
+import addTagDialog from '@/components/addTagDialog.vue'
+import api from '@/fetch'
+import uploadPic from '@/utils/uploadPic'
+import 'quill/dist/quill.snow.css'
+
+export default {
+  components: {
+    Editor,
+    uploadPic,
+    addTagDialog
+  },
+  data() {
+    return {
+      uploadDesc: {
+        title: '上传文章题图',
+        desc: '可上传jpg/jpeg/png/bmp格式图片，建议分辨率为750x562，最大4M',
+        maxsize: 4
+      },
+      ruleForm: {
+        image: '', // 封面图
+        content: '', // 文章内容
+        title: '', // 文章标题
+        description: '', // 文章摘要
+        tagIds: '' // 文章标签
+      },
+      rules: {
+        title: [{ required: true, message: '请输入文章名称', trigger: 'blur' }, { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }],
+        description: [{ required: true, message: '请填写文章摘要', trigger: 'blur' }, { min: 1, max: 500, message: '长度在 1 到 500 个字符', trigger: 'blur' }],
+        tagIds: [{ required: true, message: '请选择文章标签', trigger: 'change' }],
+        content: [{ required: true, message: '请编辑文章正文', trigger: 'blur' }]
+      },
+      confirmTags: [], // 确认已选的标签
+      articleDialogVisible: false,
+      userInfo: this.$store.state.userInfo
+    }
+  },
+  watch: {
+    $route: {
+      handler: function(val) {
+        if (val.name === 'reEditArticle') {
+          this.viewArticle(val.params.id)
+        } else if (val.name === 'publishArticle') {
+          this.ruleForm = { image: '', content: '', title: '', description: '', tagIds: '' }
+          this.confirmTags = []
+        }
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    // 预览
+    previewArticle(formName) {
+      if (!this.ruleForm.image) return this.$message.warning('请上传文章题图')
+      this.ruleForm.tagIds = this.confirmTags.map(item => item.id).join(',')
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          this.articleDialogVisible = true
+        } else {
+          return false
+        }
+      })
+    },
+    // 发布
+    saveOrUpdateArticle(formName) {
+      if (!this.ruleForm.image) return this.$message.warning('请上传文章题图')
+      this.ruleForm.tagIds = this.confirmTags.map(item => item.id).join(',')
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          api.saveOrUpdateArticle(this.ruleForm).then(res => {
+            this.$router.push('/article/list/' + res.data)
+            this.$message.success('发布成功')
+          })
+        } else {
+          return false
+        }
+      })
+    },
+    // 存草稿
+    saveOrUpdateDraftArticle(formName) {
+      if (!this.ruleForm.image) return this.$message.warning('请上传文章题图')
+      this.ruleForm.tagIds = this.confirmTags.map(item => item.id).join(',')
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          api.saveOrUpdateDraftArticle(this.ruleForm).then(res => {
+            this.$router.push('/myHome/myArticle/draftArt')
+            this.$message.success('保存成功')
+          })
+        } else {
+          return false
+        }
+      })
+    },
+    resetForm(formName) {
+      this.$refs[formName].resetFields()
+    },
+    // 获取文章详情，重新编辑
+    viewArticle(id) {
+      api.viewArticle(id).then(res => {
+        let { id, image, content, title, description, articleTagList } = res.data
+        this.ruleForm = { id, image, content, title, description }
+        this.confirmTags = articleTagList
+          .map(item => {
+            return item.children.map(its => {
+              its.tagName = item.tagName + '-' + its.tagName
+              return its
+            })
+          })
+          .flat()
+      })
+    }
+  },
+  created() {
+    if (!window.localStorage.userInfo) return this.$router.push('/login')
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.container {
+  border-radius: 10px;
+  margin: 21px auto 29px;
+  min-height: 910px;
+  background-color: #fff;
+  > h4 {
+    font-size: 16px;
+    height: 50px;
+    line-height: 50px;
+    border-bottom: 1px solid #dddddd;
+    padding-left: 20px;
+    font-weight: normal;
+  }
+  .content-area {
+    .left-content {
+      width: 320px;
+      height: 100%;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .right-content {
+      border-left: 1px solid #dddddd;
+      width: 780px;
+      height: 100%;
+      padding: 10px 20px;
+      box-sizing: border-box;
+    }
+  }
+  .footer-release {
+    text-align: center;
+    line-height: 50px;
+    border-top: 1px solid #dddddd;
+    .el-button {
+      width: 90px;
+    }
+  }
+}
+.user-info {
+  > img {
+    border-radius: 50%;
+    margin-right: 10px;
+  }
+  > div {
+    margin-top: 5px;
+    > span:last-child {
+      color: #99999999;
+      font-size: 12px;
+    }
+  }
+}
+.preview-article {
+  > h5 {
+    font-size: 18px;
+    margin: 10px 0 25px;
+  }
+}
+/deep/ .el-form--label-top .el-form-item__label {
+  padding-bottom: 0;
+}
+</style>
+

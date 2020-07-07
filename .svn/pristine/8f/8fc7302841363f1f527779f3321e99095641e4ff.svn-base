@@ -1,0 +1,8 @@
+import { post, get } from 'axios'
+
+export default {
+  // 密码登录
+  saveOrUpdateArticle (params) {
+    return post('article/saveOrUpdateArticle', params)
+  }
+}

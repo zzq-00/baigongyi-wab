@@ -1,0 +1,60 @@
+<template>
+  <div class="draftArt">
+    <div class="title font-12">我的文章（草稿箱）</div>
+    <div class="content">
+      <ArticelCom v-for="(item, index) in draftList" :articleData="item" :key="index" @getNewData='getNewData'></ArticelCom>
+    </div>
+  </div>
+</template>
+
+<script>
+import ArticelCom from '@/components/userCom/articelCom'
+import api from '@/fetch'
+export default {
+  components: {
+    ArticelCom
+  },
+  data() {
+    return {
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          flag: 8 // 1热门 2最新 3关注
+        }
+      },
+      draftList: []
+    }
+  },
+  methods: {
+    // 文章列表
+    getDraftlist(flag = 8) {
+      this.params.paramObject.flag = flag
+      api.getArticlelist(this.params).then(res => {
+        this.draftList = res.data.records
+      })
+    },
+    getNewData(delData) {
+      let index = this.draftList.findIndex(item => item === delData)
+      this.draftList.splice(index, 1)
+    }
+  },
+  mounted() {
+    this.getDraftlist()
+  }
+}
+</script>
+
+<style lang="less" scope>
+.draftArt {
+  .title {
+    color: #e23732;
+    padding: 10px 20px;
+    background-color: #fff3f3;
+  }
+  .content {
+    padding: 12px 20px 20px 20px;
+    background-color: #fff;
+  }
+}
+</style>

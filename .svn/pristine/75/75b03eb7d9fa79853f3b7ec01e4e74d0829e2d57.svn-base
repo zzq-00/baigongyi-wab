@@ -1,0 +1,122 @@
+<template>
+  <div class="special-column">
+    <h4>专栏推荐</h4>
+    <ul class="column-list">
+      <li v-for="(item, index) in columnList" :key="index" @click="gotoDetail('/paycolumnDetail/'+item.id)">
+        <img class="cover-img" :src="$store.state.imageDomain + item.image" alt="">
+        <div>
+          <h5 class="ellipsis">{{item.name}}</h5>
+          <div>
+            <span class="ellipsis" style="flex: 1;margin-right: 5px;">{{item.lecturerInfo.realName}}</span>
+            <span>
+              <i class="el-icon-view"></i> {{item.watchCount || 0}}
+            </span>
+          </div>
+          <p :class="[item.price===0?'purple':'reds']">{{item.price === 0 ? '免费' : '￥'+item.price}}</p>
+        </div>
+      </li>
+    </ul>
+    <div class="page-turning" v-if="columnList.length">
+      <img src="@/assets/images/xiangzuo.png" alt="" @click="recommendColumn('prev')">
+      &nbsp;
+      <img src="@/assets/images/xiangyou.png" alt="" @click="recommendColumn('next')">
+    </div>
+    <div v-else class="nomore-data">暂无推荐</div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+
+export default {
+  data() {
+    return {
+      columnParams: {
+        pageNum: 1,
+        pageSize: 3
+      },
+      columnList: [],
+    }
+  },
+  methods: {
+    // 专栏推荐
+    recommendColumn(param) {
+      if (param === 'prev') {
+        this.columnParams.pageNum = this.columnParams.pageNum === 1 ? (this.columnTotalPages < 10 ? this.columnTotalPages : 10) : this.columnParams.pageNum - 1
+      } else if (param === 'next') {
+        this.columnParams.pageNum = this.columnParams.pageNum === (this.columnTotalPages < 10 ? this.columnTotalPages : 10) ? 1 : this.columnParams.pageNum + 1
+      }
+      api.recommendColumn(this.columnParams).then(res => {
+        this.columnTotalPages = Math.ceil(res.data.total / this.columnParams.pageSize)
+        this.columnList = res.data.records
+      })
+    },
+    gotoDetail(url) {
+      window.open(url)
+    }
+  },
+  mounted() {
+    this.recommendColumn()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.special-column {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 15px 20px 10px;
+  box-sizing: border-box;
+  > h4 {
+    font-weight: normal;
+    font-size: 16px;
+  }
+  .column-list {
+    > li {
+      display: flex;
+      align-items: center;
+      padding: 10px 0;
+      > div {
+        flex: 1;
+        margin-left: 10px;
+        overflow: hidden;
+        > h5 {
+          font-size: 15px;
+          font-weight: normal;
+          color: #333;
+        }
+        > div:nth-child(2) {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #999;
+          margin: 7px 0;
+        }
+        > p.reds {
+          color: #f51e1e;
+        }
+        > p.purple {
+          color: #7355f6;
+        }
+      }
+    }
+  }
+  .cover-img {
+    width: 76px;
+    height: 70px;
+    border-radius: 10px;
+  }
+  .page-turning {
+    text-align: center;
+    > img {
+      cursor: pointer;
+    }
+  }
+}
+.nomore-data {
+  text-align: center;
+  margin: 20px 0 10px;
+  color: #999;
+}
+</style>
+

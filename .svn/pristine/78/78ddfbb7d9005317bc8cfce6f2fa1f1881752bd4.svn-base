@@ -1,0 +1,13 @@
+import { post, get, delete as deleteMethod } from 'axios'
+export default {
+    aliyunConfig() {//获取授权码
+        return get('/aliyun/config')
+    },
+    //点赞
+    likeAdd(params) {
+        return post('/like/add', params)
+    },
+    likeDelete(bizType, id) {
+        return deleteMethod(`/likeuser/account/uploadAvatar/delete/${bizType}/${id}`)
+    },
+}

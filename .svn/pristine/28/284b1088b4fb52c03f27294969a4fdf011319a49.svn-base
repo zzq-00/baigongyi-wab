@@ -1,0 +1,44 @@
+<template>
+  <div id="app">
+    <router-view />
+    <el-dialog class="idea-dialog" :visible.sync="ideaDialogVisible" width="660px" :before-close="handleClose">
+      <h4 slot="title" class="idea-title">写想法</h4>
+      <ideaCom @publishFinish="handleClose" :key="updataKey" />
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import { mapState, mapMutations } from 'vuex'
+import ideaCom from '@/components/ideaCom'
+export default {
+  components: {
+    ideaCom
+  },
+  data() {
+    return {
+      updataKey: 1
+    }
+  },
+  computed: mapState(['ideaDialogVisible']),
+  methods: {
+    ...mapMutations(['setIdeaDialog']),
+    handleClose() {
+      this.setIdeaDialog(false)
+      this.updataKey++
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.idea-dialog {
+  .idea-title {
+    font-size: 16px;
+    text-align: center;
+  }
+  /deep/ .el-dialog__body {
+    padding: 0 20px 20px;
+  }
+}
+</style>

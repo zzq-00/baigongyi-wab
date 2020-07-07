@@ -1,0 +1,106 @@
+<template>
+  <div class="courseOrder">
+    <div class="remind">提示: 上下拖动可改变课程顺序</div>
+    <div class="tableData">
+      <el-table ref="dragTable" style="width: 100%;" height="calc(100vh - 350px)" :data="newArr" row-key="id">
+        <el-table-column label="操作" align="center" width="120px">
+          <template slot-scope="scope">
+            <img src="@/assets/images/yidong.png"  />
+          </template>
+        </el-table-column>
+        <el-table-column label="提交/保存时间" prop="createTime" width="220px"></el-table-column>
+        <el-table-column label="课程名称" prop="name" width="240px"></el-table-column>
+        <el-table-column label="课程类型" prop="type" width="80px">
+          <template slot-scope="scope">
+            {{scope.row && scope.row.type===1?'音频':'视频'}}
+          </template>
+        </el-table-column>
+        <el-table-column label="审核状态" prop="status" width="180px">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row && scope.row.status===1001" size="mini" type="danger">审核驳回</el-tag>
+            <el-tag v-else-if="scope.row && scope.row.status===2000" size="mini" style="color: #409eff;border-color: #d9ecff;background-color: #ecf5ff;">草稿</el-tag>
+            <el-tag v-else-if="scope.row && scope.row.status===1000" size="mini" type="warning">待审核</el-tag>
+            <el-tag v-else-if="scope.row && scope.row.status===1002" size="mini" type="success">已发布</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核时间" prop="auditTime" width="220px">
+          <template slot-scope="scope">
+            <span>{{scope.row.auditTime | formatDate}}</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+  </div>
+</template>
+
+<script>
+import Sortable from 'sortablejs'
+export default {
+  props: {
+    tableData: Array,
+    showCourseOrder: Boolean
+  },
+  data() {
+    return {
+      newArr: []
+    }
+  },
+  watch: {
+    showCourseOrder: {
+      handler: function(val) {
+        if (val) {
+          this.newArr = JSON.parse(JSON.stringify(this.tableData))
+          this.newArr = this.newArr.map( function(item){
+
+
+            // 草稿   2000
+            // 已下架 2001
+            // 已发布（即审核通过） 1002
+            // 审核中 1000
+            // 审核驳回 1001
+            // 审核通过 1002
+            return item
+          })
+        }
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    setSort() {
+      const el = this.$refs.dragTable.$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0]
+      this.sortable = Sortable.create(el, {
+        ghostClass: 'sortable-ghost',
+        setData: function(dataTransfer) {
+          dataTransfer.setData('Text', '')
+        },
+        onEnd: evt => {
+          const targetRow = this.newArr.splice(evt.oldIndex, 1)[0]
+          this.newArr.splice(evt.newIndex, 0, targetRow)
+          this.$emit('newTable', this.newArr)
+          // debugger
+          // for (let i = 0; i < this.newArr.length; i++) {
+          //   console.log('name:'+this.newArr[i].name)
+          // }
+          // for (let m = 0; m < this.tableData.length; m++) {
+          //   console.log('table name:'+this.tableData[m].name)
+          // }
+        }
+      })
+    }
+  },
+  mounted() {
+    this.setSort()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.courseOrder {
+  .remind {
+    color: #e23732;
+    font-size: 12px;
+    padding: 20px 0 10px 20px;
+  }
+}
+</style>

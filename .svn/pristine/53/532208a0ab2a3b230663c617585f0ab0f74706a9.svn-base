@@ -1,0 +1,371 @@
+<template>
+  <div class="collect-answers-page">
+    <p class="operation" v-if="!manageStatus&&isOwn">
+      <el-button @click="manageStatus=!manageStatus">批量管理</el-button>
+    </p>
+    <p class="operation manage-btn" v-if="manageStatus&&isOwn">
+      <el-checkbox v-model="checkAll" @change="handleCheckAllChange">全部</el-checkbox>
+      <el-button @click="batchCancellation">取消收藏</el-button>
+      <el-button @click="escManage">退出批量管理</el-button>
+    </p>
+    <ul v-loading="answerLoading" element-loading-text="正在加载" infinite-scroll-disabled='loadStatus' v-infinite-scroll="answerlistLoad" infinite-scroll-immediate='false' infinite-scroll-distance='67'>
+      <li v-for="(item,index) in collectAnswerList" :key="index" class="clearfix">
+        <div v-if="item.question!=null">
+          <el-checkbox v-model="item.checked" @change="handleChecked(item)" v-if="manageStatus" class="fl"></el-checkbox>
+          <div class="fl qa-info" :class="[manageStatus?'check-answer':'normal-answer']">
+            <p class="list-title">{{item.question.title}}</p>
+            <div class="answer-info clearfix">
+              <img :src="item.questionAnswerDto.avatar?$store.state.imageDomain + item.questionAnswerDto.avatar : require('@/assets/images/err-header-icon01.png')" alt="" class="fl">
+              <div class="fl">
+                <p>{{item.questionAnswerDto.userName}}</p>
+                <p>{{item.questionAnswerDto.updateTime}}</p>
+              </div>
+              <div class="fr" v-if="!manageStatus">
+                <el-button class="already" v-if="item.questionAnswerDto.concernStatus==1&&loginaccountId!=item.questionAnswerDto.accountId" @click="follow('1',item,index)">已关注</el-button>
+                <el-button class="not" v-if="item.questionAnswerDto.concernStatus==2&&loginaccountId!=item.questionAnswerDto.accountId" @click="follow('2',item,index)">关注</el-button>
+                <el-button class="already" v-if="item.questionAnswerDto.concernStatus==3&&loginaccountId!=item.questionAnswerDto.accountId" @click="follow('3',item,index)">互相关注</el-button>
+              </div>
+            </div>
+            <div class="qa-content" :class="[!item.answerWhetherItExists?'prohibit':'']" @click="gotoDetails(item)" v-if="item.questionAnswerDto.userName">{{item.questionAnswerDto.stripHtmlContent}}</div>
+            <p class="tagging" v-if="item.questionAnswerDto.userName">
+              <span>{{item.questionAnswerDto.likeCount}}个赞</span>
+              <span>·</span>
+              <span>{{item.questionAnswerDto.commentCount}}条评论</span>
+            </p>
+            <div class="cancel-btn" v-if="!manageStatus&&isOwn">
+              <el-button @click="collectOperate(item,index)" v-if="item.whetherToCollect">取消收藏</el-button>
+              <el-button @click="collectOperate(item,index)" v-if="!item.whetherToCollect">收藏</el-button>
+            </div>
+          </div>
+        </div>
+        <div v-if="item.question==null">
+          <el-checkbox v-model="item.checked" @change="handleChecked(item)" v-if="manageStatus" class="fl"></el-checkbox>
+          <div class="fl qa-info" :class="[manageStatus?'check-answer':'normal-answer']">
+            <p class="delete-tips">该回答已删除！</p>
+            <div class="cancel-btn" v-if="!manageStatus&&isOwn">
+              <el-button @click="collectOperate(item,index)" v-if="item.whetherToCollect">取消收藏</el-button>
+              <el-button @click="collectOperate(item,index)" v-if="!item.whetherToCollect">收藏</el-button>
+            </div>
+          </div>
+        </div>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      answerLoading: true,
+      loadStatus: false,
+      manageStatus: false,
+      checkAll: false, //全选
+      params: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          accountId: '',
+          answerContent: '',
+          flag: 1,
+          id: '',
+          questionId: ''
+        }
+      },
+      collectAnswerList: [], //收藏的回答
+      loginaccountId: '',
+      selectArr: []
+    }
+  },
+  watch: {},
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  methods: {
+    gotoDetails(item, val) {
+      // answerWhetherItExists false是回答不存在 true是可以点击
+      if (item.answerWhetherItExists) {
+        window.open(`/myReplyDetails/${item.questionAnswerDto.id}`, '_blank')
+      }
+    },
+    // 最赞回答
+    answerlistLoad() {
+      this.loadStatus = true
+      this.params.pageNum += 1
+      this.getCollectAndAnswerList()
+    },
+    getCollectAndAnswerList() {
+      if (!this.isOwn) {
+        this.params.paramObject.flag = 2
+        this.params.paramObject.accountId = this.$route.query.id
+      } else {
+        this.params.paramObject.flag = 1
+        this.params.paramObject.accountId = ''
+      }
+      api.getCollectAndAnswerList(this.params).then(res => {
+        res.data.records.map(item => {
+          this.$set(item, 'checked', false)
+        })
+        this.collectAnswerList = this.collectAnswerList.concat(res.data.records)
+        // if (res.data.records.length == 0) {
+        //   this.newloadText = '暂无更多数据'
+        // } else {
+        //   this.newloadText = ''
+        // }
+         this.answerLoading = false //加载状态
+        this.loadStatus = !res.data.records.length ? true : false
+        this.collectAnswerList.map(item => {
+          if (item.questionAnswerDto.stripHtmlContent) {
+            if (item.questionAnswerDto.stripHtmlContent.length > 118) {
+              item.questionAnswerDto.stripHtmlContent = item.questionAnswerDto.stripHtmlContent.substring(0, 118) + '...'
+            }
+          }
+        })
+      }).catch(res=>{
+        this.answerLoading = false //加载状态
+      })
+    },
+    // 批量取消收藏
+    batchCancellation() {
+      if (this.selectArr.length == 0) {
+        this.$message({
+          showClose: true,
+          message: '请勾选要取消收藏的选项',
+          type: 'warning'
+        })
+      } else {
+        this.$confirm(`您已勾选${this.selectArr.length}个回答，是否确认取消收藏？`, '提示', {
+          confirmButtonText: '确定',
+          cancelButtonText: '取消',
+          type: 'warning'
+        })
+          .then(() => {
+            api.batchCancelCollect(this.selectArr).then(res => {
+              this.params.pageNum = 1
+              this.collectAnswerList = []
+              this.checkAll = false
+              this.selectArr = []
+              this.getCollectAndAnswerList()
+              this.$store.commit('setFollow', !this.$store.state.cancelStatus)
+            })
+          })
+          .catch(() => {
+            this.$message({
+              type: 'info',
+              message: '已取消操作'
+            })
+          })
+      }
+    },
+    // 退出批量管理
+    escManage() {
+      this.manageStatus = false
+      this.selectArr = []
+      this.checkAll = false
+      this.collectAnswerList.map(item => {
+        item.checked = false
+      })
+    },
+    // 收藏取消收藏
+    collectOperate(item, index) {
+      if (item.whetherToCollect) {
+        api.cancelCollect({ objType: 9, objId: item.questionAnswerDto.id }).then(res => {
+          this.collectAnswerList.splice(index, 1)
+          this.$store.commit('setFollow', !this.$store.state.cancelStatus)
+        })
+      } else {
+        api.addCollect({ objType: 9, objId: item.questionAnswerDto.id }).then(res => {
+          item.whetherToCollect = true
+        })
+      }
+    },
+    //   全选/取消
+    handleCheckAllChange(val) {
+      let arr = []
+      if (val) {
+        this.collectAnswerList.map(item => {
+          item.checked = true
+          arr.push({ objId: item.questionAnswerDto.id, objType: 9 })
+        })
+      } else {
+        this.collectAnswerList.map(item => {
+          item.checked = false
+        })
+        arr = []
+      }
+      this.selectArr = arr
+    },
+    handleChecked(item) {
+      item.checked != item.checked
+      let arr = []
+      this.collectAnswerList.map(item => {
+        if (item.checked) {
+          arr.push({ objId: item.questionAnswerDto.id, objType: 9 })
+        }
+      })
+      this.selectArr = arr
+      if (arr.length == this.collectAnswerList.length) {
+        this.checkAll = true
+      } else {
+        this.checkAll = false
+      }
+    },
+
+    // 关注
+    follow(val, item, index) {
+      // val:1:已关注;2:关注;3:互相关注;
+      if (!this.loginaccountId) {
+        let routeUrl = this.$router.resolve('/login')
+        window.open(routeUrl.href, '_blank')
+      } else {
+        let objId = item.questionAnswerDto.accountId
+        let objType = 6
+        if (val == 1 || val == 3) {
+          api.delAttention({ objId: objId, objType: objType }).then(res => {
+            item.questionAnswerDto.concernStatus = 2
+          })
+        } else if (val == 2) {
+          api.addAttention({ objId: objId, objType: objType }).then(res => {
+            item.questionAnswerDto.concernStatus = res.data
+          })
+        }
+      }
+    }
+  },
+  mounted() {
+    if (window.localStorage.userInfo) {
+      this.loginaccountId = JSON.parse(window.localStorage.getItem('userInfo')).accountId
+    }
+    this.getCollectAndAnswerList()
+  }
+}
+</script>
+<style lang="less" scoped>
+.collect-answers-page {
+  .operation {
+    padding: 10px 0 0 20px;
+    /deep/.el-checkbox {
+      margin-right: 30px;
+    }
+  }
+  ul {
+    width: 100%;
+    min-height: 50px;
+    height: calc(100vh - 518px);
+    overflow: auto;
+    padding-bottom: 67px;
+    li {
+      padding: 10px 20px;
+      border-bottom: 1px solid #dddddd;
+      position: relative;
+      /deep/.el-checkbox {
+        position: absolute;
+        top: 50%;
+        transform: translate(0, -50%);
+      }
+      .qa-info {
+        .delete-tips {
+          margin-bottom: 27px;
+          height: 14px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          line-height: 14px;
+        }
+        .list-title {
+          width: 100%;
+          height: 17px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(51, 51, 51, 1);
+          line-height: 17px;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+        .answer-info {
+          margin-top: 11px;
+          img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 11px;
+          }
+          div:nth-of-type(1) {
+            p:nth-child(1) {
+              margin: 4px 0 11px 0;
+              height: 12px;
+              font-size: 14px;
+              color: rgba(74, 74, 74, 1);
+              line-height: 12px;
+            }
+            p:nth-child(2) {
+              height: 9px;
+              font-size: 12px;
+              color: rgba(153, 153, 153, 1);
+              line-height: 9px;
+            }
+          }
+          div:nth-of-type(2) {
+            .already {
+              border: 1px solid rgba(230, 230, 230, 1);
+              color: rgba(102, 102, 102, 1);
+            }
+            .not {
+              border: 1px solid #e23732;
+              color: #e23732;
+            }
+          }
+        }
+        .qa-content {
+          margin-top: 12px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          line-height: 19px;
+          max-height: 55px;
+          cursor: pointer;
+          overflow: hidden;
+        }
+        .prohibit {
+          cursor: not-allowed;
+        }
+        .tagging {
+          margin-top: 10px;
+          height: 15px;
+          line-height: 15px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(153, 153, 153, 1);
+          span:nth-child(2) {
+            margin: 0 3px;
+          }
+        }
+        .cancel-btn {
+          text-align: right;
+        }
+      }
+      .check-answer {
+        margin-left: 30px;
+        width: 94%;
+      }
+      .normal-answer {
+        width: 100%;
+      }
+    }
+  }
+  ul::-webkit-scrollbar {
+    display: none;
+    overflow: hidden;
+  }
+}
+</style>

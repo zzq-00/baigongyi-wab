@@ -1,0 +1,15 @@
+import router from '@/router'
+import api from '@/fetch'
+import store from '@/store'
+
+router.beforeEach(async (to, from, next) => {
+  if (!window.localStorage.token) {
+    const { data: token } = await api.refreshToken()
+    window.localStorage.token = token
+  }
+  if (!store.state.videoDomain || !store.state.imageDomain) {
+    const { data: { qiniu: videoDomain, aliyun: imageDomain } } = await api.resourceInfo()
+    store.commit('setDomain', { videoDomain, imageDomain })
+  }
+  next()
+})

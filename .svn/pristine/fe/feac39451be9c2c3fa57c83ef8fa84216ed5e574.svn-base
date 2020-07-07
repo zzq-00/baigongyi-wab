@@ -1,0 +1,294 @@
+<template>
+  <div class="hisHome">
+    <user-header class="headerCom" :userInfoData="userInfoData"></user-header>
+    <div class="box">
+      <div class="left">
+        <el-menu router :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+          <el-menu-item index="/hisHome/hisReply">回答 {{num}}</el-menu-item>
+          <el-menu-item index="/hisHome/hisQuestion">提问 {{num}}</el-menu-item>
+          <el-menu-item index="/hisHome/article">文章 {{num}}</el-menu-item>
+          <el-menu-item index="/hisHome/hisIdea">想法 {{num}}</el-menu-item>
+          <el-menu-item index="/hisHome/hisLive">直播 {{num}}</el-menu-item>
+          <el-submenu index="6">
+            <template slot="title">更多</template>
+            <el-menu-item index="/hisHome/hisCollect">收藏</el-menu-item>
+            <el-menu-item index="/hisHome/hisAttention">关注</el-menu-item>
+          </el-submenu>
+        </el-menu>
+
+        <div class="content">
+          <router-view />
+        </div>
+
+      </div>
+      <div class="right">
+        <div class="r-top">
+          <div ><p>关注了</p><span>10</span></div>
+          <div ><p>关注者</p><span>20</span></div>
+        </div>
+        <!-- <ul class="r-bottom">
+          <li>
+            <div>
+              <img src="@/assets/images/kecheng.png" alt="">
+              <span>收藏的课程</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/icon_shoucang.png" alt="">
+              <span>收藏的专栏</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/zhibo.png" alt="">
+              <span>收藏的直播</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/wenzhang.png" alt="">
+              <span>收藏的文章</span>
+            </div>
+            <div>13</div>
+          </li>
+          <li>
+            <div>
+              <img src="@/assets/images/wenti.png" alt="">
+              <span>关注的问题</span>
+            </div>
+            <div>13</div>
+          </li>
+        </ul> -->
+        <ul class="r-bottom">
+          <li :class=" { 'active-color': tabActive==index }" v-for="(item,index) in rightList" :key="index" @click="switchModule(item,index)">
+            <img :src="item.imgs" alt="">
+            <span>{{item.name}}</span>
+            <span class="numbers">{{item.number}}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import UserHeader from '@/components/userHeader'
+import api from '@/fetch'
+export default {
+  name: 'HisHome',
+  props: {},
+  components: {
+    UserHeader
+  },
+  data () {
+    return {
+      userInfoData: {},
+      userCollectCount: {},
+      num: 3, // 数量--后期修改
+      activeName: 'first',
+      activeIndex: '/hisHome/hisReply',
+      rightList: [
+        { imgs: require('@/assets/images/kecheng.png'), name: '收藏的课程', number: '1' },
+        { imgs: require('@/assets/images/icon_shoucang.png'), name: '收藏的专栏', number: '2' },
+        { imgs: require('@/assets/images/zhibo.png'), name: '收藏的直播', number: '4' },
+        { imgs: require('@/assets/images/wenzhang.png'), name: '收藏的文章', number: '20' },
+        { imgs: require('@/assets/images/wenti.png'), name: '关注的问题', number: '13' }
+      ]
+    }
+  },
+  computed: {
+    tabActive () {
+      return this.$store.state.tabActive
+    }
+  },
+  created () {
+    this.activeIndex = this.$route.path
+    if (this.activeIndex === '/hisHome/hisCollect') {
+      this.$store.commit('setTab', 0)
+      // 点击关注
+    } else if (this.activeIndex === '/hisHome/hisAttention') {
+      this.$store.commit('setTab', 4)
+    } else {
+      this.$store.commit('setTab', -1)
+    }
+    this.getUserCollectCount()
+    this.getuserInfo()
+  },
+  methods: {
+    handleSelect (key, keyPath) {
+      // 点击收藏
+      if (key === '/hisHome/hisCollect') {
+        this.$store.commit('setTab', 0)
+        // 点击关注
+      } else if (key === '/hisHome/hisAttention') {
+        this.$store.commit('setTab', 4)
+      } else {
+        this.$store.commit('setTab', -1)
+      }
+      this.activeIndex = key
+    },
+    // 切换模块
+    switchModule (item, index) {
+      this.$store.commit('setTab', index)
+      if (item.name === '关注的问题') {
+        this.activeIndex = '/hisHome/hisAttention'
+        this.$router.push('/hisHome/hisAttention')
+      } else {
+        this.activeIndex = '/hisHome/hisCollect'
+        this.$router.push('/hisHome/hisCollect')
+      }
+    },
+    // 关注
+    goAttention () {
+      this.$router.push('/hisHome/hisAttention')
+    },
+    // 粉丝
+    goFans () {
+      this.$router.push('/hisHome/hisAttention')
+    },
+    // 个人信息
+    async getuserInfo () {
+      const res = await api.userInfo(this.$store.state.user.accountId)
+      console.log(res)
+      this.userInfoData = res.data
+    },
+    // 个人收藏信息
+    async getUserCollectCount () {
+      const res = await api.userCollectCount(this.$store.state.user.accountId)
+      // columnCount专栏收藏总数
+      // concernQuestionCount关注问题总数
+      // courseCount课程收藏总数
+      // liveCount直播收藏总数
+      const numbers = res.data
+      this.rightList[0].number = numbers.courseCount
+      this.rightList[1].number = numbers.columnCount
+      this.rightList[2].number = numbers.liveCount
+      this.rightList[3].number = numbers.articleCount
+      this.rightList[4].number = numbers.concernQuestionCount
+    }
+  }
+}
+</script>
+
+<style lang='less' scope>
+  .hisHome {
+    .headerCom {
+      margin-top:20px;
+    }
+    .box {
+      margin-top: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      .left {
+        width: 780px; // 根据页面定宽度
+        border-radius: 10px;
+        // 可删--
+        .el-tabs__header {
+          margin:0;
+          background-color: #fff;
+        }
+        .el-tabs__nav {
+          margin-left: 20px;
+        }
+        .el-tabs__item:hover {
+          color:#E23732;
+        }
+        .el-tabs__item.is-active {
+          color:#E23732;
+        }
+        .el-tabs__active-bar {
+          background-color:#E23732;
+        }
+        .el-tabs__content {
+          padding:10px;
+          background-color: #FFF3F3;
+        }
+        // --可删
+
+        .el-menu {
+          height: 50px;
+          .el-menu-item, .el-submenu__title {
+            padding: 0px;
+            margin:0 20px;
+          }
+        }
+        .el-menu--horizontal>.el-menu-item {
+          height: 50px;
+          line-height: 60px;
+        }
+        .el-menu--horizontal>.el-submenu .el-submenu__title {
+          height: 50px;
+        }
+        .el-menu--horizontal>.el-menu-item.is-active{
+          border-bottom: 2px solid #E23732;
+          font-size: 16px;
+          color:#4A4A4A
+        }
+        .el-menu--horizontal>.el-submenu:focus .el-submenu__title, .el-menu--horizontal>.el-submenu:hover .el-submenu__title {
+          font-size: 16px;
+          color:#4A4A4A
+        }
+        .el-menu--horizontal>.el-submenu.is-active .el-submenu__title {
+          border-bottom: 2px solid #E23732;
+          font-size: 16px;
+          color:#4A4A4A
+        }
+      }
+      .right {
+        .r-top {
+          width: 300px;
+          height: 80px;
+          border-radius: 10px;
+          box-sizing: border-box;
+          background-color: #fff;
+          display: flex;
+          justify-content: space-around;
+          align-items: center;
+          > div {
+            text-align: center;
+            p {
+              color: #666;
+              margin-bottom: 6px;
+            }
+            span {
+              color: #333;
+              font-size: 16px;
+            }
+          }
+        }
+        .r-bottom {
+          margin-top: 20px;
+          padding: 10px 20px 20px 20px;
+          box-sizing: border-box;
+          width: 300px;
+          background-color: #fff;
+          border-radius: 10px;
+          .active-color {
+            color: #e23732;
+          }
+          li {
+            height: 38px;
+            line-height: 38px;
+            font-size: 14px;
+            cursor: pointer;
+            img {
+              margin-right: 11px;
+            }
+            .numbers {
+              float: right;
+            }
+          }
+          li:hover {
+            color: #e23732;
+          }
+        }
+      }
+    }
+
+  }
+</style>

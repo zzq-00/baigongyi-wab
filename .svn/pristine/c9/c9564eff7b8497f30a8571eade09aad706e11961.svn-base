@@ -1,0 +1,138 @@
+<template>
+  <div class="special-course">
+    <h4>课程推荐</h4>
+    <ul class="course-list">
+      <li v-for="(item, index) in courseList" :key="index" @click="gotoDetail('/courseDetail/'+item.id)">
+        <img class="cover-img" :src="$store.state.imageDomain + item.image" alt="">
+        <div>
+          <h5 class="ellipsis">{{item.name}}</h5>
+          <div>
+            <span class="ellipsis" style="flex: 1;margin-right: 5px;">
+              <span @click.stop="openTeacherHome(item.accountId)">{{item.realName&&item.realName.length>4?item.realName.slice(0, 4)+'...':item.realName}}</span>
+              <!-- 1:音频,2:视频 -->
+              | {{item.type === 1?'音频':'视频'}}
+            </span>
+            <span>
+              <i class="el-icon-view"></i> {{item.watchCount || 0}}
+            </span>
+          </div>
+          <p :class="[item.price==0?'purple':'reds']">{{item.price == 0 ? '免费' : '&yen;'+item.price}}</p>
+        </div>
+      </li>
+    </ul>
+    <div class="page-turning" v-if="courseList.length">
+      <img src="@/assets/images/xiangzuo.png" alt="" @click="getCourse('prev')">
+      &nbsp;
+      <img src="@/assets/images/xiangyou.png" alt="" @click="getCourse('next')">
+    </div>
+    <div v-else class="nomore-data">暂无推荐</div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+
+export default {
+  data() {
+    return {
+      courseParams: {
+        pageNum: 1,
+        pageSize: 3,
+        paramObject: {
+          recommendFlag: 2 // 1 按浏览量推荐 2 播放量推荐
+        }
+      },
+      courseList: []
+    }
+  },
+  methods: {
+    // 课程推荐
+    getCourse(param) {
+      if (param === 'prev') {
+        this.courseParams.pageNum =
+          this.courseParams.pageNum === 1
+            ? this.courseTotalPages < 10
+              ? this.courseTotalPages
+              : 10
+            : this.courseParams.pageNum - 1
+      } else if (param === 'next') {
+        this.courseParams.pageNum =
+          this.courseParams.pageNum === (this.courseTotalPages < 10 ? this.courseTotalPages : 10)
+            ? 1
+            : this.courseParams.pageNum + 1
+      }
+      api.getCourse(this.courseParams).then(res => {
+        this.courseTotalPages = Math.ceil(res.data.total / this.courseParams.pageSize)
+        this.courseList = res.data.records
+      })
+    },
+    gotoDetail(url) {
+      window.open(url)
+    }
+  },
+  mounted() {
+    this.getCourse()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.special-course {
+  background-color: #fff;
+  border-radius: 10px;
+  padding: 15px 20px 10px;
+  box-sizing: border-box;
+  > h4 {
+    font-weight: normal;
+    font-size: 16px;
+  }
+  .course-list {
+    > li {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      margin: 10px 0;
+      > div {
+        flex: 1;
+        margin-left: 10px;
+        overflow: hidden;
+        > h5 {
+          font-size: 15px;
+          font-weight: normal;
+          color: #333;
+        }
+        > div:nth-child(2) {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          color: #999;
+          margin: 7px 0;
+        }
+        > p.reds {
+          color: #f51e1e;
+        }
+        > p.purple {
+          color: #7355f6;
+        }
+      }
+    }
+  }
+  .cover-img {
+    width: 106px;
+    height: 64px;
+    border-radius: 10px;
+  }
+  .page-turning {
+    text-align: center;
+    > img {
+      cursor: pointer;
+    }
+  }
+}
+.nomore-data {
+  text-align: center;
+  margin: 20px 0 10px;
+  color: #999;
+}
+</style>
+

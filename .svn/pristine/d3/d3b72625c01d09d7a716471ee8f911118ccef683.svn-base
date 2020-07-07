@@ -1,0 +1,28 @@
+<template>
+  <div class="myIdea">
+    <div class="title">文章</div>
+    <div class="content">
+      文章的内容
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style lang="less" scoped>
+  .myIdea {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

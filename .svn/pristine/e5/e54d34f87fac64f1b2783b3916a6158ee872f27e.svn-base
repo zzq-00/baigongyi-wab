@@ -1,0 +1,11 @@
+// 分享
+export default [
+    {
+      path: '/share/hotNews',
+      component: () => import('../views/share/hotNews'),
+    },
+    {
+        path: '/share/idea',
+        component: () => import('../views/share/idea'),
+    }
+  ]

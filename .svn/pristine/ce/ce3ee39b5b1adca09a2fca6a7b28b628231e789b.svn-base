@@ -1,0 +1,457 @@
+<template>
+  <div class="idea-list" :class="{'no-border-radius': $route.path === '/myHome/myIdea'}" v-if="item.id">
+    <!-- 头像 名字 时间 关注 -->
+    <div class='title'>
+      <img @click="openUserCenter(item.accountId)" :src="item.avatar ? $store.state.imageDomain + item.avatar : require('@/assets/images/err-header-icon01.png')">
+      <div>
+        <span @click="openUserCenter(item.accountId)">{{item.nickName}}</span>
+        <br>
+        <span class="font-12">{{item.createTime | formatDate}}</span>
+      </div>
+      <template v-if="$store.state.userInfo && ($store.state.userInfo.accountId === item.accountId) && $route.path === '/myHome/myIdea'">
+        <el-button @click="deleteIdeaById(item)">删除</el-button>
+      </template>
+      <template v-if="$store.state.userInfo && ($store.state.userInfo.accountId !== item.accountId)">
+        <!-- 1 已关注 2 无关注 3互相关注 -->
+        <el-button @click="addAttention(item)" v-if="!item.concernStatus || item.concernStatus===2">关注</el-button>
+        <el-button @click="delAttention(item)" v-else>{{item.concernStatus===1?'已关注':'互相关注'}}</el-button>
+      </template>
+    </div>
+    <!-- 想法内容 -->
+    <div class='content'>
+      <p>
+        <span v-html="computedContent(item)">
+        </span>
+        <span class="fold red" v-if='computedShowFold(item)' @click='item.showFold = !item.showFold'>
+          {{item.showFold ? '收起全文': '展开全文'}}
+        </span>
+      </p>
+      <div class='image-grid'>
+        <div :class="{'one': item.ideaImgs.length===1, 'three': item.ideaImgs.length%3===0 || item.ideaImgs.length===5}">
+          <el-image v-for='(erItem,erIndex) in item.ideaImgs' :src='$store.state.imageDomain + erItem.url' :key="erIndex" :preview-src-list="item.srcList">
+          </el-image>
+        </div>
+      </div>
+    </div>
+    <!-- 点赞 评论 分享 -->
+    <div class='footer'>
+      <div class='footer_top'>
+        <div>
+          <p class="operate-bar" @click="likeOperate(item)">
+            <img v-if="item.likeStatus" src="@/assets/images/yizan.png" alt="">
+            <img v-else src="@/assets/images/zan.png" alt="">
+            <span>{{item.likeCount}}</span>
+          </p>
+        </div>
+        <div>
+          <p class="operate-bar" @click='viewCommentList(item)'>
+            <img src="@/assets/images/pinglun.png" alt="">
+            <span>{{item.commentCount}}</span>
+          </p>
+        </div>
+        <div>
+          <el-popover placement="bottom" trigger="click" @show="wxShare(item.id)" width="150">
+            <ul class="share-list" ref="NewsToolBox">
+              <li @click="copyText(item.id)" style="font-size: 12px;border-bottom: 1px solid #DDDDDD;padding-bottom: 9px;">
+                <img src="@/assets/images/lianjie.png" alt="">
+                <span style="vertical-align: middle;margin-left: 8px;cursor: pointer;">复制链接</span>
+              </li>
+              <li style="font-size: 12px;line-height: 30px">
+                <img src="@/assets/images/weixin.png" alt="">
+                <span style="vertical-align: middle;margin-left: 8px;">微信扫一扫</span>
+                <canvas :ref="'canvas'+item.id" style="max-width: 74px;max-height: 74px;display: block;margin: 0 auto;"></canvas>
+              </li>
+            </ul>
+            <p class="operate-bar" slot="reference">
+              <img src="@/assets/images/fenxiang.png" alt="" />
+              <span>分享</span>
+            </p>
+          </el-popover>
+        </div>
+      </div>
+      <div class='footer_bottom newsHotDetails_comment' v-loading="operating" v-if='item.showComment'>
+        <div class='add_comment'>
+          <div>
+            <img class="header-img" :src="$store.state.userInfo&&$store.state.userInfo.avatar?$store.state.imageDomain + $store.state.userInfo.avatar : require('@/assets/images/err-header-icon01.png')" alt="">
+            <el-input type="textarea" :rows="5" placeholder="请输入内容" v-model.trim="commentParams.comment">
+            </el-input>
+          </div>
+          <p>
+            <el-button type="danger" :disabled="!commentParams.comment.length" @click='commentIdea(item)'>评 论</el-button>
+          </p>
+        </div>
+        <ul class="comment-list">
+          <li v-for="(erItem, erIndex) in item.commentList" :key="erIndex">
+            <img class="header-img" @click="openUserCenter(erItem.accountId)" :src="erItem.avatar?$store.state.imageDomain + erItem.avatar : require('@/assets/images/err-header-icon01.png')" alt="">
+            <div>
+              <div class="clearfix">
+                <span class="fl" style="cursor: pointer;" @click="openUserCenter(erItem.accountId)">{{erItem.nickName}}</span>
+                <!-- | commentDate -->
+                <span class="time fr">{{erItem.commentsTime | commentDate}}</span>
+              </div>
+              <p v-html="strReplace(erItem.comment)"></p>
+            </div>
+          </li>
+        </ul>
+        <p class="gray comment-tips" v-if="!item.commentList.length">暂无评论</p>
+        <p class="red comment-tips" v-if="item.commentList.length > 9&&item.commentList.length<item.totalCommentNum" @click="viewMore(item)">查看更多</p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import QRCode from 'qrcode'
+export default {
+  props: {
+    item: Object
+  },
+  data() {
+    return {
+      operating: false,
+      objType: 10,
+      totalCommentNum: 0,
+      // 添加评论参数
+      commentParams: {
+        comment: '',
+        objId: '',
+        objType: 10
+      },
+      // 评论列表参数
+      commentListParams: {
+        asc: true,
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          objId: '',
+          objType: 10
+        }
+      }
+    }
+  },
+  methods: {
+    strReplace(str) {
+      return str.replace(/\n/g, '<br/>')
+    },
+    computedContent(item) {
+      if (!item.showFold) {
+        if (item.content.length > 260) {
+          return item.content.slice(0, 255).replace(/\n/g, '<br>') + '...'
+        } else if (item.content.split('\n').length > 6) {
+          return item.content
+            .split('\n')
+            .slice(0, 6)
+            .join('<br>')
+        }
+      }
+      return item.content.replace(/\n/g, '<br>')
+    },
+    computedShowFold(item) {
+      let length = item.content.split('\n').length
+      return length > 6 || item.content.length > 265
+    },
+    // 删除想法
+    deleteIdeaById(item) {
+      this.$confirm(`是否删除该想法，删除后该想法相关的点赞、评论、分享等相关信息都将被清除且无法恢复！`, '提示', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      })
+        .then(() => {
+          api.deleteIdeaById(item.id).then(res => {
+            this.$message.success('删除成功')
+            this.$emit('getNewData', item)
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消操作'
+          })
+        })
+    },
+    // 添加关注人
+    addAttention(item) {
+      api.addAttention({ objId: item.accountId, objType: 6 }).then(res => (item.concernStatus = res.data))
+    },
+    delAttention(item) {
+      api.delAttention({ objId: item.accountId, objType: 6 }).then(res => (item.concernStatus = 2))
+    },
+    // 点赞
+    likeOperate(item) {
+      if (this.operating) return
+      this.operating = true
+      if (item.likeStatus) {
+        api
+          .likeDelete(this.objType, item.id)
+          .then(res => {
+            item.likeStatus = false
+            item.likeCount--
+          })
+          .finally(() => (this.operating = false))
+      } else {
+        api
+          .likeAdd({ objType: this.objType, objId: item.id })
+          .then(res => {
+            item.likeStatus = true
+            item.likeCount++
+          })
+          .finally(() => (this.operating = false))
+      }
+    },
+    // 发布评论
+    commentIdea(item) {
+      if (this.commentParams.comment.length === 0) return this.$message.warning('请填写评论')
+      this.commentParams.objId = item.id
+      api.addComment(this.commentParams).then(res => {
+        this.$message({
+          message: '评论成功',
+          type: 'success'
+        })
+        item.commentCount++
+        item.commentList.unshift({
+          accountId: this.$store.state.userInfo.accountId,
+          nickName: this.$store.state.userInfo.nickName,
+          avatar: this.$store.state.userInfo.avatar,
+          comment: this.commentParams.comment,
+          commentsTime: new Date()
+        })
+        this.commentParams.comment = ''
+      })
+    },
+    // 展开/关闭 评论列表
+    async viewCommentList(item) {
+      if (item.showComment) return (item.showComment = false)
+      this.operating = true
+      item.showComment = true
+      this.commentListParams.paramObject.objId = item.id
+      let { data } = await this.getCommentList()
+      this.operating = false
+      item.commentList = data.records
+      item.totalCommentNum = data.total
+    },
+    viewMore(item) {
+      if (this.$route.params.id) {
+        this.operating = true
+        this.commentListParams.pageNum++
+        this.getCommentList().then(({ data }) => {
+          this.operating = false
+          item.commentList = [...item.commentList, ...data.records]
+          item.totalCommentNum = data.total
+        })
+      } else {
+        window.open('/engineering/' + item.id)
+      }
+    },
+    // 获取评论
+    getCommentList() {
+      return api.getCommentList(this.commentListParams)
+    },
+    // 复制链接
+    copyText(id) {
+      let text = `${window.location.origin}/engineering/${id}`
+      var textarea = document.createElement('textarea') //创建input对象
+      var currentFocus = document.activeElement //当前获得焦点的元素
+      var toolBoxwrap = this.$refs.NewsToolBox //将文本框插入到NewsToolBox这个之后
+      toolBoxwrap.appendChild(textarea) //添加元素
+      textarea.value = text
+      textarea.focus()
+      if (textarea.setSelectionRange) {
+        textarea.setSelectionRange(0, textarea.value.length) //获取光标起始位置到结束位置
+      } else {
+        textarea.select()
+      }
+      try {
+        var flag = document.execCommand('copy') //执行复制
+      } catch (eo) {
+        var flag = false
+      }
+      toolBoxwrap.removeChild(textarea) //删除元素
+      currentFocus.focus()
+      return flag ? this.$message.success('链接复制成功') : this.$message.warning('链接复制失败')
+    },
+    // 微信分享
+    wxShare(id) {
+      var weixinShareLink = location.origin + '/share/idea?id=' + id
+      QRCode.toCanvas(this.$refs['canvas' + id], weixinShareLink, error => {
+        if (error) console.error(error)
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.idea-list {
+  background-color: #fff;
+  border-radius: 10px;
+  margin-bottom: 10px;
+  padding: 20px 18px 0;
+  overflow: hidden;
+  &.no-border-radius {
+    border-radius: initial;
+  }
+  .title {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    > img {
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+    > div {
+      flex: 1;
+      margin-left: 11px;
+      overflow: hidden;
+      > span {
+        display: inline-block;
+        &:first-child {
+          cursor: pointer;
+        }
+        &:last-child {
+          color: #999999;
+          margin-top: 5px;
+        }
+      }
+    }
+    .el-button {
+      color: #e23732;
+      border-color: rgb(246, 195, 194);
+    }
+  }
+  .content {
+    > p {
+      position: relative;
+      line-height: 20px;
+      color: #666666;
+      word-break: break-all;
+      text-align: justify;
+      .fold {
+        margin-left: 5px;
+        white-space: nowrap;
+      }
+    }
+    .image-grid {
+      > div {
+        display: flex;
+        flex-wrap: wrap;
+        .el-image {
+          width: 120px;
+          height: 120px;
+          margin: 10px 10px 0 0;
+        }
+        &.one {
+          .el-image {
+            width: 250px;
+            height: auto;
+            max-height: 400px;
+            margin: 10px 10px 0 0;
+          }
+        }
+        &.three {
+          width: 410px;
+        }
+      }
+    }
+  }
+  .footer {
+    border-top: 1px solid #dddddd;
+    margin: 20px -20px 0;
+    .footer_top {
+      display: flex;
+      align-items: center;
+      > div {
+        cursor: pointer;
+        flex: 1;
+        .operate-bar {
+          height: 20px;
+          line-height: 20px;
+          text-align: center;
+          margin: 10px 0;
+          > img {
+            height: 16px;
+          }
+          > span {
+            color: #999999;
+            margin-left: 5px;
+            vertical-align: middle;
+          }
+        }
+        & + div .operate-bar {
+          border-left: 1px solid #dddddd;
+        }
+      }
+    }
+    .newsHotDetails_comment {
+      margin-top: 5px;
+      margin-left: 20px;
+      padding-top: 12px;
+      border-top: 1px solid #dddddd;
+      position: relative;
+      &::before {
+        content: '';
+        position: absolute;
+        top: -6px;
+        left: 49%;
+        border-left: 1px solid #ddd;
+        border-top: 1px solid #ddd;
+        width: 10px;
+        height: 10px;
+        transform: rotate(45deg);
+        background-color: #fff;
+      }
+      > .add_comment {
+        padding-right: 18px;
+        > div {
+          display: flex;
+        }
+        > p {
+          padding-top: 10px;
+          text-align: right;
+          > .el-button {
+            width: 90px;
+          }
+        }
+      }
+      .comment-list {
+        margin-top: 20px;
+        > li {
+          display: flex;
+          .header-img {
+            margin-top: 10px;
+          }
+          > div {
+            flex: 1;
+            border-top: 1px solid #ddd;
+            padding: 20px 18px 20px 0;
+            > p {
+              color: #666;
+              margin-top: 8px;
+              word-break: break-all;
+            }
+          }
+          .time {
+            font-size: 12px;
+            color: #999;
+          }
+        }
+      }
+      .comment-tips {
+        margin-left: 50px;
+        padding: 10px 0;
+        text-align: center;
+        border-top: 1px solid #ddd;
+      }
+    }
+  }
+}
+.header-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+</style>

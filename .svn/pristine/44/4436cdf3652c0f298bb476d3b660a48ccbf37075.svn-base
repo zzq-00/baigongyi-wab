@@ -1,0 +1,17 @@
+import { post, get } from 'axios'
+
+export default {
+  // 发布或者修改问题
+  saveOrUpdateQuestion(params) {
+    return post('/question/saveOrUpdateQuestion', params)
+  },
+  // 问答列表
+  getQuestionList(params) {
+    return post('/question/getQuestionList', params)
+  },
+  // 问答右侧边栏
+  getFavoriteUser() {
+    return get('/questionAnswer/getFavoriteUser')
+  },
+
+}

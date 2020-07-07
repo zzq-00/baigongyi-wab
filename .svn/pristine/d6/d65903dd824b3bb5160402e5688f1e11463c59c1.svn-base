@@ -1,0 +1,121 @@
+<template>
+  <div class='seeInformation'>
+    <ul>
+      <li>
+        <span>讲师姓名 </span>
+        <span>{{data.realName}}</span>
+      </li>
+      <li>
+        <span>讲师头像</span>
+        <img :src="data.avatar" alt="讲师头像" class='hov'>
+        <!-- <em class='hov' @click='opendialog'>调整头像位置</em> -->
+      </li>
+      <li>
+        <span>身份证明</span>
+        <span>{{data.certificateType==1 ? '中国居民身份证' : '护照'}}</span>
+      </li>
+      <li>
+        <span>手持证件正面照</span>
+        <span>{{data.certificateFacade ? "已上传" : '未上传'}}</span>
+      </li>
+      <li>
+        <span>手持证件反面照</span>
+        <span>{{data.certificateBack ? "已上传" : '未上传'}}</span>
+      </li>
+      <li>
+        <span>资格证书</span>
+        <span>{{data.qualification.split('&')[0]}}{{data.qualification.split('&')[1] ? '(照片已上传)':''}}</span>
+      </li>
+      <li>
+        <span style='margin-top:4px;'>讲师简介</span>
+        <span style='width:calc(100% - 220px);line-height:24px;'>{{data.introduction}}</span>
+      </li>
+    </ul>
+  </div>
+</template>
+<script>
+import { VueCropper } from 'vue-cropper'
+import api from '@/fetch'
+import axios from 'axios'
+export default {
+  components: {
+    VueCropper
+  },
+  props: {
+    data: Object
+  },
+  data() {
+    return {
+    }
+  },
+  mounted() {
+  },
+  methods: {
+  }
+}
+</script>
+<style lang="less" scoped>
+.seeInformation {
+  height: calc(100vh - 220px); // background: #fff;
+  > ul {
+    padding-left: 32px;
+    padding-top: 32px;
+    > li {
+      vertical-align: top;
+      display: flex;
+      span {
+        display: block;
+        padding: 15px 0;
+        &:nth-child(1) {
+          color: #666666;
+          width: 98px;
+          text-align: right;
+          padding-right: 38px;
+          font-weight: 500;
+          vertical-align: top;
+        }
+        &:nth-child(2) {
+          color: #333333;
+          font-weight: 500;
+        }
+      }
+      img {
+        display: block;
+        width: 120px;
+        height: 120px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        border-radius: 50%;
+      }
+      em {
+        line-height: 140px;
+        padding-left: 20px;
+        color: #e23732;
+        text-decoration: underline;
+      }
+    }
+    .hov:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+.el-dialog {
+  .submit-img {
+    display: flex;
+    justify-content: center;
+    input {
+      width: 120px;
+      height: 34px;
+      background: #e23732;
+      color: #fff;
+      margin-top: 20px;
+      border-radius: 5px;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+</style>
+

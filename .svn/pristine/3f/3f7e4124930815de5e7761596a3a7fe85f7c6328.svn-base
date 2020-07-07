@@ -1,0 +1,49 @@
+<template>
+  <div class="myIdea">
+    <div class="title">想法</div>
+    <div class="content">
+      <ideaListCom/>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import ideaListCom from '@/components/ideaListCom'
+
+export default {
+  components: {
+    ideaListCom
+  },
+  data() {
+    return {
+    }
+  },
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  methods: {}
+}
+</script>
+
+<style lang="less" scoped>
+.myIdea {
+  .title {
+    padding: 0px 20px;
+    height: 30px;
+    line-height: 30px;
+    color: #e23732;
+    font-size: 12px;
+    background-color: #fff3f3;
+  }
+  .content {
+    width: 100%;
+    height: calc(100vh - 450px);
+  }
+}
+</style>

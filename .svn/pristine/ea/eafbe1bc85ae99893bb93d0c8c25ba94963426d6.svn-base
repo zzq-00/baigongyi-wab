@@ -1,0 +1,258 @@
+<template>
+  <div class="qa-list-page">
+    <div class="qa-list-left">
+      <p class="qa-list-title">热门回答</p>
+      <ul class="qa-list-box">
+        <li v-for="(item,index) in qaList" :key="index">
+          <p class="qa-box-title">{{item.questionContent}}</p>
+          <div class="qa-person-info">
+            <img :src="item.avatar" alt="" @click="gotoUser(item)">
+            <div>
+              <span>{{item.userName}}</span>
+              <span>{{item.lastAnswerTime}}</span>
+            </div>
+            <button class="already" v-if="item.concernStatus==1">已关注</button>
+            <button class="not" v-if="item.concernStatus==2">关注</button>
+            <button class="already" v-if="item.concernStatus==3">互相关注</button>
+          </div>
+          <div class="qa-content" @click="gotoDetails()">{{item.answerContent}}</div>
+        </li>
+      </ul>
+    </div>
+    <div class="fabulous-right">
+      <p class="fabulous-title">最赞用户</p>
+      <ul class="fabulous-list-box">
+        <li v-for="(its,index) in fabulousUser" :key="index">
+          <img :src="its.avatar" alt="">
+          <div class="user-info">
+            <p class="users">
+              <span class="user-name">{{its.userName}}</span>
+              <span class="user-more" @click="gotoMore(its.accountId)">了解更多</span>
+            </p>
+            <p class="user-introduce">{{its.introduction}}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      qaParams: {
+        pageNum: 1,
+        pageSize: 10
+      },
+      qaList: [], //问答列表
+      fabulousUser: [] //最赞用户列表
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    gotoUser() {
+      //   this.$router.push()
+    },
+    gotoDetails() {
+    //   this.$router.push('/questionsDetails')
+      this.$router.push({path:'/questionsDetails',query:{}})
+
+    },
+    // 最赞用户了解更多
+    gotoMore(accountId){
+        this.$router.push('')
+    },
+    getQuestionList() {
+      api
+        .getQuestionList(this.qaParams)
+        .then(res => {
+          this.qaList = res.data.records
+          this.qaList.map(itmem => {
+            if (item.answerContent.length > 150) {
+              item.answerContent = item.answerContent.substring(0, 150) + '...'
+            }
+          })
+        })
+        .catch(res => {})
+    },
+    getFavoriteUser() {
+      api.getFavoriteUser().then(res => {
+        this.fabulousUser = res.data
+      })
+    }
+  },
+  mounted() {
+      loginaccountId
+    this.getQuestionList() //问答列表
+    this.getFavoriteUser() //问答右侧边栏
+  }
+}
+</script>
+<style lang="less" scoped>
+.qa-list-page {
+  padding: 20px 0;
+  overflow: hidden;
+  .qa-list-left {
+    float: left;
+    width: 780px;
+    background: rgba(255, 255, 255, 1);
+    border-radius: 10px;
+    .qa-list-title {
+      padding: 22px 0 12px 20px;
+      height: 16px;
+      line-height: 16px;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(74, 74, 74, 1);
+      border-bottom: 1px solid #dddddd;
+    }
+    .qa-list-box {
+      overflow: auto;
+      height: calc(100vh - 211px);
+      li {
+        padding: 20px;
+        border-bottom: 1px solid #dddddd;
+        .qa-box-title {
+          max-width: 740px;
+          overflow: hidden;
+          height: 17px;
+          line-height: 17px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(51, 51, 51, 1);
+        }
+        .qa-box-title:hover {
+          color: #e23732;
+        }
+        .qa-person-info {
+          margin-top: 10px;
+          img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+          }
+          div {
+            display: inline-block;
+            span {
+            }
+            span:nth-child(1) {
+            }
+            span:nth-child(2) {
+            }
+          }
+          button {
+            padding: 0 13px;
+            float: right;
+            height: 34px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            cursor: pointer;
+          }
+          .not {
+            border: 1px solid #e23732;
+            color: #e23732;
+          }
+          .already {
+            border: 1px solid #666666;
+            color: #666666;
+          }
+        }
+        .qa-content {
+          margin-top: 12px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          line-height: 19px;
+          max-height: 55px;
+          overflow: hidden;
+          cursor: pointer;
+        }
+      }
+    }
+  }
+  .fabulous-right {
+    width: 280px;
+    height: 450px;
+    float: right;
+    background: rgba(255, 255, 255, 1);
+    border-radius: 10px;
+    padding: 20px 0 20px 20px;
+    .fabulous-title {
+      height: 17px;
+      line-height: 17px;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(74, 74, 74, 1);
+    }
+    .fabulous-list-box {
+      padding: 10px 0 20px 0;
+      img {
+        display: inline-block;
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+      }
+      .user-info {
+        margin-left: 10px;
+        margin-top: 10px;
+        display: inline-block;
+        position: relative;
+        .users {
+          .user-name {
+            width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(74, 74, 74, 1);
+          }
+          .user-more {
+            float: right;
+            width: 67px;
+            height: 15px;
+            line-height: 16px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(153, 153, 153, 1);
+            background: url(../../assets/images/morehover.png) no-repeat center right;
+          }
+          .user-more:hover {
+            color: #e23732;
+            cursor: pointer;
+          }
+        }
+        .user-introduce {
+          margin-top: 15px;
+          width: 192px;
+          height: 15px;
+          line-height: 15px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+      .user-info:after {
+        position: absolute;
+        content: '';
+        display: block;
+        height: 1px;
+        width: 210px;
+        background-color: #ddd;
+        left: 0px;
+        bottom: -25px;
+      }
+    }
+  }
+}
+</style>

@@ -1,0 +1,423 @@
+<!-- 直播详情页 -->
+<template>
+  <div class="liveTvDetails">
+    <div class="course">
+      <div class="cover">
+        <img :src="liveTvDetails.homeImage && ($store.state.imageDomain + liveTvDetails.homeImage)" alt="">
+      </div>
+      <div class="info">
+        <div class="courseInfo">
+          <h3 class="title font-18">{{liveTvDetails.title}}</h3>
+          <div class="other font-14 gray">
+            <span>观看：
+              <i>{{liveTvDetails.watchCount}}</i> 次</span>
+            <span> | </span>
+            <span>讲师：
+              <i>{{liveTvDetails.realName}}</i>
+            </span>
+            <span> | </span>
+            <span>{{liveTvDetails.publishTime | formatDate}}</span>
+          </div>
+        </div>
+        <div class="price purple font-16">
+          <i :class="liveTvDetails.price > 0 ? 'red' : 'purple'">{{liveTvDetails.price>0 ? '&yen;'+liveTvDetails.price : '免费' }}</i>
+        </div>
+        <div>
+          <button type="danger" @click='livePlayFn'>立即观看</button>
+          <!-- <button type="danger" v-if="liveTvDetails.price===0" @click='livePlayFn'>立即观看</button>
+                                                <button type="danger" v-else @click="dialogVisible=true">立即购买</button> -->
+          <button class="fr" @click="collect()">{{liveTvDetails.whetherToCollect ? '已收藏' : '收藏'}}</button>
+        </div>
+      </div>
+    </div>
+    <div class='dialogWrap'>
+      <el-dialog title="确认订单" :visible.sync="dialogVisible" width="50%">
+        <div class="orderInfo">
+          <p>课程名称
+            <span>柱钢筋手算</span>
+          </p>
+          <p>订单信息
+            <span>订单号</span>
+          </p>
+          <p>订单金额
+            <span>&yen;{{liveTvDetails.price}}</span>
+          </p>
+          <p>支付方式
+            <span>账户余额(&yen;39.0)</span>
+          </p>
+        </div>
+        <span slot="footer" class="dialog-footer">
+          <el-button type="danger" @click="dialogVisible = false">确 认 支 付</el-button>
+        </span>
+      </el-dialog>
+    </div>
+
+    <div class="container">
+      <div class="leftcontent">
+        <div class="toggleTab">
+          <span v-for="(item,index) in tabsName" :key="index" @click="toggleTabs(index)" :class="{active:index==nowIndex}">
+            {{item}}
+            <em style='font-style:normal;' v-if='index==1'>({{$store.state.commentNum}})</em>
+          </span>
+          <!-- <i v-if="nowIndex===1" style="color:#4A4A4A;font-size:18px">({{$store.state.commentNum}})</i> -->
+        </div>
+        <div class="middle">
+          <!-- 介绍 -->
+          <div v-show="nowIndex===0" class="introduce">
+            <h3>直播回放简介</h3>
+            <p v-html="liveTvDetails.description"></p>
+          </div>
+
+          <!-- 评论 -->
+          <comment-com :num='num' v-show="nowIndex===1" :canComment="true"></comment-com>
+
+        </div>
+      </div>
+
+      <div class="rightContent">
+        <div class="teacher">
+          <h3 class="font-16">讲师简介</h3>
+          <div class="teaInfo">
+            <div class="photo">
+              <img @click="openTeacherHome(liveTvDetails.accountId)" :src="liveTvDetails.avatar?$store.state.imageDomain + liveTvDetails.avatar : require('@/assets/images/err-header-icon01.png')" alt="">
+              <span @click="openTeacherHome(liveTvDetails.accountId)" class="name font-16">{{liveTvDetails.realName}}</span>
+            </div>
+            <span @click="openTeacherHome(liveTvDetails.accountId)" class="gray goto">查看主页
+              <i class="el-icon-arrow-right"></i>
+            </span>
+          </div>
+          <div class="motto" id='mottos'>{{liveTvDetails.introduction}}asdasdasdasd</div>
+        </div>
+        <div class="download">
+          <img class="qr" :src="$store.state.imageDomain + 'images/download/bgy_download.png'" alt="">
+          <div class="downPro">
+            <p>扫码下载百工驿APP</p>
+            <p>工程人都在用的分享交流神器</p>
+          </div>
+        </div>
+      </div>
+    </div>
+    <videoPlayer :videoVal='videoVal'></videoPlayer>
+  </div>
+</template>
+
+<script>
+import commentCom from '@/components/commentCom'
+import store from '@/store'
+import api from '@/fetch'
+import videoPlayer from '@/components/videoPlayer' //视频插件
+export default {
+  components: {
+    commentCom,
+    videoPlayer
+  },
+  data() {
+    return {
+      tabsName: ['介绍', '评论'],
+      nowIndex: 0,
+      num: 5,
+      dialogVisible: false, // 购买弹框
+      // 收藏
+      collectParams: {
+        objId: this.$route.params.id,
+        objType: 5
+      },
+      liveTvDetails: {},
+      videoVal: {
+        playerURL: '',
+        dialogTableVisible: false
+      }
+    }
+  },
+  created() {
+    this.getDetailsFn()
+  },
+  methods: {
+    getDetailsFn() {
+      api.liveHomeId(this.$route.params.id).then(res => {
+        this.liveTvDetails = res.data
+      })
+    },
+    //立即播放
+    livePlayFn() {
+      // api.livePlay(this.$route.params.id).then(res => {
+      //     this.videoVal.dialogTableVisible = true;
+      //     // this.videoVal.playerURL = this.liveTvDetails.url;
+      //     console.log(this.liveTvDetails, 'mmm');
+      // })
+      //  api.browseRecord({
+      //     "objId": this.$route.params.id,
+      //     "objType": 5
+      // }).then(res => {
+      if (this.$store.state.userInfo.accountId) {
+        var url = this.liveTvDetails.hlsUrl ? this.liveTvDetails.hlsUrl : this.liveTvDetails.url
+        this.videoVal.playerURL = url.includes('http') ? url : this.$store.state.videoDomain + url
+        this.videoVal.dialogTableVisible = true
+      } else {
+        this.$alert('请登录后再观看', {
+          confirmButtonText: '去登录',
+          callback: () => {
+            this.$router.push('/login')
+          }
+        })
+      }
+      // })
+    },
+    // 收藏，取消收藏
+    async collect() {
+      // 已登录--课程是否收藏
+      if (this.$store.state.userInfo.accountId) {
+        if (this.liveTvDetails.whetherToCollect) {
+          const res = await api.cancelCollect(this.collectParams)
+          this.liveTvDetails.whetherToCollect = false
+        } else {
+          const res = await api.addCollect(this.collectParams)
+          this.liveTvDetails.whetherToCollect = true
+        }
+      } else {
+        this.$alert('请登录后再收藏', {
+          confirmButtonText: '去登录',
+          callback: () => {
+            this.$router.push('/login')
+          }
+        })
+      }
+    },
+    // 标签切换
+    toggleTabs(index) {
+      this.nowIndex = index
+    },
+    getTotal(val) {
+      this.commentTotal = val
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.liveTvDetails {
+  .course {
+    height: 250px;
+    border-radius: 10px;
+    margin-top: 20px;
+    background-color: #fff;
+    box-sizing: border-box;
+    padding: 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    .info {
+      height: 100%;
+      margin-left: 20px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      .courseInfo {
+        .title {
+          font-weight: 700;
+          margin-bottom: 10px;
+        }
+        .other {
+          vertical-align: middle;
+          span:nth-child(2n) {
+            padding: 0 5px;
+          }
+        }
+      }
+      button {
+        width: 90px;
+        height: 34px;
+        box-sizing: border-box;
+        background: #e23732;
+        color: #fff;
+        border: 1px solid #e23732;
+        border-radius: 5px;
+        margin-right: 10px;
+        &:last-child {
+          background: #fff;
+          color: #4a4a4a;
+          border-color: #ddd;
+        }
+      }
+    }
+    .cover {
+      width: 280px;
+      height: 210px;
+      img {
+        display: inline-block;
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+      }
+    }
+  }
+  .container {
+    margin-top: 20px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    .leftcontent {
+      width: 780px;
+      background-color: #fff;
+      border-radius: 10px;
+      padding-bottom: 20px;
+      .toggleTab {
+        position: relative;
+        height: 50px;
+        padding: 20px 0 0 20px;
+        box-sizing: border-box;
+        border-bottom: 1px solid #ddd;
+        color: #999;
+        span + span {
+          margin-left: 20px;
+        }
+        span {
+          &:hover {
+            cursor: pointer;
+          }
+        }
+        .active {
+          position: relative;
+          color: #4a4a4a;
+          font-size: 18px;
+          font-weight: 400;
+        }
+        .active::after {
+          content: '';
+          display: inline-block;
+          position: absolute;
+          bottom: -6px;
+          left: 2px;
+          height: 3px;
+          width: 24px;
+          background-color: #e43c31;
+        }
+      }
+      .middle {
+        .introduce {
+          padding: 20px 20px 0 20px;
+          min-height: calc(100vh - 500px);
+          h3 {
+            font-weight: bold;
+            font-size: 16px;
+            color: #4a4a4a;
+          }
+          p {
+            font-size: 14px;
+            color: #666;
+            margin-top: 20px;
+          }
+        }
+      }
+    }
+    // #mottos {
+    //   height: 32px;
+    //   color: #666;
+    //   text-overflow: -o-ellipsis-lastline;
+    //   overflow: hidden;
+    //   text-overflow: ellipsis;
+    //   display: -webkit-box;
+    //   -webkit-line-clamp: 2;
+    //   line-clamp: 2;
+    //   -webkit-box-orient: vertical;
+    // }
+    .rightContent {
+      .teacher {
+        width: 300px;
+        height: 150px;
+        border-radius: 10px;
+        background-color: #fff;
+        box-sizing: border-box;
+        padding: 15px 8px 15px 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        color: #4a4a4a;
+        .teaInfo {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          .goto {
+            cursor: pointer;
+          }
+          .photo {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            img {
+              width: 60px;
+              height: 60px;
+              border-radius: 50%;
+              display: inline-block;
+            }
+            .name {
+              cursor: pointer;
+              margin-left: 10px;
+              font-weight: bold;
+              width: 120px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+            }
+          }
+        }
+      }
+      .download {
+        width: 300px;
+        border-radius: 10px;
+        box-sizing: border-box;
+        background-color: #fff;
+        margin-top: 20px;
+        padding: 20px 0 20px 20px;
+        .downPro {
+          display: inline-block;
+          vertical-align: middle;
+          margin-left: 5px;
+          p {
+            height: 20px;
+            line-height: 20px;
+          }
+        }
+      }
+    }
+  }
+}
+
+.dialogWrap {
+  /deep/.el-dialog__body {
+    border-top: 1px solid #ddd;
+    border-bottom: 1px solid #ddd;
+    padding-left: 100px;
+    .orderInfo {
+      margin-left: 45px;
+      p {
+        margin-bottom: 20px;
+        color: #999;
+        span {
+          margin-left: 20px;
+          color: #333;
+        }
+      }
+      p:nth-child(3) {
+        span {
+          color: #e23732;
+        }
+      }
+    }
+  }
+  /deep/.el-dialog__footer {
+    text-align: center;
+  }
+}
+
+em,
+i,
+s {
+  font-style: normal;
+  text-decoration: none;
+}
+</style>

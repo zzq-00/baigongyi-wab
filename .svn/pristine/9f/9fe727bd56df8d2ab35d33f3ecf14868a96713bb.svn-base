@@ -1,0 +1,159 @@
+<template>
+  <div>
+    <el-upload class="avatar-uploader"
+      action="#"
+      :http-request="onUpload"
+      :show-file-list="false"
+      name="image">
+      <img v-if="avatarImg" :src="avatarImg" style="width:200px">
+      <i v-else class="el-icon-plus avatar-uploader-icon"></i>
+      <el-button type="danger">点击上传</el-button>
+    </el-upload>
+
+   <!-- <el-upload
+    action="#"
+    :http-request="Upload"
+    :data="Aliyun"
+    :multiple="false"
+    :show-file-list="true"
+    list-type="picture-card"
+    :on-preview="handlePictureCardPreview"
+    :on-remove="handleRemove"
+    :limit="5"
+    >
+    <i class="el-icon-plus" />
+    </el-upload>
+    <el-dialog :visible.sync="dialogVisible">
+    <img width="100%" :src="dialogImageUrl" alt="">
+    </el-dialog>
+    <p style="color: #999;">图片上传限制： 1.最多5张； 2.最大1M</p> -->
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import axios from 'axios'
+import { getSystemDate } from '@/assets/js/date.js'
+export default {
+  name: 'UploadPic',
+  data () {
+    return {
+      dataKey: {},
+      avatarImg: ''
+    }
+  },
+  created () {
+    this.getAliyun()
+  },
+  methods: {
+    // 获取阿里云数据
+    async getAliyun (up, filename, ret) {
+      const res = await api.getUploadPic()
+      this.dataKey = res.data
+    },
+    // 头像上传图片
+    onUpload (e) {
+      console.log(e)
+      const files = e.file
+      const { name, size } = files
+      console.log(name)
+      const type = name.split('.')[1]
+      const ossUrl = this.dataKey.host
+      var policyText = {
+        expiration: this.dataKey.expiration, // 设置该Policy的失效时间，超过这个失效时间之后，就没有办法通过这个policy上传文件了
+        conditions: [
+          ['content-length-range', 0, 1048576000] // 设置上传文件的大小限制
+        ]
+      }
+      const Base64 = require('js-base64').Base64
+      var policyBase64 = Base64.encode(JSON.stringify(policyText))
+
+      var bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, this.dataKey.accessKeySecret, { asBytes: true })
+      var signature = Crypto.util.bytesToBase64(bytes)
+      const sendData = new FormData()
+      const reader = new window.FileReader()
+      reader.readAsDataURL(files)
+      reader.onload = e => {
+        this.avatarImg = e.target.result
+      }
+      sendData.append('key', `images/${getSystemDate()}${new Date().getTime()}.${type}`)
+      sendData.append('OSSAccessKeyId', this.dataKey.accessKeyId)
+      sendData.append('signature', signature)
+      sendData.append('x-oss-security-token', this.dataKey.securityToken)
+      sendData.append('policy', policyBase64)
+      sendData.append('success_action_status', 200) // 指定返回的状态码
+      sendData.append('file', files)
+      // this.ruleForm.avatar = ossUrl + '/' + new Date().getTime() + '.' + type
+      this.avatarImg = ossUrl + '/' + new Date().getTime() + '.' + type
+      console.log(ossUrl + '/' + new Date().getTime() + '.' + type, '打印')
+      axios.post(ossUrl, sendData).then((res) => {
+        console.log('得到上传到阿里云的图片地址')
+      }).catch(err => {
+        console.log(err)
+      })
+    }
+    // 上传图片
+    // Upload (file) {
+    //   console.log(file)
+    //   const that = this
+    //   // 判断扩展名
+    //   const tmpcnt = file.file.name.lastIndexOf('.')
+    //   const exname = file.file.name.substring(tmpcnt + 1)
+    //   const names = ['jpg', 'jpeg', 'png']
+    //   if (names.indexOf(exname) < 0) {
+    //     this.$message.error('不支持的格式!')
+    //     return
+    //   }
+    //   if (file.size > 1024 * 1024) {
+    //     this.$message.error('图片大小最大1M')
+    //   }
+    //   async function multipartUpload () {
+    //     // const fileName = that.name + file.file.uid
+    //     const fileName = that.Aliyun.objectName + +'/' + getSystemDate() + '-' + file.file.name
+    //     // fileName = aliyunConfig.objectName+'/'+Date.now()+'-'+file.name //所要上传的文件名拼接 (test/)
+    //     // 定义唯一的文件名，打印出来的uid其实就是时间戳
+    //     // client 是第一步中的 client
+    //     client(that.signature).put(fileName, file.file,
+    //       {
+    //         progress: function (p) { // 获取进度条的值
+    //           console.log(p)
+    //           that.progress = p * 100
+    //         }
+    //       }).then(
+    //       result => {
+    //         // 下面是如果对返回结果再进行处理，根据项目需要
+    //         console.log(result)
+    //         // that.imgUrl = 'http://' + result.bucket + '.' + that.Aliyun.endpoint + '/' + result.name
+    //         that.dialogImageUrl = result.url
+    //         that.imgUrl.push({
+    //           name: file.file.name,
+    //           url: result.url
+    //         })
+    //         console.log(that.imgUrl)
+    //       }).catch(err => {
+    //       console.log('err:', err)
+    //     })
+    //   }
+    //   multipartUpload()
+    // },
+    // 图片预览
+    // handlePictureCardPreview (file) {
+    //   this.dialogImageUrl = file.url
+    //   this.dialogVisible = true
+    // },
+    // // 删除图片
+    // handleRemove (file, fileList) {
+    //   // console.log(file)
+    //   for (var i in this.imgUrl) {
+    //     if (this.imgUrl[i].name === file.name) {
+    //       this.imgUrl.splice(i, 1)
+    //     }
+    //   }
+    // }
+  }
+}
+</script>
+
+<style>
+
+</style>

@@ -1,0 +1,131 @@
+<template>
+  <div class="hisCollect">
+    <div class="title">
+      <span v-for="item in tabsColumn" :key="item" @click="tabChange(item)" :class="{active:item === tabActive}">
+        {{item}}
+      </span>
+    </div>
+    <div class="content">
+      <articleList v-if="tabActive==='收藏的文章'" :listData="collectData" :noMore="noMore" :loading="loading" @getMore="getMore" @getNewData="getNewData" />
+      <CollectedAnswers v-else-if="tabActive==='收藏的回答'" />
+      <CollectedLives v-else-if="tabActive==='收藏的直播'" />
+      <CollectCourse v-else :tabActive="tabActive" :collectData="collectData" :noMore="noMore" :loading="loading" @getMore="getMore" @getNewData="getNewData" :key="updateKey"></collectCourse>
+    </div>
+  </div>
+</template>
+
+<script>
+import CollectCourse from './components/CollectCourse'
+import articleList from '@/components/articleList'
+import CollectedAnswers from './components/CollectedAnswers' //收藏的回答
+import CollectedLives from './components/CollectedLives' //收藏的回答
+import api from '@/fetch'
+import { mapState } from 'vuex'
+export default {
+  components: {
+    CollectCourse,
+    articleList,
+    CollectedAnswers,
+    CollectedLives
+  },
+  data() {
+    return {
+      updateKey: 1,
+      tabsColumn: ['收藏的课程', '收藏的专栏', '收藏的直播', '收藏的文章', '收藏的回答'],
+      collectData: [],
+      loading: false,
+      totalNums: 1,
+      collectParams: {
+        accountId: this.$route.query.id || this.$store.state.userInfo.accountId,
+        pageNum: 1,
+        pageSize: 10,
+        flag: 2
+      }
+    }
+  },
+  computed: {
+    ...mapState(['tabActive']),
+    noMore() {
+      return this.collectData.length >= this.totalNums
+    }
+  },
+  watch: {
+    tabActive: {
+      handler: function(val) {
+        this.collectData = []
+        this.totalNums = 1
+        this.updateKey++
+        this.collectParams.pageNum = 1
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    tabChange(item) {
+      this.$store.commit('setTab', item)
+    },
+    async getMore() {
+      this.loading = true
+      let res = {}
+      if (this.tabActive === '收藏的课程') {
+        res = await api.CollectCourse(this.collectParams)
+      } else if (this.tabActive === '收藏的专栏') {
+        res = await api.CollectColumn(this.collectParams)
+      } else if (this.tabActive === '收藏的直播') {
+        // res = await api.CollectLive(this.collectParams)
+      } else if (this.tabActive === '收藏的文章') {
+        res = await api.CollectArticle(this.collectParams)
+      } else if (this.tabActive === '收藏的回答') {
+        // res = await api.CollectAnswer(this.collectParams)
+      }
+      this.loading = false
+      if (res.data) {
+        this.collectData = [...this.collectData, ...res.data.records]
+        this.totalNums = res.data.total
+        !this.noMore && this.collectParams.pageNum++
+      }
+    },
+    // 取消收藏后重新获取数据
+    getNewData(delData) {
+      if (Array.isArray(delData)) {
+        delData.forEach(obj => {
+          let index = this.collectData.findIndex(item => item.id === obj.objId)
+          this.collectData.splice(index, 1)
+        })
+        this.totalNums -= delData.length
+      } else {
+        let index = this.collectData.findIndex(item => item === delData)
+        this.collectData.splice(index, 1)
+        this.totalNums -= 1
+      }
+      // 更新右侧收藏数量
+      this.$store.commit('setFollow', !this.$store.state.cancelStatus)
+      if (!this.collectData.length) {
+        this.collectParams.pageNum = 1
+        this.getMore()
+      }
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.hisCollect {
+  .title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+    cursor: pointer;
+    span + span {
+      margin-left: 16px;
+    }
+    .active {
+      color: #e23732;
+    }
+  }
+  .content {
+    width: 100%;
+    height: calc(100vh - 450px);
+    background-color: #fff;
+  }
+}
+</style>

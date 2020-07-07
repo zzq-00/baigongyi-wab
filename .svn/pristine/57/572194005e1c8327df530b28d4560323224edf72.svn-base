@@ -1,0 +1,63 @@
+/**
+ * 封装axios模块
+ */
+import axios from 'axios'
+// import store from '@/store'
+// import { getItem } from '@/store/storage'
+import { Message } from 'element-ui'
+
+axios.defaults.timeout = 0
+// axios.defaults.withCredentials = true
+// axios.defaults.baseURL = process.env.VUE_APP_API || window.location.origin
+axios.defaults.baseURL = process.env.NODE_ENV === 'development' ? '/proxyHeader' : 'http://bgywebtest.tzecc.com/api/'
+
+// axios拦截器
+axios.interceptors.request.use(
+  config => {
+    if (window.localStorage.user) config.headers.Authentication = JSON.parse(window.localStorage.getItem('user')).token
+    if (!config.url.includes('aliyuncs')) config.withCredentials = true
+    return config
+  },
+  error => {
+    return Promise.reject(error)
+  }
+)
+
+// 返回状态判断
+axios.interceptors.response.use(
+  response => {
+    if (response.data && response.data.code !== 200) {
+      Message.error(response.data.message)
+      return Promise.reject(response.data)
+    }
+    return response.data
+  },
+  error => {
+    if (error.response.status === 401) {
+      Message.error(error.response.data.message)
+      setTimeout(() => {
+        window.localStorage.clear()
+        window.location.replace('/login?redirectUrl=' + window.location.href)
+      }, 1000)
+    }
+    return Promise.reject(error.message)
+  }
+)
+let apiObject = {
+  // 获取授权码
+  aliyunConfig: () => axios.get('aliyun/config'),
+  // 获取token
+  getUploadToken: () => axios.get('/qiniu/config')
+}
+// 自动导入当前文件夹下的文件内容，合并为一个Object。
+// 不太好，以后放弃
+const apiFiles = require.context('.', false, /\.js$/)
+apiFiles.keys().forEach(key => {
+  if (key === './index.js') return
+  apiObject = {
+    ...apiObject,
+    ...apiFiles(key).default
+  }
+})
+
+export default apiObject

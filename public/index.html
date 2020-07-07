@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <!-- <meta name="renderer" content="webkit"> -->
+  <meta name="referrer" content="no-referrer" />
+  <meta name="viewport" content="width=device-width,initial-scale=1.0,user-scalable=no,maximum-scale=1.0">
+  <meta name="format-detection" content="telephone=no, email=no">
+  <meta name="description" content="百工驿——工程行业领先的学习、交流、分享社区，集资讯、社区、教育、人才服务为一体，全方位服务工程人。" />
+  <meta name="keywords" content="百工驿，工程资讯，工程社区，工程问答，工程服务，建设工程，工程造价，工程咨询" />
+  <!-- Open Graph data -->
+  <meta property="og:title" content="百工驿" />
+  <meta property="og:url" content="www.baigongyi.com" />
+  <meta property="og:image" content="./baigongyi.png" />
+  <meta property="og:description" content="百工驿——工程行业领先的学习、交流、分享社区，集资讯、社区、教育、人才服务为一体，全方位服务工程人。" />
+  <link rel="icon" href="<%= BASE_URL %>favicon.ico">
+  <!-- vue-video-player css -->
+  <link rel="stylesheet" href="<%= BASE_URL %>js/video@6.6.2/video-js.css">
+  <link rel="stylesheet" href="<%= BASE_URL %>js/vue-video-player@5.0.0/custom-theme.css">
+  <!-- element css -->
+  <link rel="stylesheet" href="<%= BASE_URL %>css/theme/index.css">
+  <!-- base -->
+  <link rel="stylesheet" href="<%= BASE_URL %>css/base.css">
+
+  <title>百工驿</title>
+  <!-- vue -->
+  <script type="text/javascript" src="<%= BASE_URL %>js/vue@2.6.11/vue.min.js"></script>
+  <!-- element js -->
+  <script type="text/javascript" src="<%= BASE_URL %>js/element@2.13.1/index.js"></script>
+  <!-- jquery -->
+  <script type="text/javascript" src="<%= BASE_URL %>js/jquery@3.4.1/jquery.min.js"></script>
+  <!-- vue-video-player js -->
+  <script src="<%= BASE_URL %>js/video@6.6.2/video.min.js"></script>
+  <script src="<%= BASE_URL %>js/vue-video-player@5.0.0/vue-video-player.js"></script>
+  <!-- hls-plugin -->
+  <script src="<%= BASE_URL %>js/videojs-contrib-hls@5.15.0/videojs-contrib-hls.js"></script>
+  <script src="<%= BASE_URL %>js/videojs-contrib-hls@5.15.0/videojs-contrib-media-sources.js"></script>
+  <!-- crypto1 -->
+  <script type="text/javascript" src="<%= BASE_URL %>js/crypto1/crypto/crypto.js"></script>
+  <script type="text/javascript" src="<%= BASE_URL %>js/crypto1/hmac/hmac.js"></script>
+  <script type="text/javascript" src="<%= BASE_URL %>js/crypto1/sha1/sha1.js"></script>
+</head>
+
+<body>
+  <noscript>
+    <strong>We're sorry but 百工驿 doesn't work properly without JavaScript enabled. Please enable it to continue.</strong>
+  </noscript>
+  <div id="app"></div>
+  <!-- built files will be auto injected -->
+</body>
+<!-- 分享sdk -->
+<script type="text/javascript" src="https://res.wx.qq.com/open/js/jweixin-1.6.0.js"></script>
+<script type="text/javascript" src="https://g.alicdn.com/dingding/open-develop/1.9.0/dingtalk.js"></script>
+<script type="text/javascript" src="https://yzf.qq.com/xv/web/static/chat_sdk/yzf_chat.min.js"></script>
+<script type="text/javascript">
+  //app搜索页面、协议页面、分享页面、下载页面、编辑器不展示客服按钮 
+  var url = window.location.href;
+  var whiteList = new Array("/appsearch", "/protocol", "/share", "/download", "/mEditor", "/liveBox");
+  var showkf = true;
+  for(var i = 0; i < whiteList.length; i++) {
+    if(url.indexOf(whiteList[i]) > 0) {
+      showkf = false;
+      break;
+    }
+  }
+  if (showkf) {
+    //参数说明
+    //sign：公司渠道唯一标识，复制即可，无需改动
+    //uid：用户唯一标识，如果没有则不填写，默认为空
+    //data：用于传递用户信息，最多支持5个，参数名分别为c1,c2,c3,c4,c5；默认为空
+    //selector：css选择器(document.querySelector, 如#btnid .chat-btn等)，用于替换默认的常驻客服入口
+    //callback(type, data): 回调函数,type表示事件类型， data表示事件相关数据
+    //type支持的类型：newmsg有新消息，error云智服页面发生错误， close聊天窗口关闭
+    var user = window.localStorage.getItem("userInfo") !== '""' ? JSON.parse(window.localStorage.getItem("userInfo")) : undefined;
+    var userName = user ? user.nickName : "游客"
+    var userMobile = user ? user.mobile : ""
+    var userAccount = user ? user.accountId : ""
+    setInterval(() => {
+      window.yzf && window.yzf.init({
+      sign: '37ef9b97d77303902344cbeb19b5e560fd1c6c5043643e4120a992abefbdb82a87a9c50e53317cb6fc3ff83af3d8e09eb5819492',
+      uid: userAccount,
+      data: {
+        c1: userName,
+        c2: userMobile,
+        c3: userAccount,
+        c4: '',
+        c5: ''
+      },
+      selector: '#onlineService',
+      callback: function (type, data) { }
+    });
+    }, 1000);
+
+    
+  }
+</script>
+
+</html>

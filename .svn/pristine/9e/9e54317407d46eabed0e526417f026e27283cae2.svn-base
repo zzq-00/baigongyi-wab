@@ -1,0 +1,31 @@
+<template>
+  <div class="myBuy">
+    <classes-column :dataList=dataList></classes-column>
+  </div>
+</template>
+
+<script>
+import classesColumn from '@/components/classesColumn'
+export default {
+  name: 'MyBuy',
+  components: {
+    classesColumn
+  },
+  data () {
+    return {
+      dataList: {
+        course: [],
+        column: []
+      }
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .myBuy {
+    width: 860px;
+    padding-left: 20px;
+    box-sizing: border-box;
+  }
+</style>

@@ -1,0 +1,296 @@
+<template>
+    <div class='newsHotDetails'>
+        <div class='newsHotDetails_main'>
+            <h4>住建部：修改投标管理办法，取消合同备案和招标金额限制</h4>
+            <div class='message'>
+                <span>CBI建筑网</span>
+                <p>
+                    <span>
+                        <i class="el-icon-view"></i>2019-12-27 9:45</span>
+                    <span>
+                        <i class="el-icon-view"></i>119</span>
+                </p>
+            </div>
+        </div>
+        <div class='newsHotDetails_label'>
+            <p>
+                本站系本网编辑转载，转载目的在于传递更多信息，并不代表本网赞同其观点和对其真实性负责。如涉及作品内容、版权和其它问题，请及时与本网联系，我们将根据著作权人的要求，立即更正或者删除有关内容。 【声明】本站文章版权归原作者所有内容为作者个人观点 本站只提供参考并不构成任何投资及应用建议。本站拥有对此声明的最终解释权。
+            </p>
+            <div class='newsHotDetails_label_QRcode'>
+                <p>
+                    <i class="el-icon-paperclip"></i>
+                    <span>复制链接</span>
+                </p>
+                <div>
+                    <p>
+                        <i class="el-icon-paperclip"></i>
+                        <span>微信扫一扫</span>
+                    </p>
+                    <img src="" alt="">
+                </div>
+            </div>
+        </div>
+        <div class='newsHotDetails_share'>
+            <button>
+                <i class="el-icon-paperclip"></i>
+                <span>234</span>
+            </button>
+            <button>
+                <i class="el-icon-paperclip"></i>
+                <span>234</span>
+            </button>
+        </div>
+        <div class='newsHotDetails_comment'>
+            <p>评论(2)</p>
+            <div class='add_comment'>
+                <div>
+                    <img src="" alt="">
+                    <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea">
+                    </el-input>
+                </div>
+                <p>
+                    <button>评论</button>
+                </p>
+            </div>
+            <ul>
+                <li>
+                    <dl>
+                        <dt>
+                            <img src="" alt="">
+                        </dt>
+                        <dd>
+                            <div>
+                                <p>徐天</p>
+                                <p>
+                                    <em>2019年7月9日</em>
+                                    <em>20:00</em>
+                                </p>
+                            </div>
+                            <p>老师讲解清晰，不错！</p>
+                        </dd>
+                    </dl>
+                </li>
+            </ul>
+        </div>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            textarea: ""
+        }
+    }
+}
+</script>
+<style lang="less" scoped>
+.newsHotDetails {
+    width: 100%;
+    height: calc(100vh - 160px);
+    background: #fff;
+    border-radius: 10px;
+    overflow-y: scroll;
+}
+
+.newsHotDetails_main {
+    padding-top: 30px;
+    padding-left: 230px;
+    padding-right: 230px;
+    padding-bottom: 50px;
+    >h4 {
+        font-size: 18px;
+        color: #4A4A4A;
+        font-weight: 600;
+        text-align: center;
+    }
+    .message {
+        display: flex;
+        justify-content: space-between;
+        padding-top: 20px;
+        >span {
+            color: #999999;
+        }
+        >p {
+            span {
+                color: #999999;
+                i {
+                    color: #999999;
+                    padding-right: 6px;
+                }
+                &:nth-child(2) {
+                    padding-left: 12px;
+                }
+            }
+        }
+    }
+}
+
+.newsHotDetails_label {
+    padding: 22px;
+    background: #eee;
+    margin-left: 230px;
+    margin-right: 230px;
+    position: relative;
+    >p {
+        color: #333333;
+        line-height: 20px;
+    }
+}
+
+.newsHotDetails_label_QRcode {
+    height: 160px;
+    width: 120px;
+    position: absolute;
+    top: -30px;
+    right: 0;
+    box-shadow: 0px 0px 4px 0px rgba(57, 63, 58, 0.35);
+    background: #fff;
+    >p {
+        height: 40px;
+        line-height: 40px;
+        padding-left: 10px;
+        i {
+            font-size: 16px;
+        }
+        span {
+            color: #333;
+            padding-left: 5px;
+        }
+    }
+    >div {
+        border-top: 1px solid #DDDDDD;
+        >p {
+            padding: 10px 10px;
+            i {
+                font-size: 16px;
+            }
+            span {
+                color: #333;
+                padding-left: 5px;
+            }
+        }
+        >img {
+            display: inline-block;
+            width: 74px;
+            height: 74px;
+            background: #ccc;
+            margin-left: 30px;
+        }
+    }
+}
+
+.newsHotDetails_share {
+    padding-top: 20px;
+    padding-left: 230px;
+    padding-right: 240px;
+    display: flex;
+    justify-content: flex-end;
+    button {
+        background: #fff;
+        width: 90px;
+        height: 34px;
+        border: 1px solid #DDDDDD;
+        border-radius: 17px;
+        span {
+            color: #666666;
+        }
+        i {
+            color: #333;
+            font-size: 18px;
+            padding-right: 5px;
+        }
+        &:nth-child(2) {
+            margin-left: 20px;
+        }
+        &:hover {
+            cursor: pointer;
+        }
+    }
+}
+
+.newsHotDetails_comment {
+    padding-top: 10px;
+    padding-left: 230px;
+    padding-right: 240px;
+    >p {
+        padding-bottom: 10px;
+        border-bottom: 1px solid #DDDDDD;
+    }
+    >.add_comment {
+        padding-top: 20px;
+        >div {
+            display: flex;
+            img {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                padding-right: 10px;
+            }
+            /deep/ .el-textarea__inner {
+                height: 120px;
+                border: 1px solid #ddd;
+                border-radius: 10px;
+            }
+        }
+        p {
+            padding-top: 10px;
+            display: flex;
+            justify-content: flex-end;
+            button {
+                background: #fff;
+                width: 90px;
+                height: 34px;
+                border: 1px solid #DDDDDD;
+                border-radius: 5px;
+                color: #4A4A4A;
+                &:hover {
+                    cursor: pointer;
+                }
+            }
+        }
+    }
+    >ul {
+        padding-top: 20px;
+        padding-bottom: 50px;
+        >li {
+            border-top: 1px solid #DDDDDD;
+            dl {
+                display: flex;
+                padding-top: 10px;
+                padding-bottom: 20px;
+                dt {
+                    img {
+                        width: 40px;
+                        height: 40px;
+                        border-radius: 50%;
+                        background: #ccc;
+                    }
+                }
+                dd {
+                    padding-left: 10px;
+                    flex: 1;
+                    >div {
+                        padding-top: 10px;
+                        display: flex;
+                        justify-content: space-between;
+                        p {
+                            color: #4A4A4A;
+                            em {
+                                color: #999999;
+                                &:nth-child(2) {
+                                    padding-left: 8px;
+                                }
+                            }
+                        }
+                    }
+                    >p {
+                        padding-top: 12px;
+                        color: #666666;
+                    }
+                }
+            }
+        }
+    }
+}
+</style>
+

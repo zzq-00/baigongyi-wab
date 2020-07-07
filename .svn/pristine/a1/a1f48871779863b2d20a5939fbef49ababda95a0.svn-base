@@ -1,0 +1,9 @@
+import { put } from 'axios'
+
+export default {
+  // 获取用户头像
+  getAvatar (avatar) {
+    return put(`/user/account/uploadAvatar/${avatar}`)
+  }
+
+}

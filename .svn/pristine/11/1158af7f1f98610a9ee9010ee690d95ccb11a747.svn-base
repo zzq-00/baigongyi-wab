@@ -1,0 +1,133 @@
+<template>
+    <div class='article'>
+        <div class='article_main'>
+            <ul class='article_main_left'>
+                <li :class="{active:currentIndex==index}" v-for='(item,index) in leftNavData' :key='index' @click='currentIndex = index'>
+                    <i :class="item.icon"></i>
+                    <span>{{item.name}}</span>
+                </li>
+            </ul>
+            <div class='article_main_right'>
+                <newsHot v-if='currentIndex===0'></newsHot>
+            </div>
+        </div>
+        <div class='article_footer'>
+            <p @click='reduceNumFn'>
+                <i class="el-icon-arrow-left"></i>
+            </p>
+            <em>第 2/20 页</em>
+            <p @click='addNumFn'>
+                <i class="el-icon-arrow-right"></i>
+            </p>
+            <span>共 80 条</span>
+        </div>
+    </div>
+</template>
+<script>
+import newsHot from './newsHot.vue'
+export default {
+  components: {
+    newsHot,
+  },
+  data() {
+    return {
+      currentIndex: 0,
+      leftNavData: [{ name: '新闻热点', icon: 'el-icon-document' }, { name: '建筑前沿' }, { name: '资质热点' }],
+    }
+  },
+  methods: {
+    //分页减少
+    reduceNumFn() {
+
+    },
+    //分页增加
+    addNumFn() {
+
+    }
+  }
+}
+</script>
+<style lang="less" scope>
+.article_main {
+  width: 100%;
+  height: calc(100vh - 260px);
+  background: #fff;
+  border-radius: 10px;
+  padding-top: 32px;
+  display: flex;
+}
+
+.article_main_left {
+  border-right: 1px solid #DDDDDD;
+  height: 200px;
+  width: 178px;
+  li {
+    position: relative;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    >span {
+      font-size: 16px;
+      color: #4A4A4A;
+      padding-left: 46px;
+      font-weight: 500;
+    }
+    >i {
+      font-size: 16px;
+      position: absolute;
+      left: 20px;
+    }
+    &:hover {
+      cursor: pointer;
+      span,
+      i {
+        color: #E23732;
+      }
+    }
+  }
+  .active {
+    span,
+    i {
+      color: #E23732;
+    }
+  }
+}
+
+.article_main_right {
+  padding-left: 20px;
+  flex: 1;
+  padding-right: 280px;
+  overflow-y: scroll;
+}
+
+.article_footer {
+  padding-top: 20px;
+  display: flex;
+  justify-content: center;
+  >p {
+    width: 34px;
+    height: 34px;
+    background: #fff;
+    line-height: 34px;
+    text-align: center;
+    border: 1px solid #DDDDDD;
+    border-radius: 5px;
+    >i {
+      font-size: 18px;
+      color: #999999;
+    }
+    &:hover {
+      cursor: pointer;
+    }
+  }
+  >em {
+    line-height: 34px;
+    color: #999999;
+    padding: 0 10px;
+  }
+  >span {
+    line-height: 34px;
+    color: #999999;
+    padding-left: 10px;
+  }
+}
+</style>

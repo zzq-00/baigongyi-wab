@@ -1,0 +1,12 @@
+import { post, get } from 'axios'
+//用户中心讲师入驻
+export default {
+    //申请成为讲师
+    lecturerData(params) {
+        return post('/lecturer', params)
+    },
+    // 通过用户id查询讲师信息
+    lecturerId(id) {
+        return get(`/lecturer/${id}`)
+    }
+}

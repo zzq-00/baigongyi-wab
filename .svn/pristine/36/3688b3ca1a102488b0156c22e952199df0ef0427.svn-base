@@ -1,0 +1,25 @@
+/**
+ * 文章
+ */
+export default [
+  {
+    path: '/layout',
+    component: () => import('../views/layout/layout.vue'),
+    children: [
+      {
+        path: '/agreement',
+        component: () => import('../views/agreement/index.vue'),
+        children: [
+          {
+            path: 'lecturer',
+            component: () => import('../views/agreement/lecturer.vue')
+          },
+          {
+            path: 'user',
+            component: () => import('../views/agreement/user.vue')
+          },
+        ]
+      }
+    ],
+  }
+]

@@ -1,0 +1,32 @@
+<template>
+  <div class='examineIng'>
+     <h5>审合中</h5>
+     <img src="@/assets/images/dengdai.png" alt="">
+     <p>您已成功提交入驻申请，信息审核需3-5个工作日，请耐心等待！</p>
+  </div>
+</template>
+<style lang="less" scoped>
+.examineIng{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    >h5{
+        text-align: center;
+        padding:50px 0;
+        font-size: 18px;
+        color:#4A4A4A;
+        font-weight: 600;
+    }
+    >img{
+        width:52px;
+        height: 56px;
+        margin:0 auto;
+    }
+    >p{
+        text-align: center;
+        color:#666666;
+        padding-top: 15px;
+    }
+}
+</style>
+

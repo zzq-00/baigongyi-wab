@@ -1,0 +1,141 @@
+<template>
+  <div>
+   <el-upload
+    action=""
+    :http-request="Upload"
+    :data="Aliyun"
+    :multiple="false"
+    :show-file-list="true"
+    list-type="picture-card"
+    :on-preview="handlePictureCardPreview"
+    :on-remove="handleRemove"
+    :limit="5"
+    >
+    <i class="el-icon-plus" />
+    </el-upload>
+    <el-dialog :visible.sync="dialogVisible">
+    <img width="100%" :src="dialogImageUrl" alt="">
+    </el-dialog>
+    <p style="color: #999;">图片上传限制： 1.最多5张； 2.最大1M</p>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import { getSystemDate } from '@/assets/js/date.js'
+import { client } from '../utils/oss.js'
+export default {
+  name: 'UploadPic',
+  data () {
+    return {
+      dialogImageUrl: '',
+      dialogVisible: false,
+      Aliyun: {}, // 存签名信息
+      progress: 0, // 进度条
+      imgUrl: [], // 存上传后的图片url
+      region: null, // 资源地址
+      accessKeyId: null, //
+      accessKeySecret: null, // 秘钥
+      signature: null // 签名
+    }
+  },
+  created () {
+    this.getAliyun()
+  },
+  methods: {
+    // 获取阿里云数据
+    async getAliyun () {
+      const { data } = await api.getUploadPic()
+      this.signature = data.signature
+    },
+
+    // onFileChangeTX (e) {
+    //   const files = e.target.files || e.dataTransfer.files
+    //   // //获取阿里云的授权码
+    //   api.aliyunConfig().then(res => {
+    //     const ossUrl = res.data.host
+    //     const sendData = new FormData()
+    //     sendData.append('OSSAccessKeyId', res.data.accessId)
+    //     sendData.append('policy', res.data.policy)
+    //     sendData.append('signature', res.data.signature)
+    //     // sendData.append('dir', res.data.dir)
+    //     sendData.append('success_action_status', 200) // 指定返回的状态码
+    //     sendData.append('file', files)
+    //     console.log(sendData, 'sendData')
+    //     const config = {
+    //       headers: {
+    //         'Content-Type': 'multipart/form-data'
+    //       }
+    //     }
+    //     axios.defaults.withCredentials = true
+    //     axios.post(ossUrl, sendData, config).then((res) => {
+    //       console.log('得到上传到阿里云的图片地址')
+    //     })
+    //   })
+    // },
+
+    // 上传图片
+    Upload (file) {
+      console.log(file)
+      const that = this
+      // 判断扩展名
+      const tmpcnt = file.file.name.lastIndexOf('.')
+      const exname = file.file.name.substring(tmpcnt + 1)
+      const names = ['jpg', 'jpeg', 'png']
+      if (names.indexOf(exname) < 0) {
+        this.$message.error('不支持的格式!')
+        return
+      }
+      if (file.size > 1024 * 1024) {
+        this.$message.error('图片大小最大1M')
+      }
+      async function multipartUpload () {
+        // const fileName = that.name + file.file.uid
+        const fileName = that.Aliyun.objectName + +'/' + getSystemDate() + '-' + file.file.name
+        // fileName = aliyunConfig.objectName+'/'+Date.now()+'-'+file.name //所要上传的文件名拼接 (test/)
+        // 定义唯一的文件名，打印出来的uid其实就是时间戳
+        // client 是第一步中的 client
+        client(that.signature).put(fileName, file.file,
+          {
+            progress: function (p) { // 获取进度条的值
+              console.log(p)
+              that.progress = p * 100
+            }
+          }).then(
+          result => {
+            // 下面是如果对返回结果再进行处理，根据项目需要
+            console.log(result)
+            // that.imgUrl = 'http://' + result.bucket + '.' + that.Aliyun.endpoint + '/' + result.name
+            that.dialogImageUrl = result.url
+            that.imgUrl.push({
+              name: file.file.name,
+              url: result.url
+            })
+            console.log(that.imgUrl)
+          }).catch(err => {
+          console.log('err:', err)
+        })
+      }
+      multipartUpload()
+    },
+    // 图片预览
+    handlePictureCardPreview (file) {
+      this.dialogImageUrl = file.url
+      this.dialogVisible = true
+    },
+    // 删除图片
+    handleRemove (file, fileList) {
+      // console.log(file)
+      for (var i in this.imgUrl) {
+        if (this.imgUrl[i].name === file.name) {
+          this.imgUrl.splice(i, 1)
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style>
+
+</style>

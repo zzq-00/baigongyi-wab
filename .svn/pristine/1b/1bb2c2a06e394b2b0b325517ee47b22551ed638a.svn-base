@@ -1,0 +1,168 @@
+<template>
+    <div class='leftIcon'>
+        <div class='list'>
+            <ul>
+                <li @click='GiveTheThumbsTp(likedFlag)'>
+                    <i class="icon iconfont" :class='{"red":!likedFlag}'>&#xe639;</i>
+                    <em>{{zanNum ? zanNum : 0}}</em>
+                </li>
+                <li>
+                    <i class="icon iconfont">&#xe60f;</i>
+                    <em>{{fenxData.num ? fenxData.num : '0'}}</em>
+                    <span>分享</span>
+                </li>
+                <li @click='copy()'>
+                    <i class="icon iconfont">&#xe620;</i>
+                </li>
+                <li @click='flag = !flag'>
+                    <i class="icon iconfont">&#xe649;</i>
+                </li>
+            </ul>
+        </div>
+        <div class='erweima' v-show='flag'>
+            <div id="qrcode"></div>
+        </div>
+    </div>
+</template>
+<script>
+import QRCode from 'qrcodejs2';
+import api from '@/fetch'
+export default {
+    data() {
+        return {
+            flag: false,
+            fenxData: {},
+            address: '',
+            zanNum: 0,
+            likedFlag: true
+        }
+    },
+    mounted() {
+        this.qrcode(); //调用二维码生成的方法
+        this.fenxData = this.$store.state.hotmessageData;
+        this.address = process.env.VUE_APP_API.substring(0, process.env.VUE_APP_API.length - 5);
+        this.zanNum = this.$store.state.hotmessageData.likeCount
+        console.log(this.$store.state.hotmessageData,'jjj');
+    },
+    methods: {
+        qrcode() {
+            let that = this;
+            // 和div的id相同 必须是id  class类名会报错
+            // 第二参数是他的配置项
+            let qrCode = new QRCode('qrcode', {
+                width: 74,
+                height: 74,
+                text: process.env.VUE_APP_API.substring(0, process.env.VUE_APP_API.length - 5) + that.$store.state.hotmessageData.path,
+                colorDark: '#fff',
+                colorLight: '#000',
+                correctLevel: QRCode.CorrectLevel.L
+            })
+            console.log(process.env.VUE_APP_API.substring(0, process.env.VUE_APP_API.length - 5) + that.$store.state.hotmessageData.path, 'path');
+        },
+        //点赞
+        GiveTheThumbsTp(likedFlag) {
+            if (this.likedFlag) {
+                api.likeAdd({
+                    "likedFlag": true,
+                    "objId": this.$store.state.hotmessageData.id,
+                    "objType": 7
+                }).then(res => {
+                    if (res.code == 200) {
+                        this.zanNum = res.data;
+                        this.likedFlag = false
+                    }
+                })
+            }else{
+                api.likeDelete(7,this.$store.state.hotmessageData.id).then(res =>{
+                     if (res.code == 200) {
+                        this.zanNum = res.data;
+                        this.likedFlag = true
+                    }
+                })
+            }
+
+        },
+        //复制
+        copy() {
+            var input = document.createElement("input");
+            input.value = process.env.VUE_APP_API.substring(0, process.env.VUE_APP_API.length - 5) + this.$store.state.hotmessageData.path;
+            document.body.appendChild(input);
+            input.select();
+            input.setSelectionRange(0, input.value.length),
+                document.execCommand("Copy");
+            document.body.removeChild(input);
+            this.$message({
+                message: '复制成功',
+                type: 'success'
+            });
+        },
+    }
+}
+</script>
+<style lang="less" scoped>
+.leftIcon {
+    .list {
+        position: absolute;
+        top: 235px;
+        left: 145px;
+        li {
+            margin-bottom: 12px;
+            position: relative;
+            i {
+                display: block;
+                width: 40px;
+                height: 40px;
+                background: #fff;
+                border-radius: 50%;
+                text-align: center;
+                line-height: 40px;
+                font-size: 18px;
+                font-weight: 600;
+            }
+            .red{
+                color:#FD4040;
+            }
+            span {
+                padding-top: 10px;
+                color: #999999;
+                display: block;
+                text-align: center;
+            }
+            &:nth-child(1):hover,
+            &:nth-child(3):hover,
+            &:nth-child(4):hover {
+                cursor: pointer;
+            }
+            em {
+                background: #FD4040;
+                color: #fff;
+                position: absolute;
+                right: -5px;
+                top: 0;
+                width: 20px;
+                height: 15px;
+                text-align: center;
+                border-radius: 7px;
+            }
+        }
+    }
+    .erweima {
+        position: absolute;
+        top: 415px;
+        left: 200px;
+        width: 92px;
+        height: 92px;
+        border: 1px solid #999999;
+        padding-left: 8px;
+        padding-top: 8px;
+        box-sizing: border-box;
+        border-radius: 3px;
+        >div {
+            display: block;
+            width: 74px;
+            height: 74px;
+        }
+    }
+}
+</style>
+

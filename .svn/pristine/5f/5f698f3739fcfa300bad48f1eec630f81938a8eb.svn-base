@@ -1,0 +1,307 @@
+<!--编辑课程-->
+<template>
+  <div class="creatColumn">
+    <div class="content">
+      <div class="title">{{$route.name === 'reEditCourse'?'编辑课程':'创建课程'}}</div>
+      <el-form ref="ruleForm" :model="ruleForm" :rules="rules" label-width="80px" label-position="top" inline>
+        <el-form-item>
+          <uploadPic type="course" v-model="ruleForm.image" :value="ruleForm.image" :description="uploadDesc"></uploadPic>
+        </el-form-item>
+        <el-form-item label="发布课程角色" prop="accountIdentity">
+          <el-select disabled v-model="ruleForm.accountIdentity">
+            <el-option :value="1" label="讲师"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="课程名称" prop="name">
+          <el-input v-model="ruleForm.name" class="columnName" maxlength="30" show-word-limit></el-input>
+        </el-form-item>
+
+        <el-form-item label="课程价格(元)" prop="price">
+          <el-input v-model="ruleForm.price"></el-input>
+        </el-form-item>
+
+        <el-form-item label="选择课程类型" class="coursetype" prop="type">
+          <el-select v-model="ruleForm.type">
+            <el-option :value="1" label="音频"></el-option>
+            <el-option :value="2" label="视频"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="选择视频文件" prop="url">
+          <div class="recommed">建议上传视频大小不超过2g，视频类型为：'FLV','MOV','MP4'</div>
+          <uploadVideo @getValue="getVideoValue" :value="ruleForm"></uploadVideo>
+        </el-form-item>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item required>
+              <template slot="label">
+                课程标签 <span style="font-size: 12px;color: #999999;">添加标签后，您的课程将显示在对应标签分区中，方便学员进行检索；标签不分先后</span>
+              </template>
+              <div v-for="(item,index) in tagItems" :key="index" class="addTag">
+                <el-select placeholder="请选择一级标签" class="tag1" v-model="tagItems[index].tag1" @change="tagItems[index].tag2 = ''">
+                  <el-option v-for="tag in firstTag" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                </el-select>
+                <el-select placeholder="请选择二级标签" class="tag2" v-model="tagItems[index].tag2" v-if="computedSecondTag(tagItems[index].tag1).length">
+                  <el-option v-for="tag in computedSecondTag(tagItems[index].tag1)" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                </el-select>
+                <i class="el-icon-circle-plus-outline" @click.prevent="onAdd" v-show="index===tagItems.length-1" style='margin: 5px;'></i>
+                <i class="el-icon-circle-close" @click.prevent="onReduce(index)" v-show="tagItems.length>1" style='margin: 5px;color:#E23732;'></i>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="课程介绍" prop="courseDescription">
+          <Editor v-model="ruleForm.courseDescription" />
+        </el-form-item>
+
+        <el-form-item class="button">
+          <el-button @click="preview">预览</el-button>
+          <el-button @click="saveSraft">存草稿</el-button>
+          <el-button type="danger" @click="onSubmit">提交审核</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import uploadVideo from '@/utils/uploadVideo'
+import uploadPic from '@/utils/uploadPic'
+import Editor from '@/components/Editor.vue'
+
+export default {
+  components: {
+    uploadVideo,
+    uploadPic,
+    Editor
+  },
+  data() {
+    return {
+      uploadDesc: {
+        title: '课程主页图',
+        desc: '可上传jpg/jpeg/png/bmp格式图片，建议分辨率为900*506，最大4M',
+        maxsize: 4
+      },
+      ruleForm: {
+        image: '',
+        accountIdentity: 1, // 发布者身份
+        name: '',
+        price: '',
+        type: '', // 类型--音频视频
+        url: '', // 音频视频地址
+        tagIds: '',
+        courseDescription: '',
+        originalFileName: '' // 文件名
+      },
+      rules: {
+        accountIdentity: [{ required: true, message: '选择发布课程角色', trigger: 'blur' }],
+        name: [{ required: true, message: '请填写课程名称', trigger: 'blur' }],
+        price: [{ required: true, message: '请填写课程价格', trigger: 'blur' }],
+        type: [{ required: true, message: '请选择课程类型', trigger: 'change' }],
+        url: [{ required: true, message: '上传视频文件', trigger: 'change' }],
+        courseDescription: [{ required: true, message: '请填写课程内容', trigger: 'blur' }]
+      },
+      tagItems: [{ tag1: '', tag2: '' }],
+      allTags: []
+    }
+  },
+  watch: {
+    $route: {
+      handler: function(val) {
+        if (val.name === 'reEditCourse') {
+          this.getCourseDetail(val.params.id)
+        } else if (val.name === 'createCourse') {
+          this.ruleForm = {
+            image: '',
+            accountIdentity: 1, // 发布者身份
+            name: '',
+            price: '',
+            type: '', // 类型--音频视频
+            url: '', // 音频视频地址
+            tagIds: '',
+            courseDescription: '',
+            originalFileName: '' // 文件名
+          }
+          this.tagItems = [{ tag1: '', tag2: '' }]
+        }
+      },
+      immediate: true
+    }
+  },
+  computed: {
+    firstTag() {
+      return this.allTags.filter(item => !item.parentId)
+    }
+  },
+  methods: {
+    getVideoValue(val) {
+      this.ruleForm.url = val.url
+      this.ruleForm.originalFileName = val.originalFileName
+    },
+    computedSecondTag(id) {
+      return this.allTags.filter(item => item.parentId === id)
+    },
+    onAdd() {
+      this.tagItems.push({ tag1: '', tag2: '' })
+    },
+    onReduce(index) {
+      this.$confirm('确定要删除？', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.tagItems.splice(index, 1)
+      })
+    },
+    // 标签
+    getTaglist() {
+      api.tagList().then(res => (this.allTags = res.data.records))
+    },
+    // 预览
+    preview() {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      const tagIds = this.tagItems.map(item => item.tag2)
+      if (tagIds.includes('')) return this.$message('请选中专栏二级标签')
+      this.ruleForm.tagIds = tagIds.join(',')
+      this.$refs.ruleForm.validate(isOk => {
+        if (isOk) {
+          this.$store.commit('previewCourse', this.ruleForm)
+          window.open('/previewCourse')
+        }
+      })
+    },
+    // 存为草稿
+    saveSraft() {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      const tagIds = this.tagItems.map(item => item.tag2)
+      if (tagIds.includes('')) return this.$message('请选中专栏二级标签')
+      this.ruleForm.tagIds = tagIds.join(',')
+      this.$refs.ruleForm.validate(async isOk => {
+        if (isOk) {
+          const res = await api.saveCourse(this.ruleForm)
+          this.$message.success('保存成功')
+          this.$router.push('/myLecture')
+        }
+      })
+    },
+    // 提交审核
+    onSubmit() {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      const tagIds = this.tagItems.map(item => item.tag2)
+      if (tagIds.includes('')) return this.$message.warning('请选中专栏二级标签')
+      this.ruleForm.tagIds = tagIds.join(',')
+      this.$refs.ruleForm.validate(async isOk => {
+        if (isOk) {
+          const res = await api.publishCourse(this.ruleForm)
+          this.$message.success('发布成功')
+          this.$router.push('/myLecture')
+        }
+      })
+    },
+    // 课程详情
+    getCourseDetail(id) {
+      api.getCourseDetail(id).then(res => {
+        let { id, image, accountIdentity, name, price, type, url, courseDescription, originalFileName } = res.data
+        this.ruleForm = { id, image, accountIdentity, name, price, type, url, courseDescription, originalFileName }
+        this.tagItems = res.data.courseTagList
+          .map(item => {
+            return item.children.map(its => {
+              return { tag1: its.parentId, tag2: its.id }
+            })
+          })
+          .flat()
+      })
+    }
+  },
+  created() {
+    this.getTaglist()
+  }
+}
+</script>
+
+<style lang="less" scope>
+.creatColumn {
+  .content {
+    width: 860px;
+    background-color: #fff;
+    border-radius: 10px;
+    .title {
+      height: 50px;
+      line-height: 50px;
+      padding-left: 20px;
+      border-bottom: 1px solid #ddd;
+      box-sizing: border-box;
+    }
+  }
+}
+.content {
+  .ask {
+    font-size: 12px;
+    color: #ccc;
+    line-height: 18px;
+  }
+  .el-form {
+    padding: 10px 90px 10px 30px;
+    .el-form-item {
+      margin-bottom: 18px;
+      .el-form-item__content {
+        .el-input {
+          width: auto;
+          width: 260px;
+        }
+        .columnName {
+          width: 560px;
+        }
+        .update1,
+        .update2 {
+          .el-input {
+            width: 120px;
+            margin-right: 20px;
+          }
+        }
+        .tag1 + .tag2 {
+          margin-left: 40px;
+        }
+        .recommed {
+          font-size: 12px;
+          color: #ccc;
+          margin-top: -30px;
+          margin-left: 100px;
+        }
+      }
+      .addTag {
+        margin-bottom: 22px;
+        // position: relative;
+        img {
+          margin-left: 10px;
+        }
+      }
+    }
+    .update {
+      margin-left: 28px;
+    }
+    .button {
+      margin-left: 230px;
+      .el-button {
+        width: 90px;
+        height: 34px;
+      }
+    }
+    .coursetype {
+      margin-left: 29px;
+      .el-input {
+        width: 120px;
+      }
+    }
+  }
+  .el-form--label-top {
+    .el-form-item__label {
+      padding: 0px !important;
+      line-height: 30px !important;
+    }
+  }
+}
+</style>

@@ -1,0 +1,40 @@
+<!-- 免费课程详情页 -->
+<template>
+  <div class="freeCourse">
+    <course-detailcom :courseDetail='courseDetail'></course-detailcom>
+  </div>
+</template>
+
+<script>
+import courseDetailcom from '@/components/courseDetail'
+import api from '@/fetch'
+export default {
+  name: 'freeCourseDetail',
+  components: {
+    courseDetailcom
+  },
+  data () {
+    return {
+      courseDetail: {} // 课程详情
+    }
+  },
+  created () {
+    this.getCourseDetail()
+  },
+  methods: {
+    // id--课程详情页
+    async getCourseDetail () {
+      const res = await api.getCourseDetail(this.$route.params.id)
+      this.courseDetail = res.data
+    }
+
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .freeCourse {
+    width: 1100px;
+    overflow: hidden;
+  }
+</style>

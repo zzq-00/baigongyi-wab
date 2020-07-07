@@ -1,0 +1,12 @@
+import { post, get, put } from 'axios'
+// 用户中心讲师入驻
+export default {
+  // 申请成为讲师
+  lecturerData: params => post('lecturer', params),
+
+  lecturerUpdata: params => put('lecturer', params),
+  // 讲师
+  getTeacher: params => post('lecturer/list', params),
+  // 讲师--id查询
+  getTeacherDetail: id => get(`lecturer/${id}`)
+}

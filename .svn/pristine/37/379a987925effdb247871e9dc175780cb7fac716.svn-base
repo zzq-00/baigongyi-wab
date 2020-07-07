@@ -1,0 +1,121 @@
+<template>
+  <div class="myAttention">
+    <div class="title">
+      <span v-for="(item,index) in isOwn?tabsColumn:tabsColumns" :key="index" @click="tabChange(item)" :class="{active: item===nowIndex}">
+        {{item}}
+      </span>
+    </div>
+    <div class="content">
+      <concerns v-if="nowIndex.includes('关注的问题')" :attentionData="attentionData" :noMore="noMore" :loading="loading" @getMore="getMore"></concerns>
+      <AttentionCom v-else :attentionData="attentionData" :noMore="noMore" :loading="loading" @getMore="getMore" :key="updateKey"></AttentionCom>
+    </div>
+  </div>
+</template>
+
+<script>
+import AttentionCom from '@/components/Attention'
+import concerns from '@/components/concerns' //关注的问题
+import api from '@/fetch'
+import { mapState } from 'vuex'
+export default {
+  name: 'myAttention',
+  components: {
+    AttentionCom,
+    concerns
+  },
+  data() {
+    return {
+      nowIndex: '',
+      tabsColumn: ['我关注的人', '关注我的人', '我关注的问题'],
+      tabsColumns: ['他关注的人', '关注他的人', '他关注的问题'],
+      attentionData: [], // 关注列表
+      totalNums: 1,
+      updateKey: 1,
+      // 关注
+      attentionParams: {
+        accountId: this.$route.query.id || this.$store.state.userInfo.accountId,
+        pageNum: 1,
+        pageSize: 10
+      },
+      loading: false
+    }
+  },
+  computed: {
+    ...mapState(['tabActive']),
+    noMore() {
+      return this.attentionData.length >= this.totalNums
+    },
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  watch: {
+    tabActive: {
+      handler: function(val) {
+        if (val === '关注的问题') {
+          this.nowIndex = this.isOwn ? '我关注的问题' : '他关注的问题'
+        } else if (val === '关注了') {
+          this.nowIndex = this.isOwn ? '我关注的人' : '他关注的人'
+        } else if (val === '关注者') {
+          this.nowIndex = this.isOwn ? '关注我的人' : '关注他的人'
+        } else {
+          this.nowIndex = val
+        }
+        this.attentionData = []
+        this.totalNums = 1
+        this.updateKey++
+        this.attentionParams.pageNum = 1
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    // tab栏切换
+    tabChange(item) {
+      this.$store.commit('setTab', item)
+    },
+    async getMore() {
+      this.loading = true
+      let res = {}
+      if (this.nowIndex.includes('关注的问题')) {
+        res = await api.concernQuestion(this.attentionParams)
+      } else if (this.nowIndex === '我关注的人' || this.nowIndex === '他关注的人') {
+        res = await api.myAttention(this.attentionParams)
+      } else if (this.nowIndex === '关注我的人' || this.nowIndex === '关注他的人') {
+        res = await api.myFans(this.attentionParams)
+      }
+      // 更新右侧收藏数量
+      this.$store.commit('setFollow', !this.$store.state.cancelStatus)
+      this.loading = false
+      if (res.data) {
+        this.attentionData = [...this.attentionData, ...res.data.records]
+        this.totalNums = res.data.total
+        !this.noMore && this.attentionParams.pageNum++
+      }
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.myAttention {
+  .title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+    cursor: pointer;
+    span + span {
+      margin-left: 16px;
+    }
+    .active {
+      color: #e23732;
+    }
+  }
+  .content {
+    height: calc(100vh - 300px);
+    background-color: #fff;
+  }
+}
+</style>

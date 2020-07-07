@@ -1,0 +1,15 @@
+import router from '@/router'
+import api from '@/fetch'
+
+router.beforeEach(async (to, from, next) => {
+  if (!window.localStorage.token) {
+    const { data: token } = await api.refreshToken()
+    window.localStorage.token = token
+  }
+  if (!window.localStorage.videoDomain || !window.localStorage.imageDomain) {
+    const { data: { qiniu: videoDomain, aliyun: imageDomain } } = await api.resourceInfo()
+    window.localStorage.videoDomain = JSON.stringify(videoDomain)
+    window.localStorage.imageDomain = JSON.stringify(imageDomain)
+  }
+  next()
+})

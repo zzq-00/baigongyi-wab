@@ -1,0 +1,379 @@
+<!--课程，专栏列表-->
+<template>
+  <div class="container">
+    <div class="content">
+      <div class="column clearfix">
+        <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)"
+            :class="{active:index==nowIndex}">{{item}}
+        </span>
+      </div>
+
+      <!-- 课程列表 -->
+      <ul class="classList" v-if="nowIndex===0">
+        <li class="line" v-for="(item,index) in dataList.course.records" :key="index" @click="courseDetail(item)">
+          <div class="classPic"><img src="@/assets/images/class.png" alt=""></div>
+          <div class="classInfo">
+            <span class="font-14">{{item.name}}</span>
+            <div class="price ">
+              <i :class="item.price > 0 ? 'red' : 'green'">{{item.price>0 ? '￥'+item.price : '免费' }}</i>
+              <div>
+                <span class="font-12 update">{{item.type===1? '音频': '视频'}}</span>
+                <el-tag v-if="currentPath ==='/myLecture'" :type="item.status==='0'? '': 'success'" size="mini">{{item.status==='0'? '草稿': '已发布'}}</el-tag>
+              </div>
+            </div>
+          </div>
+          <div class="otherInfo">
+              <div class="photoInfo" v-show="currentPath!=='/myLecture'">
+                <img  :src="item.avatar" class="photo">
+                <span class="font-12">{{item.realName}}</span>
+              </div>
+              <div class="time">{{item.createTime}}</div>
+              <div v-show="currentPath==='/myLecture'" class="font-12 handle">
+                <div v-show="item.status==='0'">
+                  <span style="margin-right:3px">编辑</span>
+                  <span>删除</span>
+                </div>
+                <span v-show="item.status!=='0'" >下架课程</span>
+              </div>
+          </div>
+        </li>
+      </ul>
+      <!-- 专栏列表 -->
+      <ul class="classList" v-if="nowIndex===1">
+        <li class="line" v-for="item in dataList.column.records" :key="item.accountId" @click="columnDetail(item)">
+          <div class="classPic"><img src="@/assets/images/class.png" alt=""></div>
+          <div class="classInfo">
+            <span class="font-14">{{item.name}}</span>
+            <div class="price">
+              <i :class="item.price >0 ? 'red' : 'green'">{{item.price>0 ? '￥'+item.price : '免费' }}</i>
+              <div>
+                <span v-if="currentPath!=='/myLecture'" class="font-12 update">{{item.upToTime}}</span>
+                <el-tag v-if="currentPath==='/myLecture'" :type="item.status==='0'? '': 'success'" size="mini">{{item.status===0? '草稿': '已发布'}}</el-tag>
+              </div>
+            </div>
+          </div>
+          <div class="otherInfo">
+              <div class="photoInfo" v-show="currentPath!=='/myLecture'">
+                <img  :src="item.lecturerInfo.avatar" class="photo">
+                <span class="font-12">{{item.lecturerInfo.realName}}</span>
+              </div>
+              <div class="time">{{item.updateTime}}</div>
+              <div v-show="currentPath==='/myLecture'" class="font-12 handle">
+                <div v-show="item.status==='0'">
+                  <span style="margin-right:3px">编辑</span>
+                  <span>删除</span>
+                </div>
+                <div v-show="item.status!=='0'">
+                  <span>下架课程</span>
+                  <span>课程管理</span>
+                </div>
+              </div>
+          </div>
+        </li>
+      </ul>
+      <!-- 课程分页 -->
+      <div class="pagination" v-show="nowIndex===0">
+        <el-pagination
+          @current-change="handleCurrentChange"
+          :current-page.sync="dataList.course.current "
+          :page-size.sync="dataList.course.size"
+          layout="prev,slot, next, total"
+          :total="dataList.course.total">
+          <slot>
+            <span>第<i>{{dataList.course.current}}/{{dataList.course.pages}}</i>页</span>
+          </slot>
+        </el-pagination>
+      </div>
+      <!-- 专栏分页 后期修改 v-show="dataList.column.records.length && nowIndex===1" -->
+      <div class="pagination" v-show="nowIndex===1">
+        <el-pagination
+          @current-change="handleCurrentChange"
+          :current-page.sync="dataList.column.current "
+          :page-size.sync="dataList.column.size "
+          layout="prev, slot, next, total"
+          :hide-on-single-page="true"
+          :total="dataList.column.total ">
+          <slot>
+            <span>第<i>{{dataList.column.current}}/{{dataList.column.pages}}</i>页</span>
+          </slot>
+        </el-pagination>
+      </div>
+
+       <!-- 创建课程，专栏 -->
+      <div class="create" v-show="currentPath==='/myLecture'">
+        <el-button type="danger" @click="dialogVisible = true">{{nowIndex===0 ? '创建课程' : '创建专栏'}}</el-button>
+        <el-dialog
+          title="提示"
+          :visible.sync="dialogVisible"
+          width="30%"
+          >
+          <span>创建内容</span>
+          <span slot="footer" class="dialog-footer">
+            <el-button @click="dialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+          </span>
+        </el-dialog>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import store from '@/store'
+export default {
+  name: 'classesColumn',
+  props: {
+    dataList: Object
+  },
+  data () {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['课堂', '专栏'],
+      dialogVisible: false, // 创建课程弹框
+      currentPath: this.$route.path
+    }
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs (index) {
+      this.nowIndex = index
+    },
+    // 翻页
+    handleCurrentChange (val) {
+      console.log(val)
+      this.$emit('getCurrentPage', val)
+    },
+    // 跳转到---课程详情页--讲堂
+    courseDetail (courseItem) {
+      if (courseItem.price === 0) {
+        this.$router.push(`/freecourseDetail/${courseItem.id}`)
+      } else {
+        if (store.state.user) {
+          if (courseItem.purchaseStatus) {
+            this.$router.push(`/myBuy/courseDetail/${courseItem.id}`)
+          } else {
+            this.$router.push(`/paycourseDetail/${courseItem.id}`)
+          }
+        } else {
+          this.$router.push(`/paycourseDetail/${courseItem.id}`)
+        }
+      }
+    },
+    // 跳转到---专栏详情页--讲堂
+    columnDetail (columnItem) {
+      if (columnItem.price === 0) {
+        this.$router.push(`/freecolumnDetail/${columnItem.id}`)
+      } else {
+        if (store.state.user) {
+          if (columnItem.purchaseStatus) {
+            this.$router.push(`/myBuy/columnDetail/${columnItem.id}`)
+          } else {
+            this.$router.push(`/paycolumnDetail/${columnItem.id}`)
+          }
+        } else {
+          this.$router.push(`/paycolumnDetail/${columnItem.id}`)
+        }
+      }
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .container {
+    position: relative;
+    .teacherrIntroduce {
+      margin-top: 22px;
+      background-color: #fff;
+      padding: 30px;
+      height: 150px;
+      box-sizing: border-box;
+      img {
+        display: inline-block;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+      }
+      .info {
+        margin-top:20px;
+        margin-left: 20px;
+        span {
+          font-size: 18px;
+          margin-bottom: 20px;
+        }
+        p {
+          margin-top: 6px;
+        }
+      }
+      .el-button {
+        width: 90px;
+        height: 34px;
+        padding: 0;
+        margin-top:25px;
+      }
+    }
+    .column {
+      font-size: 16px;
+      margin: 20px 20px 26px 0;
+      span:first-child {
+        margin-right: 20px;
+      }
+      .active{
+        position: relative;
+        color: #e43c31;
+      }
+      .active::after{
+        content: "";
+        display: inline-block;
+        position: absolute;
+        bottom:-10px;
+        left: 5px;
+        height: 3px;
+        width:24px;
+        background-color: #e43c31;
+      }
+    }
+    .classList {
+      overflow: hidden;
+      .line::after {
+        content: "";
+        display: block;
+        height: 2px;
+        width: 100%;
+        position: absolute;
+        bottom: 48px;
+        left:0;
+        background-color: #ddd;
+      }
+      li {
+        float: left;
+        width: 260px;
+        height: 346px;
+        border-radius: 10px;
+        background-color: #fff;
+        margin-right: 20px;
+        margin-bottom: 20px;
+        position: relative;
+        border: 1px solid #E7E8EC;
+        box-sizing: border-box;
+        .classPic {
+          width: 260px;
+          height: 174px;
+          box-sizing: border-box;
+          border-bottom:1px solid #E7E8EC;
+          img{
+            width: 260px;
+            height: 174px;
+          }
+        }
+        .classInfo{
+          padding:20px 20px 22px 20px;
+          height: 121px;
+          width: 100%;
+          box-sizing: border-box;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: flex-start;
+          .price {
+            width:100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            .red,.green {
+              font-size: 16px;
+            }
+            .update{
+              padding:3px 9px;
+              background-color: #F2F2F2;
+              border-radius: 5px;
+              margin-right: 3px;
+            }
+          }
+        }
+        .otherInfo {
+          padding:0 20px;
+          height: 50px;
+          font-size: 14px;
+          text-align: center;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          .photoInfo{
+            .photo {
+              width: 24px;
+              height: 24px;
+              border-radius: 50%;
+              margin-right: 8px;
+            }
+          }
+          .time {
+            font-size: 12px;
+            color:#999;
+          }
+          .handle {
+            span{
+              padding:3px 9px;
+              border-radius: 5px;
+            }
+          }
+        }
+      }
+    }
+    // 分页
+    .pagination {
+      margin-top: 30px;
+      text-align: center;
+      .el-pagination .btn-next, .el-pagination .btn-prev {
+          width: 40px;
+          height: 40px;
+          padding-right: auto;
+          .el-icon-arrow-left:before, .el-icon-arrow-right:before {
+            font-size: 20px;
+          }
+        }
+      .el-pagination {
+        slot {
+          span{
+            font-size: 20px;
+            margin: 6px 20px 0;
+            color:#999;
+            font-weight: normal;
+          }
+        }
+        .el-pagination__total {
+          margin: 6px 0 0 20px;
+          font-size: 20px;
+          color:#999;
+          font-weight: normal;
+        }
+      }
+    }
+    // 创建
+    .create{
+      position: absolute;
+      top:-12px;
+      right:20px;
+      .el-button {
+        width: 90px;
+        height: 34px;
+        line-height: 34px;
+        padding:0;
+        span{
+          margin:0;
+          font-size: 14px;
+        }
+      }
+    }
+    .create::after {
+      content: '';
+      display: block;
+      width: 860px;
+      height: 2px;
+      background-color: #F4F4F4;
+      position: absolute;
+      bottom: -10px;
+      right:-20px;
+    }
+  }
+</style>

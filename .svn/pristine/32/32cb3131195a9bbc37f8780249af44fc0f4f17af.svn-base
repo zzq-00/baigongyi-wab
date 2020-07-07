@@ -1,0 +1,177 @@
+<template>
+  <div class="upload-content">
+    <div class="title-tips" :class="{'flex': type!=='hasButton'}">
+      <h5><span>*</span> {{description.title}}</h5>
+      <p>{{description.desc}}</p>
+    </div>
+    <label for="img-upload" class="input-wrap">
+      <div class="img-box">
+        <div class="icon-holder" v-if="!imageUrl">
+          <i :class="[type==='hasButton'?'el-icon-plus gray':'el-icon-circle-plus red']"></i>
+          <p v-show="type!=='hasButton'">上传{{type==='course'?'课程':'专栏'}}主页图</p>
+        </div>
+        <img v-else :src="imageUrl" alt="" width="100%" style="max-height: 100%;">
+      </div>
+      <el-button v-show="type==='hasButton'" type="danger" style="width: 100%;">上传</el-button>
+    </label>
+    <input type="file" ref="file-input" accept="image/*" id="img-upload" @change="uploadFile" v-show="false">
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import axios from 'axios'
+
+export default {
+  props: {
+    type: String,
+    value: String,
+    description: Object
+  },
+  data() {
+    return {
+      dateNow: '',
+      fileSuffix: ['.jpg', '.jpeg', '.png', '.bmp'],
+      imageUrl: ''
+    }
+  },
+  watch: {
+    value: function(val) {
+      this.imageUrl = val
+    }
+  },
+  methods: {
+    // 获取日期
+    getDateFn() {
+      let date = new Date()
+      let Y = date.getFullYear()
+      let M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
+      let D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+      this.dateNow = Y + M + D
+    },
+    // 获取后缀名
+    get_suffix(filename) {
+      let pos = filename.lastIndexOf('.')
+      return pos != -1 ? filename.substring(pos).toLowerCase() : ''
+    },
+    // 随机生成32位数字 字母组合的字符串
+    generateUUID() {
+      let d = new Date().getTime()
+      let uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        let r = (d + Math.random() * 16) % 16 | 0
+        d = Math.floor(d / 16)
+        return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16)
+      })
+      return uuid
+    },
+    async uploadFile(event) {
+      let files = event.target.files || event.dataTransfer.files
+      if (!files.length) return
+      let file = files[0]
+      let fileType = this.get_suffix(file.name)
+      if (!this.fileSuffix.includes(fileType)) {
+        this.$refs['file-input'].value = ''
+        return this.$message.warning('仅支持jpg/jpeg/png/bmp格式图片')
+      }
+      if (file.size / 1024 / 1024 > this.description.maxsize) {
+        this.$refs['file-input'].value = ''
+        return this.$message.warning('照片最大' + this.description.maxsize + 'M')
+      }
+      // 获取阿里云数据
+      let { data: dataKey } = await api.aliyunConfig()
+      let ossUrl = dataKey.host
+      let policyText = {
+        expiration: dataKey.expiration, // 设置该Policy的失效时间，超过这个失效时间之后，就没有办法通过这个policy上传文件了
+        conditions: [
+          ['content-length-range', 0, 1048576000] // 设置上传文件的大小限制
+        ]
+      }
+      let Base64 = require('js-base64').Base64
+      let policyBase64 = Base64.encode(JSON.stringify(policyText))
+      let bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, dataKey.accessKeySecret, { asBytes: true })
+      let signature = Crypto.util.bytesToBase64(bytes)
+      let sendData = new FormData()
+      let renderNum = this.generateUUID()
+      sendData.append('key', `images/${this.dateNow}/${renderNum}${fileType}`)
+      sendData.append('OSSAccessKeyId', dataKey.accessKeyId)
+      sendData.append('signature', signature)
+      sendData.append('x-oss-security-token', dataKey.securityToken)
+      sendData.append('policy', policyBase64)
+      sendData.append('success_action_status', 200) // 指定返回的状态码
+      sendData.append('file', file)
+      try {
+        await axios.post(ossUrl, sendData)
+        this.imageUrl = `${ossUrl}/images/${this.dateNow}/${renderNum}${fileType}`
+        this.$emit('input', this.imageUrl)
+      } catch (error) {}
+    }
+  },
+  mounted() {
+    this.getDateFn()
+  }
+}
+</script>
+
+<style lang="less" scope>
+.upload-content {
+  width: 100%;
+  box-sizing: border-box;
+  .title-tips {
+    &.flex {
+      display: flex;
+      align-items: center;
+      > p {
+        margin-top: 0;
+        margin-left: 10px;
+      }
+    }
+    > h5 {
+      font-weight: normal;
+      > span {
+        color: #e23732;
+      }
+      & + p {
+        color: #999;
+        font-size: 12px;
+        margin-top: 10px;
+      }
+    }
+  }
+  .input-wrap {
+    display: block;
+    width: 278px;
+  }
+  .img-box {
+    width: 100%;
+    height: 208px;
+    border: 1px solid #ddd;
+    background-color: #EEEEEE;
+    border-radius: 10px;
+    box-sizing: border-box;
+    margin: 10px 0;
+    text-align: center;
+    position: relative;
+    .icon-holder {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      > p {
+        margin-top: 10px;
+      }
+      > i {
+        font-size: 30px;
+      }
+    }
+    & + p {
+      width: 280px;
+      height: 34px;
+      line-height: 34px;
+      color: #fff;
+      background-color: #e23732;
+      border-radius: 5px;
+      text-align: center;
+    }
+  }
+}
+</style>

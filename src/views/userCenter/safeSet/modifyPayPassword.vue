@@ -1,0 +1,308 @@
+<template>
+  <div class='modifyPayPassword'>
+    <div class='modifyPayPassword_nav'>
+      <div>
+        <p v-if='Identification==1'>修改登录密码</p>
+        <p v-if='Identification==2'>{{$route.query.set?'设置支付密码':'修改支付密码'}}</p>
+        <p v-if='Identification==3'>修改绑定手机</p>
+        <div>
+          <p>
+            <em>1</em>
+            <span>验证身份</span>
+          </p>
+          <span></span>
+          <p class='redBorder'>
+            <em>2</em>
+            <span v-if='Identification==1'>修改密码</span>
+            <span v-if='Identification==2'>重置支付密码</span>
+            <span v-if='Identification==3'>修改手机</span>
+          </p>
+          <span></span>
+          <p class='redBorder'>
+            <em>3</em>
+            <span>完成</span>
+          </p>
+        </div>
+      </div>
+    </div>
+    <div class='modifyPayPassword_main'>
+      <div>
+        <p>当前手机号：
+          <b>{{$store.state.userInfo.mobile && $store.state.userInfo.mobile.replace(/^(\d{3})\d{4}(\d+)/,"$1****$2")}}</b>
+        </p>
+        <div>
+          <!-- <input type='text' v-model.number="tel" placeholder="请输入短信验证码" style="color:#606266">
+                                                    <span v-show="show" @click="getCode()">{{yzCode}}</span>
+                                                    <span v-show="!show">{{count}} S后重新获取</span> -->
+          <el-form :model="ruleForm" :rules="rules" ref="ruleForm" class="demo-ruleForm">
+            <el-form-item prop="code" class='minInput'>
+              <el-input type="text" v-model="ruleForm.code" placeholder="请输入短信验证码"></el-input>
+              <span v-show="show" @click="getCode()">{{yzCode}}</span>
+              <span v-show="!show">{{count}} S后重新获取</span>
+            </el-form-item>
+          </el-form>
+        </div>
+        <button @click='submitValidation("ruleForm")'>提交验证</button>
+      </div>
+    </div>
+  </div>
+</template>
+<script>
+import api from '@/fetch'
+export default {
+  data() {
+    return {
+      tel: '',
+      Identification: 0,
+      show: true,
+      count: 120,
+      flag: '',
+      yzCode: '获取验证码',
+      timer: null,
+      ruleForm: {
+        code: ''
+      },
+      rules: {
+        code: [
+          { required: true, message: '请输入短信验证码', trigger: 'blur' },
+          {
+            pattern: /^\d{6}\b/,
+            message: '请输入6位验证码'
+          }
+        ]
+      }
+    }
+  },
+  mounted() {
+    this.Identification = this.$route.query.Identification
+  },
+  methods: {
+    // 获取验证码
+    getCode() {
+      api.getSmsCode({ mobile: this.$store.state.userInfo.mobile }).then(res => {
+        if (res.code === 200) {
+          this.$message({
+            message: '验证码已发送，120s内有效',
+            type: 'success'
+          })
+          const TIME_COUNT = 120
+          if (!this.timer) {
+            this.count = TIME_COUNT
+            this.show = false
+            this.timer = setInterval(() => {
+              if (this.count > 0 && this.count <= TIME_COUNT) {
+                this.count--;
+                this.yzCode = '重新获取'
+              } else {
+                this.show = true
+                clearInterval(this.timer)
+                this.timer = null
+              }
+            }, 1000)
+          }
+        }
+      })
+    },
+    submitValidation(formName) {
+      // Identification == 1修改登录密码，2:支付密码 3:更换手机号
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          if (this.Identification == 1) {
+            api
+              .verifySmsCode({
+                mobile: this.$store.state.userInfo.mobile,
+                smsVerifyCode: this.ruleForm.code
+              })
+              .then(res => {
+                this.$router.push({ path: '/changePassword', query: { Identification: 1, verification: this.ruleForm.code } })
+              })
+          } else if (this.Identification == 2) {
+            api
+              .verifySmsCode({
+                mobile: this.$store.state.userInfo.mobile,
+                smsVerifyCode: this.ruleForm.code
+              })
+              .then(res => {
+                this.$router.push(
+                  `/paySubmitPassword?verification=${this.ruleForm.code}${this.$route.query.set ? '&set=sets' : ''}&url=${
+                    this.$route.query.url ? this.$route.query.url : ''
+                  }`
+                )
+              })
+          } else if (this.Identification == 3) {
+            api
+              .verifySmsCode({
+                mobile: this.$store.state.userInfo.mobile,
+                smsVerifyCode: this.ruleForm.code
+              })
+              .then(res => {
+                this.$router.push({ path: '/changePassword', query: { Identification: 2, verification: this.ruleForm.code } })
+              })
+          }
+        }
+      })
+    }
+  }
+}
+</script>
+<style lang="less" scoped>
+.modifyPayPassword {
+  width: 100%;
+  height: 100vh;
+  background: #fff;
+  margin-top: 20px;
+  border-radius: 10px 10px 0 0;
+}
+
+.modifyPayPassword_nav {
+  > div {
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    display: flex;
+    justify-content: space-between;
+    padding: 0 20px;
+    box-sizing: border-box;
+    border-bottom: 1px solid #dddddd;
+    background: #fff;
+    border-radius: 10px 10px 0 0;
+    > p {
+      color: #4a4a4a;
+      font-size: 16px;
+      line-height: 50px;
+    }
+    > div {
+      display: flex;
+      box-sizing: border-box;
+      > p {
+        > em {
+          width: 21px;
+          height: 21px;
+          border: 1px solid #e23732;
+          border-radius: 50%;
+          color: #ffffff;
+          display: inline-block;
+          background: #e23732;
+          margin-top: 14px;
+          line-height: 22px;
+          text-align: center;
+          font-style: normal;
+        }
+        > span {
+          font-weight: 500;
+          color: #333333;
+          padding-left: 10px;
+          display: inline-block;
+          margin-top: 14px;
+          line-height: 22px;
+        }
+      }
+      > span {
+        display: inline-block;
+        height: 2px;
+        width: 40px;
+        background: #000000;
+        margin: 24px 10px 0;
+      }
+    }
+  }
+  .redBorder {
+    em {
+      border: 1px solid #e23732;
+      color: #e23732;
+      background: #fff;
+      font-style: normal;
+    }
+  }
+}
+
+.modifyPayPassword_main {
+  width: 100%;
+  height: 100%;
+  > div {
+    width: 400px;
+    margin: 60px auto 0;
+    > p {
+      color: #4a4a4a;
+      font-size: 18px;
+      font-weight: 600;
+      padding-bottom: 20px;
+      text-align: left;
+    }
+    > div {
+      > input {
+        width: 260px;
+        height: 30px;
+        border: 1px solid #dddddd;
+        padding-left: 5px;
+        box-sizing: border-box;
+      }
+      > span {
+        padding-left: 20px;
+        color: #e23732;
+        line-height: 30px;
+        text-decoration: underline;
+        &:hover {
+          cursor: pointer;
+        }
+      }
+      .minInput {
+        /deep/ .el-input {
+          width: 260px;
+          height: 30px;
+        }
+        /deep/ .el-input__inner {
+          width: 260px;
+          height: 30px;
+        }
+        span {
+          padding-left: 20px;
+          color: #e23732;
+          line-height: 30px;
+          text-decoration: underline;
+          &:hover {
+            cursor: pointer;
+          }
+        }
+      }
+      input::-webkit-input-placeholder,
+      textarea::-webkit-input-placeholder {
+        color: #999;
+      }
+
+      input:-moz-placeholder,
+      textarea:-moz-placeholder {
+        color: #999;
+      }
+
+      input::-moz-placeholder,
+      textarea::-moz-placeholder {
+        color: #999;
+      }
+
+      input:-ms-input-placeholder,
+      textarea:-ms-input-placeholder {
+        color: #999;
+      }
+    }
+    > button {
+      margin-top: 50px;
+      width: 110px;
+      height: 34px;
+      background: #e23732;
+      color: #fff;
+      border-radius: 5px;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+em,
+i,
+s {
+  font-style: normal;
+  text-decoration: none;
+}
+</style>
+

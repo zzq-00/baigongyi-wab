@@ -1,0 +1,49 @@
+<template>
+  <div class='myWallet'>
+    <img src='@/assets/images/pic_1.png'>
+    <h4>正在建设中...</h4>
+    <p @click='$router.go(-1)'>返回</p>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style lang="less" scoped>
+.myWallet {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  width:100%;
+  height:calc(100vh - 150px);
+  background:#fff;
+  img {
+    display: inline-block;
+    width: 420px;
+    height: 250px;
+  }
+  h4 {
+    color: #3C4250;
+    font-size: 26px;
+  }
+  p {
+    margin-top: 23px;
+    width: 110px;
+    height: 40px;
+    line-height: 40px;
+    text-align: center;
+    font-size: 16px;
+    color: #FFFFFF;
+    border-radius: 20px;
+    background: linear-gradient(to right, #F9AC26, #F33535);
+    &:hover{
+      cursor: pointer;
+    }
+  }
+}
+</style>
+

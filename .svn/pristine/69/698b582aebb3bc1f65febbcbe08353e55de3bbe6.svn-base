@@ -1,0 +1,235 @@
+<template>
+  <div class="index-footer">
+    <p class="demarcation"></p>
+    <div class="footer-main">
+      <div class="clearfix href-list">
+        <dl class="fl" v-for="(item,index) in navs" :key="index">
+          <dt>{{item.title}}</dt>
+          <dd v-for="(i,index) in item.content" :key="index">
+            <a :href="i.url" v-if="i.externalLinks" target="_blank">{{i.name}}</a>
+            <router-link :to="i.url" v-else>{{i.name}}</router-link>
+          </dd>
+        </dl>
+        <div class="app-QRcode fr">
+          <p>百工驿APP</p>
+          <img :src="$store.state.imageDomain + 'images/download/bgy_download.png'" alt="">
+        </div>
+      </div>
+      <div class="hotline-address">
+        <p class="hotline clearfix">
+          <span>北京市海淀区车公庄西路19号外文文化创意园12号楼</span>
+          <span>服务专线：</span>
+          <!-- <span>400-607-5677 </span> -->
+          <svg>
+            <defs>
+              <linearGradient id="grad">
+                <stop offset="0%" style="stop-color:rgba(255, 123, 55, 1); stop-opacity:1" />
+                <stop offset="100%" style="stop-color:rgba(228, 61, 48, 1); stop-opacity:1" />
+              </linearGradient>
+            </defs>
+            <text x="0" y="100%" height='12' fill="url(#grad)" style="font-size:12px;line-height:12px;font-weight: bold;">400-697-5677</text>
+          </svg>
+        </p>
+        <p class="copyright">
+          <span>Copyright © 2017 上海青矩互联网科技有限公司 版权所有</span>
+          <span>沪ICP备16015426号-1</span>
+        </p>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      navs: [
+        {
+          title: '关于百工驿',
+          content: [{ name: '百工驿介绍', url: '/introduce', externalLinks: false }, { name: '联系我们', url: '/contactUs', externalLinks: false }]
+        },
+        {
+          title: '服务保障',
+          content: [
+            { name: '用户协议', url: '/agreement/user', externalLinks: false },
+            { name: '讲师入驻协议', url: '/agreement/lecturer', externalLinks: false }
+          ]
+        },
+        {
+          title: '资源',
+          content: [
+            { name: '课程', url: '/lectureRoom', externalLinks: false },
+            { name: '专栏', url: '/lectureRoom?activeTab=column', externalLinks: false },
+            { name: '直播', url: '/livetv', externalLinks: false },
+            { name: '文章', url: '/article/list', externalLinks: false }
+          ]
+        },
+        {
+          title: '快速入口',
+          content: [
+            { name: '讲师入驻', url: '', externalLinks: true },
+            { name: '人才入驻', url: '/', externalLinks: false },
+            { name: '供应商入驻', url: '/', externalLinks: false },
+            { name: '工作台', url: '/', externalLinks: false }
+          ]
+        }
+        // {
+        //   title: '帮助中心',
+        //   content: [
+        //     { name: '流程管理说明', url: '/', externalLinks: false },
+        //     { name: '权益保护', url: '/', externalLinks: false },
+        //     { name: '供应商信用体系', url: '/', externalLinks: false }
+        //   ]
+        // },
+        // {
+        //   title: '公司',
+        //   content: [
+        //     { name: '联系我们', url: '/', externalLinks: true },
+        //     { name: '官方微博', url: '/', externalLinks: true },
+        //     { name: '反馈建议', url: '/', externalLinks: true }
+        //   ]
+        // }
+      ]
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    teacherFn() {
+      if (this.$store.state.userInfo.accountId) {
+        api
+          .getTeacherDetail(this.$store.state.userInfo.accountId)
+          .then(res => {
+            // debugger
+            if (res.data.status == 1000) {
+              this.navs[3].content[0].url = '/applyTeacher/examineIng'
+            } else if (res.data.status == 1002) {
+              this.navs[3].content[0].url = '/applyTeacher/seeInformation'
+            } else if (res.data.status == 1001) {
+              this.navs[3].content[0].url = '/applyTeacher/agreement'
+            }
+          })
+          .catch(err => {
+            this.navs[3].content[0].url = '/applyTeacher/agreement'
+          })
+      } else {
+        this.navs[3].content[0].url = '/login'
+      }
+    }
+  },
+  mounted() {
+    this.teacherFn()
+  }
+}
+</script>
+<style lang="less" scoped>
+.index-footer {
+  background-color: #faf8f6;
+  height: 221px;
+  padding: 0px 0 45px 0;
+  .demarcation {
+    height: 1px;
+    background: linear-gradient(269.95500000000004deg, rgba(228, 61, 48, 1) 0%, rgba(206, 76, 61, 1) 100%);
+  }
+  .footer-main {
+    width: 1100px;
+    margin: 0 auto;
+    padding-top: 35px;
+    .href-list {
+      dl {
+        font-size: 14px;
+        dt {
+          height: 14px;
+          line-height: 14px;
+          font-weight: bold;
+          color: rgba(38, 38, 38, 1);
+        }
+        dd {
+          margin-top: 21px;
+          height: 14px;
+          line-height: 14px;
+          font-weight: 400;
+          color: rgba(140, 140, 140, 1);
+        }
+      }
+      dl:nth-child(1) {
+        margin-right: 126px;
+      }
+      dl:nth-child(2) {
+        margin-right: 140px;
+      }
+      dl:nth-child(3) {
+        margin-right: 160px;
+      }
+      .app-QRcode {
+        p {
+          height: 13px;
+          line-height: 13px;
+          font-size: 14px;
+          font-weight: bold;
+          color: rgba(38, 38, 38, 1);
+          margin-bottom: 18px;
+        }
+        img {
+          display: inline-block;
+          width: 77px;
+          height: 77px;
+        }
+      }
+    }
+    .hotline-address {
+      margin-top: 55px;
+      .hotline {
+        padding-bottom: 7px;
+        border-bottom: 1px solid #bfbfbf;
+        font-size: 12px;
+        font-weight: 400;
+        color: rgba(191, 191, 191, 1);
+        span:nth-child(1) {
+          display: inline-block;
+          height: 12px;
+          line-height: 12px;
+          border-right: 1px solid #bfbfbf;
+          padding-right: 7px;
+          margin-right: 7px;
+        }
+        span:nth-child(2) {
+          height: 12px;
+          line-height: 12px;
+        }
+        span:nth-child(3) {
+          font-weight: bold;
+          background: linear-gradient(262.826deg, rgba(228, 61, 48, 1) 0%, rgba(255, 123, 55, 1) 100%);
+          -webkit-background-clip: text;
+          background-clip: text;
+          color: transparent;
+        }
+        svg {
+          width: 76px;
+          height: 12px;
+        }
+        #grad {
+          height: 12px;
+        }
+      }
+      .copyright {
+        height: 12px;
+        font-size: 12px;
+        font-weight: 400;
+        color: rgba(191, 191, 191, 1);
+        padding-top: 10px;
+        span:nth-child(1) {
+          display: inline-block;
+          height: 12px;
+          line-height: 12px;
+          border-right: 1px solid #bfbfbf;
+          padding-right: 7px;
+          margin-right: 7px;
+        }
+      }
+    }
+  }
+}
+</style>

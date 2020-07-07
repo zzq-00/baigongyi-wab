@@ -1,0 +1,65 @@
+<template>
+  <div class="myIdea">
+    <div class="title">想法</div>
+    <ul class="content">
+      <li></li>
+    </ul>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  data() {
+    return {
+      ideaList: [],
+      params: {
+        accountId: '',
+        flag: 2,
+        pageNum: 1,
+        pageSize: 10
+      }
+    }
+  },
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  methods: {
+    myIdeaList() {
+      if (!this.isOwn) {
+        this.params.accountId = this.$route.query.id
+      } else {
+        this.params.accountId = this.loginaccountId
+      }
+      api.myIdeaList(this.params).then(res => {})
+    }
+  },
+  mounted() {
+    if (window.localStorage.userInfo) {
+      this.loginaccountId = JSON.parse(window.localStorage.getItem('userInfo')).accountId
+    }
+    this.myIdeaList()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.myIdea {
+  .title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+  }
+  .content {
+    padding: 20px 0;
+    max-height: 788px;
+    min-height: calc(100vh - 456px);
+    background-color: #fff;
+    overflow: auto;
+  }
+}
+</style>

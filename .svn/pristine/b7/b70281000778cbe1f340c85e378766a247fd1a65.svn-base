@@ -1,0 +1,11 @@
+// app 注册协议
+export default [
+    {
+      path: '/protocol/userRegist',
+      component: () => import('../views/protocol/userRegist'),
+    },
+    {
+        path: '/protocol/lecturerRegist',
+        component: () => import('../views/protocol/lecturerRegist'),
+    }
+  ]

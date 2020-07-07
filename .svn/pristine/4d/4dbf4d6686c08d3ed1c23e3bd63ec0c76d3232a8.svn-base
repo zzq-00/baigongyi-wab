@@ -1,0 +1,33 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import ElementUI from 'element-ui'
+import dragVerify from 'vue-drag-verify'
+import VideoPlayer from 'vue-video-player'
+
+import App from './App.vue'
+import router from './router'
+import store from './store'
+
+// 样式
+// import 'element-ui/lib/theme-chalk/index.css'
+import 'vue-video-player/src/custom-theme.css'
+import 'video.js/dist/video-js.css'
+import '@/assets/iconfont/iconfont.css'
+import '@/assets/theme/index.css'
+import '@/assets/style/main.css'
+
+Vue.config.productionTip = false
+Vue.use(ElementUI, { size: 'small' })
+Vue.use(dragVerify)
+Vue.use(VideoPlayer)
+Vue.use(Router)
+// 当点击相同页面时防止报错
+const originalPush = Router.prototype.push
+Router.prototype.push = function push (location) {
+  return originalPush.call(this, location).catch(err => err)
+}
+new Vue({
+  router,
+  store,
+  render: h => h(App)
+}).$mount('#app')

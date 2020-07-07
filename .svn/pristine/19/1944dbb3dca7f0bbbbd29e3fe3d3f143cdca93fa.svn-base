@@ -1,0 +1,22 @@
+import axios from 'axios'
+const OSS = require('ali-oss')
+
+let aliyunData = {}
+export function getAliyun () {
+  axios.get('/aliyun/config').then(res => {
+    aliyunData = res.data
+  })
+  return aliyunData
+  // this.region = aliyunData.host
+  // this.accessKeyId = aliyunData.accessId
+  // this.accessKeySecret = aliyunData.policy
+  // this.signature = aliyunData.signature
+}
+
+export function client (data) {
+  return new OSS({
+    region: aliyunData.host,
+    accessKeyId: aliyunData.accessId,
+    accessKeySecret: aliyunData.policy
+  })
+}

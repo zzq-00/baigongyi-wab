@@ -1,0 +1,158 @@
+<template>
+  <div class="nav-list">
+    <div class="nav-main">
+      <ul>
+        <!-- <li :class="[activeIndex==index?'active-color':'']" v-for="(item,index) in navList" :key="index" @click="goRouter(item,index)">
+                      <span>{{item.name}}</span>
+                    </li> -->
+        <li>
+          <a href='/'>首页</a>
+        </li>
+        <li>
+          <a href='/lectureRoom'>讲堂</a>
+        </li>
+        <li>
+          <a href='/livetv'>直播</a>
+        </li>
+        <li>
+          <span>百工社区<img src='@/assets/images/right.png' /></span>
+          <div class='child_list'>
+            <ol>
+              <li v-for='(item,index) in tagsList' :key='index' @click='checkTag(index,item)'>
+                {{item.tagName}}
+              </li>
+            </ol>
+          </div>
+        </li>
+        <li>
+          <a href='/hotmessage'>热点资讯</a>
+        </li>
+        <li>
+          <a href='/engineering'>工程圈</a>
+        </li>
+        <li>
+          <a href='/questions'>问答</a>
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      activeIndex: 0,
+      tagsList: [],
+      navList: [
+        { name: '首页', links: '/' },
+        { name: '讲堂', links: '/lectureRoom' },
+        { name: '直播', links: '/livetv' },
+        { name: '百工社区', links: '/' },
+        { name: '热点资讯', links: '/hotmessage' },
+        { name: '工程圈', links: '/engineering' },
+        { name: '文章', links: '/article/list' },
+        { name: '问答', links: '/questions' }
+      ]
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    getTagsList() {
+      let arr = [];
+      api.tagList().then(res => {
+        res.data.records.forEach((item, index) => {
+          if (!item.parentId) {
+            arr.push(item)
+          }
+        })
+      })
+      this.tagsList = arr;
+    },
+    checkTag(index, item) {
+      this.$router.push({path:'/community',query:{id:item.id}});
+    },
+  },
+  mounted() {
+    this.getTagsList();
+  }
+}
+</script>
+<style lang="less" scoped>
+.nav-list {
+  height: auto;
+  background: rgba(228, 61, 48, 1);
+  .nav-main {
+    width: 1100px;
+    margin: 0 auto;
+    ul {
+      position: relative;
+      >li {
+        padding: 0 13px;
+        display: inline-block;
+        line-height: 47px;
+        font-size: 16px;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 1);
+        height: 100%;
+        position: relative;
+        >span {
+          >img {
+            display: inline-block;
+            padding-left: 10px;
+            vertical-align: middle;
+          }
+        }
+        a:hover {
+          color: #fff;
+        }
+        &:nth-child(1){
+          background-color: #ff584b;
+        }
+        &:nth-child(4):hover {
+          .child_list {
+            display: block;
+          }
+        }
+        .child_list {
+          display: none;
+          background: #fff;
+          position: absolute;
+          width: 250px;
+          left: 0;
+          top: 47px;
+          z-index: 999;
+          border: 1px solid #e8e8e8;
+          >ol {
+            width: 100%;
+            padding: 20px 0;
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            >li {
+              width: 50%;
+              line-height: 30px;
+              font-weight: 400;
+              text-align: center;
+              color: #333333;
+              &:hover {
+                background:#fff;
+                color: #ff584b;
+                cursor: pointer;
+              }
+            }
+          }
+        }
+      }
+      li:hover {
+        background-color: #ff584b;
+      } // .active-color {
+      //   background-color: #ff584b;
+      // }
+    }
+  }
+}
+</style>

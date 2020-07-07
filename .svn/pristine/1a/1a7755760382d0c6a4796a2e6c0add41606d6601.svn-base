@@ -1,0 +1,395 @@
+<template>
+  <div class='hotMessage'>
+    <div class='hotMessage_nav'>
+      <el-breadcrumb separator="/">
+        <el-breadcrumb-item v-for="(item,index) in hotMessageNav" :key="index" :to="{ path: item.path }">{{item.name}}</el-breadcrumb-item>
+      </el-breadcrumb>
+    </div>
+    <!-- <router-view></router-view> -->
+    <div class='article'>
+      <div class='article_main'>
+        <ul class='article_main_left'>
+          <li :class="{active:currentIndex==index}" v-for='(item,index) in leftNavData' :key='index' @click='currentIndexFn(index)'>
+            <i class="icon iconfont" v-if='index==0'>&#xe614;</i>
+            <span>{{item.name}}</span>
+          </li>
+        </ul>
+        <div class='article_main_right'>
+          <!-- <newsHot v-if='currentIndex===0' @toFatherData="sendSonData" ref='mychild'></newsHot>
+                          <architecture v-if='currentIndex===1' @toFatherData="sendSonData"></architecture>
+                          <qualifications v-if='currentIndex===2' @toFatherData="sendSonData"></qualifications> -->
+          <div class='newsHot'>
+            <ul>
+              <li v-for='(item,index) in listData' :key='index'>
+                <dl>
+                  <dt>
+                    <img :src="$store.state.imageDomain + item.image" />
+                  </dt>
+                  <dd>
+                    <h4 @click='goDetails(item)'>{{item.title}}</h4>
+                    <p v-html='item.roundup'></p>
+                    <div>
+                      <span :title='item.sourceName'>{{item.sourceName}}</span>
+                      <p>
+                        <span>
+                          <i class="icon iconfont">&#xe606;</i>
+                          {{item.publishTime | formatDate}}
+                        </span>
+                        <span>
+                          <i class="el-icon-view"></i>{{item.watchCount}}
+                        </span>
+                      </p>
+                    </div>
+                  </dd>
+                </dl>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="pagination">
+        <el-pagination hide-on-single-page @current-change="handleCurrentChange" :current-page.sync="datas.current" :page-size.sync="datas.size" layout="prev,slot, next, total" :total="totalElement">
+          <slot>
+            <span>第
+              <i>{{datas.current}}/{{datas.pages}}</i>页</span>
+          </slot>
+        </el-pagination>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  // components: {
+  //   newsHot,
+  // },
+  data() {
+    return {
+      //currentIndex: 0,
+      hotMessageNav: [
+        {
+          name: '热点资讯',
+          path: '/hotmessage'
+        },
+        {
+          name: '新闻热点'
+        }
+      ],
+      currentIndex: 0,
+      listData: [],
+      totalElement: 0,
+      datas: {},
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          type: 1
+        }
+      },
+      leftNavData: [{ name: '新闻热点' }, { name: '建筑前沿' }, { name: '资质热点' }]
+      //leftNavData: [{ name: '新闻热点', icon: 'el-icon-document' }, { name: '建筑前沿' }, { name: '资质热点' }],
+    }
+  },
+  mounted() {
+    if (this.$route.query.indexs) {
+      this.currentIndex = this.$route.query.indexs
+      this.params.paramObject.type = Number(this.currentIndex) + 1
+    }
+    this.getDataListFn()
+  },
+  methods: {
+    getDataListFn() {
+      api.hotNewsList(this.params).then(res => {
+        this.listData = res.data.records
+        this.datas = res.data
+        this.totalElement = res.data.total
+      })
+    },
+    currentIndexFn(index) {
+      this.currentIndex = index
+      if (index === 0) {
+        this.hotMessageNav[1].name = '新闻热点'
+      } else if (index === 1) {
+        this.hotMessageNav[1].name = '建筑前沿'
+      } else if (index === 2) {
+        this.hotMessageNav[1].name = '资质热点'
+      }
+      this.params.paramObject.type = index + 1
+      this.params.pageNum = 1
+      this.getDataListFn()
+    },
+    handleCurrentChange(val) {
+      this.params.pageNum = val
+      this.getDataListFn()
+    },
+    goDetails(item) {
+      this.$router.push({ path: '/hotmessage/' + item.id + '?currentIndex=' + this.currentIndex })
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.hotMessage {
+  overflow: hidden;
+}
+
+.hotMessage_nav {
+  height: 40px;
+  line-height: 40px;
+  /deep/ .el-breadcrumb {
+    height: 40px;
+    line-height: 40px;
+  }
+  /deep/ .el-breadcrumb__inner {
+    color: #4a4a4a;
+    font-weight: 500;
+    &:hover {
+      color: #e23732;
+    }
+  }
+}
+
+.article_main {
+  width: 100%;
+  height: calc(100vh - 260px);
+  background: #fff;
+  border-radius: 10px;
+  padding-top: 32px;
+  display: flex;
+}
+
+.article_main_left {
+  border-right: 1px solid #dddddd;
+  height: 200px;
+  width: 178px;
+  li {
+    position: relative;
+    padding-top: 10px;
+    padding-bottom: 20px;
+    > span {
+      font-size: 16px;
+      color: #4a4a4a;
+      padding-left: 46px;
+      font-weight: 500;
+    }
+    > i {
+      font-size: 16px;
+      position: absolute;
+      left: 20px;
+    }
+    &:hover {
+      cursor: pointer;
+      span,
+      i {
+        color: #e23732;
+      }
+    }
+  }
+  .active {
+    span,
+    i {
+      color: #e23732;
+    }
+  }
+}
+
+.article_main_right {
+  padding-left: 20px;
+  flex: 1;
+  padding-right: 280px;
+  overflow-y: scroll;
+  position: relative;
+}
+
+.pagination {
+  margin-top: 10px;
+  text-align: center;
+  margin-bottom: 15px;
+  /deep/ .el-pagination .btn-next,
+  .el-pagination .btn-prev {
+    width: 40px;
+    height: 40px;
+    padding-right: auto;
+    border: 1px solid #dddddd;
+    border-radius: 5px;
+    .el-icon-arrow-left:before,
+    .el-icon-arrow-right:before {
+      font-size: 20px;
+    }
+  }
+  /deep/ .el-pagination {
+    slot {
+      span {
+        font-size: 20px;
+        margin: 6px 20px 0;
+        color: #999;
+        font-weight: normal;
+      }
+    }
+    /deep/ .el-pagination__total {
+      margin: 6px 0 0 20px;
+      font-size: 20px;
+      color: #999;
+      font-weight: normal;
+    }
+  }
+}
+
+.newsHot {
+  li {
+    margin-bottom: 30px;
+    height: 118px;
+    overflow: hidden;
+    dl {
+      position: relative;
+      dt {
+        img {
+          width: 200px;
+          height: 118px;
+          border-radius: 5px;
+          position: absolute;
+          left: 0;
+          top: 0;
+        }
+      }
+      dd {
+        padding-left: 220px;
+        h4 {
+          font-size: 16px;
+          padding: 10px 0;
+          color: #333333;
+          font-weight: 600;
+          white-space: nowrap;
+          text-overflow: ellipsis;
+          overflow: hidden;
+          word-break: break-all;
+          &:hover {
+            cursor: pointer;
+          }
+        }
+        p {
+          height: 34px;
+          color: #666666;
+          display: -webkit-box;
+          -webkit-box-orient: vertical;
+          -webkit-line-clamp: 2;
+          overflow: hidden;
+        }
+        > div {
+          display: flex;
+          justify-content: space-between;
+          padding-top: 26px;
+          > span {
+            color: #999999;
+            display: inline-block;
+            width: 160px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+          > p {
+            span {
+              color: #999999;
+              i {
+                color: #999999;
+                padding-right: 6px;
+              }
+              &:nth-child(2) {
+                padding-left: 12px;
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+em,
+i,
+s {
+  font-style: normal;
+  text-decoration: none;
+}
+// .hotMessage_main {
+//   width: 100%;
+//   height: calc(100vh - 260px);
+//   background: #fff;
+//   border-radius: 10px;
+//   padding-top: 32px;
+//   display: flex;
+// }
+// .hotMessage_main_left {
+//   border-right: 1px solid #DDDDDD;
+//   height: 200px;
+//   width: 178px;
+//   li {
+//     position: relative;
+//     padding-top: 10px;
+//     padding-bottom: 20px;
+//     >span {
+//       font-size: 16px;
+//       color: #4A4A4A;
+//       padding-left: 46px;
+//       font-weight: 500;
+//     }
+//     >i {
+//       font-size: 16px;
+//       position: absolute;
+//       left: 20px;
+//     }
+//     &:hover {
+//       cursor: pointer;
+//       span,
+//       i {
+//         color: #E23732;
+//       }
+//     }
+//   }
+//   .active {
+//     span,
+//     i {
+//       color: #E23732;
+//     }
+//   }
+// }
+// .hotMessage_main_right {
+//   padding-left: 20px;
+//   flex: 1;
+//   padding-right: 280px;
+//   overflow-y: scroll;
+// }
+// .hotMessage_footer {
+//   padding-top: 20px;
+//   display: flex;
+//   justify-content: center;
+//   >p {
+//     width: 34px;
+//     height: 34px;
+//     background: #fff;
+//     line-height: 34px;
+//     text-align: center;
+//     border: 1px solid #DDDDDD;
+//     border-radius: 5px;
+//     >i {
+//       font-size: 18px;
+//       color: #999999;
+//     }
+//     &:hover {
+//       cursor: pointer;
+//     }
+//   }
+//   >em {
+//     line-height: 34px;
+//     color: #999999;
+//     padding: 0 10px;
+//   }
+//   >span {
+//     line-height: 34px;
+//     color: #999999;
+//     padding-left: 10px;
+//   }
+// }
+</style>

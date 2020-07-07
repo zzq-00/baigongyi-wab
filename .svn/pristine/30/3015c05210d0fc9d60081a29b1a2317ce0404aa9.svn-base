@@ -1,0 +1,66 @@
+<template>
+  <div class="nav-list">
+    <div class="nav-main">
+      <ul>
+        <li :class="[activeIndex==index?'active-color':'']" v-for="(item,index) in navList" :key="index" @click="activeIndex=index">
+          <router-link :to="item.links">{{item.name}}</router-link>
+        </li>
+      </ul>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  components: {},
+  data() {
+    return {
+      activeIndex: 0,
+      navList: [
+        { name: '首页', links:'/' },
+        { name: '讲堂', links:'/lectureRoom' },
+        { name: '直播', links:'/livetv' },
+        { name: '百工社区', links:'/' },
+        { name: '热点资讯', links:'/hotmessage' },
+        { name: '工程圈', links:'/engineering' },
+        { name: '文章', links:'/article/list' },
+        { name: '问答', links:'/questions' }
+      ]
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {},
+  mounted() {}
+}
+</script>
+<style lang="less" scoped>
+.nav-list {
+  height: 47px;
+  line-height: 47px;
+  background: rgba(228, 61, 48, 1);
+  .nav-main {
+    width: 1100px;
+    margin: 0 auto;
+    ul {
+      li {
+        padding: 0 13px;
+        display: inline-block;
+        font-size: 16px;
+        font-weight: bold;
+        color: rgba(255, 255, 255, 1);
+        height: 100%;
+        a:hover {
+          color: #fff;
+        }
+      }
+      li:hover {
+        background-color: #ff584b;
+      }
+      .active-color {
+        background-color: #ff584b;
+      }
+    }
+  }
+}
+</style>

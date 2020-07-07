@@ -1,0 +1,154 @@
+<template>
+  <div class="userCenter">
+    <div class="silder" v-if="isOwn">
+      <div class="useTitle">用户中心</div>
+      <el-menu router :default-active="sliderIndex" :default-openeds='subMenu' class="el-menu-demo">
+        <el-menu-item index="/myHome">我的主页 </el-menu-item>
+        <el-menu-item index="/myWallet">我的钱包</el-menu-item>
+        <el-menu-item index="/myBuy">我的购买</el-menu-item>
+        <el-menu-item index="/myLive">我的直播</el-menu-item>
+        <el-menu-item index="/myLecture" v-if="userInfoData.wasTeacher">我的讲堂</el-menu-item>
+        <!-- index="/myTeacher"-->
+        <el-menu-item @click='teacherFn'>讲师入驻</el-menu-item>
+        <el-submenu index="2">
+          <template slot="title">账号管理</template>
+          <el-menu-item index="/safetySet">安全设置</el-menu-item>
+          <el-menu-item index="/personalData">个人资料</el-menu-item>
+        </el-submenu>
+      </el-menu>
+    </div>
+    <div class="main">
+      <router-view :userInfoData='userInfoData' />
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+
+export default {
+  data() {
+    return {
+      sliderIndex: this.$route.path,
+      subMenu: [],
+      userInfoData: {}
+    }
+  },
+  computed: {
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  watch: {
+    '$route.path': {
+      handler: function(val) {
+        this.sliderIndex = this.$route.path
+        if (val === '/myHome/myReply' || val === '/myHome/myQuestion' || val === '/myHome/myIdea' || val == '/myHome/myLive' || val == '/myHome/myCollect' || val == '/myHome/myAttention') {
+          this.sliderIndex = '/myHome'
+        } else if (val === '/personalData') {
+          this.subMenu.push('2')
+        } else if (val.indexOf('/editCourse')!=-1||val.indexOf('/courseMessage')!=-1||val === '/editColumn') {
+          this.sliderIndex = '/myLecture'
+        }
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  methods: {
+    // 个人信息
+    async getuserInfo(id) {
+      const res = await api.getUserInfo(id)
+      this.userInfoData = res.data
+    },
+    teacherFn() {
+      api
+        .getTeacherDetail(this.$store.state.userInfo.accountId)
+        .then(res => {
+          if (res.data) {
+            if (res.data.status === 1000) {
+              this.$router.push('/examineIng')
+            } else if (res.data.status === 1002) {
+              this.$router.push('/seeInformation')
+            } else if (res.data.status === 1001) {
+              this.$router.push('/agreement')
+            }
+          }
+        })
+        .catch(err => {
+          this.$router.push('/agreement')
+        })
+    }
+  },
+  mounted() {
+    this.getuserInfo(this.$route.query.id || this.$store.state.userInfo.accountId)
+  },
+  beforeRouteUpdate(to, from, next) {
+    this.getuserInfo(to.query.id || this.$store.state.userInfo.accountId)
+    next()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.userCenter {
+  padding-top: 20px;
+  display: flex;
+  overflow: hidden;
+  .silder {
+    width: 200px;
+    height: 500px;
+    border-radius: 10px;
+    background-color: #fff;
+    overflow: hidden;
+    .useTitle {
+      height: 50px;
+      border-radius: 10px 10px 0 0;
+      background: #e23732;
+      font-size: 18px;
+      color: #fff;
+      line-height: 50px;
+      padding-left: 20px;
+    }
+    /deep/.el-menu {
+      border: none;
+      border-radius: 0 0 10px 10px;
+      padding-bottom: 60px;
+    }
+    /deep/.el-menu-item,
+    /deep/.el-submenu__title {
+      position: relative;
+      height: 48px;
+      line-height: 48px;
+    }
+    /deep/.el-menu-item:focus,
+    /deep/.el-menu-item:hover,
+    /deep/.el-menu-item:active {
+      background-color: #f7f9fd;
+    }
+    /deep/.el-menu-item:hover::after,
+    /deep/.el-menu-item:active::after {
+      content: '';
+      display: block;
+      position: absolute;
+      height: 16px;
+      width: 3px;
+      background-color: #f00;
+      top: 0;
+      bottom: 0;
+      margin: auto;
+      left: 0;
+    }
+  }
+  .main {
+    // background-color: #fff;
+    border-radius: 10px;
+    flex: 1;
+    margin-left: 20px;
+    overflow: hidden;
+  }
+}
+</style>

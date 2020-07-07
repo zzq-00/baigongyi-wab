@@ -1,0 +1,145 @@
+<template>
+  <div class="fabulous-right">
+    <p class="fabulous-title">最赞用户</p>
+    <ul class="fabulous-list-box">
+      <li v-for="(its,index) in fabulousUser" :key="index">
+        <img :src="its.avatar?$store.state.imageDomain + its.avatar : require('@/assets/images/err-header-icon01.png')" alt="">
+        <div class="user-info">
+          <p class="users">
+            <span class="user-name">{{type=='idea'?its.nickName:its.nickName}}</span>
+            <span class="user-more" @click="gotoUser(its.accountId)">了解更多</span>
+          </p>
+          <p class="user-introduce">{{its.introduction}}</p>
+        </div>
+      </li>
+    </ul>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  props: {
+    type: String
+  },
+  components: {},
+  data() {
+    return {
+      fabulousUser: [] //最赞用户列表
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    gotoUser(accountId) {
+      window.open(`/myHome/myReply?id=${accountId}`, '_blank')
+    },
+    getFavoriteUser() {
+      if (this.type == 'idea') {
+        api.ideaBestLikePeople().then(res => {
+          this.fabulousUser = res.data
+        })
+      } else {
+        api.getFavoriteUser().then(res => {
+          this.fabulousUser = res.data
+        })
+      }
+    }
+  },
+  mounted() {
+    this.getFavoriteUser()
+  }
+}
+</script>
+<style lang="less" scoped>
+.fabulous-right {
+  width: 280px;
+  float: right;
+  background: rgba(255, 255, 255, 1);
+  border-radius: 10px;
+  padding: 20px 0 20px 20px;
+  .fabulous-title {
+    height: 17px;
+    line-height: 17px;
+    font-size: 16px;
+    font-weight: 400;
+    color: rgba(74, 74, 74, 1);
+  }
+  .fabulous-list-box {
+    padding: 10px 0 20px 0;
+    max-height: calc(100vh - 247px);
+    overflow-y: auto;
+    li {
+      height: 90px;
+      img {
+        width: 60px;
+        height: 60px;
+        border-radius: 50%;
+        float: left;
+        margin-top: 10px;
+      }
+      .user-info {
+        margin-left: 10px;
+        margin-top: 20px;
+        display: inline-block;
+        position: relative;
+        .users {
+          .user-name {
+            display: inline-block;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            height: 18px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: bold;
+            color: rgba(74, 74, 74, 1);
+          }
+          .user-more {
+            float: right;
+            width: 67px;
+            height: 15px;
+            line-height: 16px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(153, 153, 153, 1);
+            background: url(../assets/images/more.png) no-repeat center right;
+          }
+          .user-more:hover {
+            color: #e23732;
+            cursor: pointer;
+            background: url(../assets/images/morehover.png) no-repeat center right;
+          }
+        }
+        .user-introduce {
+          margin-top: 12px;
+          width: 192px;
+          height: 15px;
+          line-height: 15px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
+        }
+      }
+      .user-info:after {
+        position: absolute;
+        content: '';
+        display: block;
+        height: 1px;
+        width: 210px;
+        background-color: #ddd;
+        left: 0px;
+        bottom: -25px;
+      }
+    }
+  }
+  .fabulous-list-box::-webkit-scrollbar {
+    display: none;
+    overflow: hidden;
+  }
+}
+</style>

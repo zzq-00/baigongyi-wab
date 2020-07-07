@@ -1,0 +1,183 @@
+<template>
+    <div class='agreement'>
+         <div class='myTeacher_nav'>
+            <p>讲师入驻</p>
+            <div>
+                <p>
+                <em>1</em>
+                <span>签订入驻协议</span>
+                </p>
+                <span></span>
+                <p class='redBorder'>
+                <em>2</em>
+                <span>填写资料并提交审核</span>
+                </p>
+            </div>
+        </div>
+        <h4>百工驿讲堂讲师注册协议</h4>
+        <div>
+            <h5>导言</h5>
+            <p>
+                欢迎您使用百工驿讲堂提供的服务！
+            </p>
+            <p> 为使用百工驿讲堂提供的服务（以下简称：本服务），您应当阅读并遵守《百工驿讲堂课程发布者注册协议》（以下简称：本协议）。</p>
+            <p>
+                请您务必审慎阅读、充分理解各条款内容，特别是免除或者限制责任的条款，以及开通或使用某项服务的单独协议、规则。
+            </p>
+            <p>
+                除非您已阅读并接受本协议及相关协议、规则等所有条款，否则，您无权使用百工驿提供的本服务。您使用百工驿的本服务，即视为您已阅读并同意上述协议、规则等的约束。 您有违反本协议的任何行为时，百工驿有权依照违反情况，随时单方限制、中止或终止向您提供本服务，并有权追究您的相关责任。
+            </p>
+            <h5>1.术语含义 </h5>
+            <p>
+                如无特别说明，下列术语在本协议中的含义为：
+            </p>
+            <p>
+                1.1 课程发布者：指经有效注册、申请后，将其享有相应权利的各种课程接入百工驿讲堂并向用户提供各种免费或收费类的在线直播、录播服务以实现与用户进行在线交流与学习目的的个人、法人或其他组织，因前述主体的不同，课程发布者在对外展现上也称“机构”或“老师”，本协议中简称为“您”。
+            </p>
+        </div>
+        <div class='agreement_footer'>
+            <el-checkbox v-model="checked">我已阅读并同意以上协议</el-checkbox>
+            <div>
+                <button @click='nextClick'>下一步</button>
+            </div>
+        </div>
+    </div>
+</template>
+<script>
+export default {
+    data() {
+        return {
+            checked: true
+        }
+    },
+    methods: {
+        nextClick() {
+            if (this.checked) {
+                this.$router.push('/fillInMessage')
+            }
+        }
+    }
+}
+</script>
+<style lang="less" scoped>
+.agreement {
+    width: 100%;
+    height: 100%;
+    overflow-x:hidden;
+    background:#fff;
+    border-radius:10px;
+    >h4 {
+        padding: 20px 0;
+        text-align: center;
+        color: #4A4A4A;
+        font-size: 18px;
+        font-weight: 600;
+    }
+    >div {
+        padding: 0px 60px;
+        >h5 {
+            padding: 10px 0;
+            font-size: 16px;
+            color: #4A4A4A;
+            font-weight: 600;
+        }
+        >p {
+            color: #666;
+            line-height: 24px;
+        }
+    }
+    .myTeacher_nav {
+        width: 100%;
+        height: 50px;
+        line-height: 50px;
+        display: flex;
+        justify-content: space-between;
+        padding: 0 20px;
+        box-sizing: border-box;
+        border-bottom: 1px solid #dddddd;
+        background: #fff;
+        border-radius: 10px 10px 0 0;
+        > p {
+            color: #4a4a4a;
+            font-size: 16px;
+            line-height: 50px;
+        }
+        > div {
+            display: flex;
+            box-sizing: border-box;
+            > p {
+            > em {
+                width: 21px;
+                height: 21px;
+                border: 1px solid #e23732;
+                border-radius: 50%;
+                color: #ffffff;
+                display: inline-block;
+                background: #e23732;
+                margin-top: 14px;
+                line-height: 22px;
+                text-align: center;
+            }
+            > span {
+                font-weight: 500;
+                color: #333333;
+                padding-left: 10px;
+                display: inline-block;
+                margin-top: 14px;
+                line-height: 22px;
+            }
+            }
+            .redBorder {
+            em {
+                border: 1px solid #e23732;
+                color: #e23732;
+                background: #fff;
+            }
+            }
+            > span {
+            display: inline-block;
+            height: 2px;
+            width: 40px;
+            background: #666666;
+            margin: 24px 10px 0;
+            }
+        }
+}
+}
+
+.agreement_footer {
+    width: 100%;
+    height: 100px;
+    margin-top:100px;
+    margin-bottom:30px;
+    border-top: 1px solid #DDDDDD;
+    /deep/ .el-checkbox {
+        padding-top: 20px;
+        .el-checkbox__inner {
+            background: #E23732;
+            border-color: #E23732;
+        }
+        .el-checkbox__input.is-checked+.el-checkbox__label {
+            color: #4A4A4A;
+        }
+    }
+    >div {
+        width: 100%;
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+        >button {
+            width: 90px;
+            height: 34px;
+            border-radius: 5px;
+            box-sizing: border-box;
+            background: #E23732;
+            color: #fff;
+            &:hover {
+                cursor: pointer;
+            }
+        }
+    }
+}
+</style>
+

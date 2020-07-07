@@ -1,0 +1,177 @@
+<!-- 关注的问题 -->
+<template>
+  <div class="content-page">
+    <ul class="concerns-list" infinite-scroll-disabled='newStatus' v-infinite-scroll="answerLoad" infinite-scroll-immediate='false' infinite-scroll-distance='10'>
+      <li v-for="(item,index) in followProblemList" :key="index">
+        <div v-if="item.id">
+          <p class="titles" @click="gotoDetails(item)">{{item.title}}</p>
+          <p class="subscript">
+            <span>{{item.answerCount}}个回答</span>
+            <span>·</span>
+            <span>{{item.followers}}人关注</span>
+          </p>
+          <div class="cancel-btn" v-if="$route.query.own!='Others'">
+            <button @click="cancel(item,index)" v-if="item.followStatus">取消关注</button>
+          </div>
+        </div>
+        <div v-if="!item.id">
+          <p class="titles">该问题已删除</p>
+          <div class="cancel-btn" v-if="$route.query.own!='Others'">
+            <button @click="cancel(item,index)" v-if="item.followStatus">取消关注</button>
+          </div>          
+        </div>
+      </li>
+      <!-- <p class="tips">{{newloadText}}</p> -->
+    </ul>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      newStatus: false,
+      followProblemList: [], //收藏的问题
+      followParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          accountId: '',
+          flag: 1,
+          id: ''
+        }
+      },
+      // newloadText: '',
+      loginaccountId: ''
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    gotoDetails(item) {
+      // 他的主页点击详情可能进到自己提的问题详情own:own;
+      let own
+      if (item.accountId == this.loginaccountId) {
+        own = 'own'
+      } else {
+        own = 'Others'
+      }
+      let routeUrl
+      routeUrl = this.$router.resolve({ path: `/questionsDetails/${item.id}`, query: { own: own } })
+      window.open(routeUrl.href, '_blank')
+    },
+    cancel(item, index) {
+      api
+        .delAttention({
+          objId: item.id?item.id:item.objId,
+          objType: 4
+        })
+        .then(res => {
+          this.followProblemList.splice(index, 1)
+          this.$store.commit('setFollow', !this.$store.state.cancelStatus)
+        })
+    },
+    //关注的问题
+    getFollowAndQuestionList() {
+      if (this.$route.query.own == 'Others') {
+        this.followParams.paramObject.flag = 2
+        this.followParams.paramObject.accountId = this.$route.query.id
+      } else {
+        this.followParams.paramObject.flag = 1
+        this.followParams.paramObject.accountId = ''
+      }
+      api.getFollowAndQuestionList(this.followParams).then(res => {
+        res.data.records.map(item => {
+          item.followStatus = true
+        })
+        this.followProblemList = this.followProblemList.concat(res.data.records)
+        this.newStatus = false
+        // if (res.data.records.length == 0) {
+        //   this.newloadText = '暂无更多数据'
+        // } else {
+        //   this.newloadText = ''
+        // }
+      })
+    },
+    answerLoad() {
+      this.newStatus = true
+      this.followParams.pageNum += 1
+      this.getFollowAndQuestionList()
+    }
+  },
+  mounted() {
+    this.loginaccountId = JSON.parse(window.localStorage.getItem('userInfo')).accountId
+    this.getFollowAndQuestionList()
+  }
+}
+</script>
+<style lang="less" scoped>
+.content-page {
+  padding-top: 13px;
+  .concerns-list {
+    min-height: 50px;
+    overflow: auto;
+    height: calc(100vh - 456px);
+    padding-bottom: 37px;
+    li {
+      padding: 10px 20px;
+      border-bottom: 1px solid #dddddd;
+      .titles {
+        cursor: pointer;
+        width: 550px;
+        height: 17px;
+        line-height: 17px;
+        font-size: 16px;
+        font-weight: bold;
+        color: rgba(51, 51, 51, 1);
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+      }
+      .subscript {
+        height: 15px;
+        font-size: 14px;
+        font-weight: 400;
+        color: rgba(153, 153, 153, 1);
+        line-height: 15px;
+        margin-top: 12px;
+        span:nth-child(2) {
+          margin: 0 3px;
+        }
+      }
+      .cancel-btn {
+        text-align: right;
+        button {
+          height: 34px;
+          line-height: 32px;
+          border: 1px solid rgba(230, 230, 230, 1);
+          border-radius: 5px;
+          padding: 0px 15px;
+          font-size: 14px;
+          color: rgba(102, 102, 102, 1);
+          background-color: #fff;
+          cursor: pointer;
+        }
+        button:hover {
+          color: #e23732;
+          border: 1px solid #e23732;
+        }
+      }
+    }
+    .tips {
+      text-align: center;
+      padding: 10px 0;
+      font-size: 16px;
+    }
+  }
+  .concerns-list::-webkit-scrollbar {
+    display: none;
+    overflow: hidden;
+  }
+}
+</style>

@@ -1,0 +1,212 @@
+<template>
+  <div class="teacherHome">
+    <div class="teacherIntroduce" >
+      <img class="fl" :src="teacherList.avatar" alt="">
+      <div class="info fl">
+        <span>{{teacherList.realName}}</span>
+        <p class="font-14">{{teacherList.introduction}}</p></div>
+      <el-button class="fr" :type="attentionType ? 'danger' : '' " @click="attention">{{attentionType ? '关注' : '已关注'}}</el-button>
+    </div>
+
+     <div class="content">
+      <div class="tabChange clearfix">
+        <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)"
+            :class="{active:index==nowIndex}">{{item}}
+        </span>
+      </div>
+      <course-list :dataList=dataList @getCurrentPage="getCurrentPage" v-show="nowIndex===0"></course-list>
+      <column-list :dataList=dataList @getCurrentPage="getCurrentPage" v-show="nowIndex===1"></column-list>
+
+    </div>
+  </div>
+</template>
+
+<script>
+import CourseList from '@/components/courseList'
+import ColumnList from '@/components/columnList'
+import api from '@/fetch'
+export default {
+  name: 'LectureRoom',
+  components: {
+    CourseList,
+    ColumnList
+  },
+  data () {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['课堂', '专栏'],
+      attentionType: 'danger', // danger 关注，已关注
+      // 课程参数
+      courseParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8,
+        paramObject: {
+          accountId: this.$route.params.id
+        }
+      },
+      // 专栏参数
+      columnParams: {
+        asc: true,
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 8,
+        paramObject: {
+          accountId: this.$route.params.id
+        }
+      },
+      teacherList: {
+        avatar: '',
+        realName: '',
+        introduction: ''
+      },
+      dataList: {
+        course: {},
+        column: {}
+      },
+      // 关注
+      attentionParams: {
+        objId: this.$route.params.id,
+        objType: this.$route.params.objType
+      }
+    }
+  },
+  watch: {
+    courseParams: {
+      handler: 'getTeacherCourse',
+      deep: true
+    },
+    columnParams: {
+      handler: 'getTeacherColumn',
+      deep: true
+    }
+  },
+  computed: {
+  },
+  created () {
+    console.log(this.$route.params)
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.getTeacherCourse()
+      } else {
+        this.getTeacherColumn()
+      }
+    })
+    if (this.nowIndex === 0) {
+      return this.getTeacherCourse()
+    } else {
+      return this.getTeacherColumn()
+    }
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs (index) {
+      this.nowIndex = index
+    },
+    // 关注
+    async attention () {
+      if (this.attentionType === '') {
+        const res = await api.delAttention(this.attentionParams)
+        console.log(res, 111)
+        this.attentionType = 'danger'
+      } else {
+        const res = await api.addAttention(this.attentionParams)
+        console.log(res, 222)
+        this.attentionType = ''
+      }
+    },
+    // 讲师--课程列表
+    async getTeacherCourse () {
+      const res = await api.getCourse(this.courseParams)
+      console.log(res)
+      this.dataList.course = res.data
+      this.teacherList.avatar = res.data.records[0].avatar
+      this.teacherList.realName = res.data.records[0].realName
+      this.teacherList.introduction = res.data.records[0].introduction
+    },
+    // 讲师--专栏列表
+    async getTeacherColumn () {
+      const res = await api.getColumn(this.columnParams)
+      this.dataList.column = res.data
+      this.teacherList.avatar = res.data.records[0].lecturerInfo.avatar
+      this.teacherList.realName = res.data.records[0].lecturerInfo.realName
+      this.teacherList.introduction = res.data.records[0].lecturerInfo.introduction
+    },
+    // 翻页
+    getCurrentPage (currentPage) {
+      console.log(currentPage)
+      if (this.nowIndex === 0) {
+        this.courseParams.pageNum = currentPage
+      } else {
+        this.columnParams.pageNum = currentPage
+      }
+    }
+
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .teacherHome {
+    width: 1100px;
+    overflow: hidden;
+    li:nth-child(4n){
+      margin-right:0;
+    }
+    .teacherIntroduce {
+      margin-top: 22px;
+      background-color: #fff;
+      padding: 30px;
+      height: 150px;
+      box-sizing: border-box;
+      img {
+        display: inline-block;
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+      }
+      .info {
+        margin-top:20px;
+        margin-left: 20px;
+        span {
+          font-size: 18px;
+          margin-bottom: 20px;
+          color: #4a4a4a;
+        }
+        p {
+          margin-top: 6px;
+          color:#999;
+        }
+      }
+      .el-button {
+        width: 90px;
+        height: 34px;
+        padding: 0;
+        margin-top:25px;
+      }
+    }
+    .tabChange {
+      font-size: 16px;
+      margin: 20px 20px 26px 0;
+      span:first-child {
+        margin-right: 20px;
+      }
+      .active{
+        position: relative;
+        color: #e43c31;
+      }
+      .active::after{
+        content: "";
+        display: inline-block;
+        position: absolute;
+        bottom:-10px;
+        left: 5px;
+        height: 3px;
+        width:24px;
+        background-color: #e43c31;
+      }
+    }
+  }
+
+</style>

@@ -1,0 +1,225 @@
+<template>
+  <el-container class='section'>
+    <el-header>
+      <div class="layoutHeader">
+        <div class="header clearfix">
+          <a href="javascript:;" class="fl"><img src="../../assets/images/logo214-49.png" alt=""></a>
+          <el-input class="fl" placeholder="搜索你感兴趣的内容" prefix-icon="el-icon-search" v-model="searchTxt"></el-input>
+          <div class="link fr">
+            <a href="javascript:;" class="fl app">百公驿App</a>
+
+            <!-- 已登录 -->
+            <div class="fl user" v-if="$store.state.user">
+              <el-dropdown trigger="click" @command="handleCommand">
+                <!-- 头像 -->
+                <img src="@/assets/images/pic.png" alt="" style="width:30px;height:30px">
+                <el-dropdown-menu slot="dropdown">
+                  <el-dropdown-item command='/userCenter'>用户中心</el-dropdown-item>
+                  <el-dropdown-item command='/myHome' divided>我的主页</el-dropdown-item>
+                  <el-dropdown-item command='/myWallet'>我的钱包</el-dropdown-item>
+                  <el-dropdown-item command='/personalData'>账号管理</el-dropdown-item>
+                  <el-dropdown-item divided @click.native='onLogout'>退出登录</el-dropdown-item>
+                </el-dropdown-menu>
+              </el-dropdown>
+            </div>
+            <!-- 未登录 -->
+            <div class="fl" v-else>
+              <router-link to="/login">去登录</router-link>
+              <span>|</span>
+              <router-link to="/register" class="red">免费注册</router-link>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="nav fl">
+          <el-menu router index="" :default-active="activeIndex" active-text-color="#f00" class="el-menu-demo" mode="horizontal" @select="handleSelect">
+            <el-menu-item index="/index">首页</el-menu-item>
+            <el-menu-item index="/lectureRoom">讲堂</el-menu-item>
+            <el-menu-item index="/livetv">直播</el-menu-item>
+            <el-menu-item index="/engineering">工程圈</el-menu-item>
+            <el-menu-item index="/hotmessage">热点资讯</el-menu-item>
+            <el-menu-item index="/plaza">广场</el-menu-item>
+            <el-menu-item index="/article/list">文章</el-menu-item>
+            <el-menu-item index="/questions">问答</el-menu-item>
+          </el-menu>
+        </div>
+
+        <div class="publish fr">
+          <router-link to="/article/publishArticle"><i class="el-icon-tickets"></i>发文章</router-link>
+          <router-link to="/askingQuestions"><i class='icon iconfont'>&#xe60a;</i>提问题</router-link>
+          <router-link to="/"><i class='icon iconfont'>&#xe63a;</i>写想法</router-link>
+        </div>
+      </div>
+    </el-header>
+    <el-main>
+      <!-- <keep-alive :include="['questions',]"> -->
+        <router-view />
+      <!-- </keep-alive> -->
+    </el-main>
+    <leftIcon v-if='flag'></leftIcon>
+  </el-container>
+</template>
+
+<script>
+import leftIcon from '@/components/leftIcon.vue'
+export default {
+  components: {
+    leftIcon
+  },
+  data() {
+    return {
+      activeIndex: this.$route.path,
+      searchTxt: null,
+      flag: false,
+      user: {
+        name: '', // 用户昵称
+        photo: '' // 用户头像
+      }
+    }
+  },
+  created() {},
+  watch: {
+    activeIndex() {
+      return this.$route.path
+    },
+    $route(to, from) {
+      if (to.fullPath.includes('/hotmessage/newsHotDetails')) {
+        this.flag = true
+      } else {
+        this.flag = false
+      }
+    }
+  },
+  methods: {
+    handleSelect(key, keyPath) {
+      this.activeIndex = keyPath[0]
+    },
+    // 退出登录
+    onLogout() {
+      this.$confirm('确定退出?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true
+      })
+        .then(() => {
+          this.$store.commit('setUser', null)
+          window.localStorage.clear()
+          window.location.href = '/index'
+          this.$message({
+            type: 'success',
+            message: '退出成功!'
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消退出'
+          })
+        })
+    },
+    // 切换路径
+    handleCommand(command) {
+      this.$router.push(command)
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.el-container {
+  position: relative;
+  .el-header {
+    height: 120px !important;
+    padding: 0;
+    background-color: #fff;
+    .layoutHeader {
+      width: 1100px;
+      margin: 0 auto;
+      .header {
+        height: 50px;
+        padding-top: 16px;
+        overflow: hidden;
+        line-height: 50px;
+        a {
+          display: inline-block;
+        }
+        .el-input {
+          width: 450px;
+          margin-left: 30px;
+          float: left;
+          .el-input__inner {
+            height: 36px;
+            border-radius: 18px;
+            border: 0;
+            background-color: #f4f4f4ff;
+          }
+          .el-input__prefix {
+            left: 14px !important;
+            top: 1px;
+          }
+        }
+        .el-input--prefix .el-input__inner {
+          padding-left: 40px !important;
+        }
+        .link {
+          .app {
+            margin-right: 30px;
+          }
+          span {
+            margin: 0 10px;
+          }
+        }
+      }
+      .nav {
+        width: 600px;
+        .el-menu--horizontal > .el-menu-item {
+          height: auto;
+          line-height: 0;
+          border: none;
+        }
+        .el-menu-item {
+          padding: 34px 30px 20px 0;
+          color: #4a4a4a;
+        }
+        .el-menu-item,
+        .el-submenu__title {
+          height: auto;
+          line-height: auto !important;
+          font-size: 16px;
+        }
+        .el-menu--horizontal > .el-menu-item.is-active {
+          border: none;
+        }
+      }
+      .publish {
+        font-size: 16px;
+        margin-top: 22px;
+        > a {
+          margin-left: 30px;
+          i {
+            margin-right: 5px;
+          }
+        }
+      }
+    }
+  }
+  .el-main {
+    padding: 0;
+    width: 1100px;
+    margin: 0 auto;
+  }
+}
+
+// 下拉菜单样式
+.el-dropdown-menu {
+  padding: 0 !important;
+  .el-dropdown-menu__item--divided {
+    margin-top: auto;
+  }
+  .el-dropdown-menu__item--divided:before {
+    height: auto !important;
+  }
+}
+</style>

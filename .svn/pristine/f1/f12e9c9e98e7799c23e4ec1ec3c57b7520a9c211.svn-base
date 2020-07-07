@@ -1,0 +1,35 @@
+<template>
+  <div class="hisLive">
+    <div class="title">他的直播</div>
+    <div class="content">
+      <live-com></live-com>
+    </div>
+  </div>
+</template>
+
+<script>
+import LiveCom from '@/components/Live'
+export default {
+  name: 'HisLive',
+  components: {
+    LiveCom
+  },
+  data () {
+    return {}
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .hisLive {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

@@ -1,0 +1,86 @@
+<template>
+  <div class="draftArt">
+    <div class="title font-12">{{isOwn?'我':'他'}}的文章（草稿箱）</div>
+    <div class="content">
+      <articleList :isOwn="isOwn" :listData="draftList" :noMore="noMore" :loading="loading" @getMore="getDraftlist" @getNewData='getNewData' />
+    </div>
+  </div>
+</template>
+
+<script>
+import articleList from '@/components/articleList'
+import api from '@/fetch'
+export default {
+  components: {
+    articleList
+  },
+  data() {
+    return {
+      params: {
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          flag: 8 // 1热门 2最新 3关注
+        }
+      },
+      totalDraft: 1,
+      draftList: [],
+      loading: false
+    }
+  },
+  computed: {
+    noMore() {
+      return this.draftList.length >= this.totalDraft
+    },
+    isOwn() {
+      if (this.$route.query.id) {
+        return this.$route.query.id === this.$store.state.userInfo.accountId
+      }
+      return true
+    }
+  },
+  methods: {
+    // 草稿列表
+    getDraftlist() {
+      this.loading = true
+      api.getArticlelist(this.params).then(res => {
+        this.loading = false
+        this.totalDraft = res.data.total
+        this.draftList = [...this.draftList, ...res.data.records]
+        !this.noMore && this.params.pageNum++
+      })
+    },
+    getNewData(delData) {
+      this.totalDraft -= 1
+      let index = this.draftList.findIndex(item => item === delData)
+      this.draftList.splice(index, 1)
+      if (!this.draftList.length) {
+        this.params.pageNum = 1
+        this.getDraftlist()
+      }
+    }
+  },
+  mounted() {
+    this.getDraftlist()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.draftArt {
+  .title {
+    color: #e23732;
+    padding: 10px 20px;
+    background-color: #fff3f3;
+  }
+  .content {
+    height: calc(100vh - 400px);
+    background-color: #fff;
+  }
+}
+.nomore-data {
+  text-align: center;
+  margin: 5px 0 10px;
+  color: #999;
+}
+</style>

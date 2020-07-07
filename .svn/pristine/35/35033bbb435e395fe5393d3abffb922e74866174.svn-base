@@ -1,0 +1,17 @@
+import { post, get } from 'axios'
+
+export default {
+  // 下单
+  Order (params) {
+    return post('/order', params)
+  },
+  // 确认订单
+  payOrder () {
+    return get('/order/pay')
+  },
+  // 查询订单
+  OrderId (id) {
+    return get(`/order/${id}`)
+  }
+
+}

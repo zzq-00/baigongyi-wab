@@ -1,0 +1,433 @@
+<template>
+    <div class='fillInMessage'>
+        <div class='fillInMessage_main'>
+            <el-form ref="ruleForm" :model="data" label-width="80px" label-position="top" :inline='true' size="small">
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师姓名" required prop="realName">
+                            <el-input v-model="data.realName"></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师头像" required>
+                            <div class="recommed">请上传本人真实照片。照片jpg/jpeg/png/bmp格式图片，最大4M，要求居中晰。</div>
+                            <div class="upload-tx">
+                                <label for="TX">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>上传头像</p>
+                                    <input id="TX" accept="image/*" type="file" @change="onFileChangeTX($event)" />
+                                </label>
+                                <img v-if='avatarImg || data.avatar' :src='avatarImg ? avatarImg : data.avatar' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="身份证明" required prop="certificateType">
+                            <el-select v-model="data.certificateType" placeholder="请选择">
+                                <el-option label="中国居民身份证" value="1"></el-option>
+                                <el-option label="护照" value="2"></el-option>
+                            </el-select>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="手持证件正面照" required>
+                            <div class="recommed recommedRinght">
+                                请确保证件姓名、证件号码清晰可见 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M
+                            </div>
+                            <div class="upload-tx upload-sfz">
+                                <label for="TX">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件正面照</p>
+                                    <input id="TX" type="file" @change="onFileChangeface($event)" />
+                                </label>
+                                <img v-if='sfzImg || data.certificateFacade' :src='sfzImg ? sfzImg : data.certificateFacade' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="手持证件反面照" required>
+                            <div class="recommed recommedRinght">
+                                请确保证件姓名、证件号码清晰可见 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M
+                            </div>
+                            <div class="upload-tx upload-sfz">
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>手持证件反面照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCard($event)" />
+                                </label>
+                                <img v-if='sffImag || data.certificateBack' :src='sffImag ? sffImag : data.certificateBack' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="资格证书" required><!-- prop="qualification"-->
+                            <el-input v-model="data.book"></el-input>
+                            <div class="recommed recommedRinght" style='top:90px;'>
+                                请提交教学能力或专业能力证明，如职称证书、考级证书等（需包含官方证书等有效信息）。 <br/> 照片支持jpg/jpeg/png/bmp格式图片，最大4M，要求居中清晰。
+                            </div>
+                            <div class="upload-tx upload-sfz" style='margin-top:11px;'>
+                                <label for="ZM">
+                                    <span class="iconTx">
+                                        <i class="el-icon-plus"></i>
+                                    </span>
+                                    <p>上传证书照</p>
+                                    <input id="ZM" type="file" @change="onFileChangeCardbook($event)" />
+                                </label>
+                                <img v-if='zjImg || data.qualification' :src='zjImg ? zjImg : data.qualification' />
+                            </div>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+                <el-row :gutter="20">
+                    <el-col :span="24">
+                        <el-form-item label="讲师简介" required prop="introduction">
+                            <div class="recommed" style='margin-left:0;margin-top:-10px;'>请清晰、准确、真实地描述您的教学理念、目标服务群体、主要课程方向等，简介内容将会展示在你的课程/专栏主页以供学员参考，100字以内。</div>
+                            <el-input type="textarea" placeholder="请输入内容" v-model="data.introduction" maxlength="100" show-word-limit></el-input>
+                        </el-form-item>
+                    </el-col>
+                </el-row>
+            </el-form>
+        </div>
+
+        <div class='fillInMessage_footer'>
+            <button @click="submitForm('ruleForm')">提交审核</button>
+        </div>
+    </div>
+</template>
+<script>
+import api from '@/fetch'
+import axios from 'axios'
+
+export default {
+    props: {
+        data: Object
+    },
+    data() {
+        return {
+            avatarImg: '',
+            sfzImg: '',
+            sffImag: '',
+            zjImg: '',
+            rules: {
+                realName: [
+                    { required: true, message: '请输入', trigger: 'blur' }
+                ],
+                certificateType: [
+                    { required: true, message: '请选择', trigger: 'change' }
+                ],
+                introduction: [
+                    { required: true, message: '请输入', trigger: 'blur' }
+                ],
+                book: [
+                    { required: true, message: '请输入', trigger: 'blur' }
+                ]
+            },
+            files: '',
+            dataKey: {},
+            g_dirname: ''
+        }
+    },
+    mounted() {
+        this.getAliyunKey();
+        console.log(this.data,'data')
+        this.data.book = this.data.qualification.split(',')[0]
+        this.data.qualification = this.data.qualification.split(',')[1]
+    },
+    methods: {
+        // 获取阿里云的授权码
+        getAliyunKey(up, filename, ret) {
+            api.aliyunConfig().then(res => {
+                this.dataKey = res.data
+            })
+        },
+        //获取日期
+        getDateFn() {
+            var date = new Date();
+            var Y = date.getFullYear();
+            var M = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1);
+            var D = (date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate());
+            return Y + M + D + '/'
+        },
+        //随机生成32位数字 字母组合的字符串
+        generateUUID() {
+            var d = new Date().getTime();
+            var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = (d + Math.random() * 16) % 16 | 0;
+                d = Math.floor(d / 16);
+                return (c == 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+            });
+            return uuid;
+        },
+        upLoadFn(e, num) {
+            const files = e.target.files[0]
+            const { name, size } = files
+            const type = name.split('.')[1]
+            if (type !== 'jpg' && type !== 'jpeg' && type !== 'jpeg' && type !== 'png' && type !== 'bmp') {
+                this.$message({
+                    message: '照片jpg/jpeg/png/bmp格式图片!'
+                })
+                return false
+            }
+            if (size / 1024 / 1024 > 4) {
+                this.$message({
+                    message: '照片最大4M!'
+                })
+                return false
+            }
+            const ossUrl = this.dataKey.host
+            var policyText = {
+                "expiration": this.dataKey.expiration, //设置该Policy的失效时间，超过这个失效时间之后，就没有办法通过这个policy上传文件了
+                "conditions": [
+                    ["content-length-range", 0, 1048576000] // 设置上传文件的大小限制
+                ]
+            };
+            let Base64 = require('js-base64').Base64;
+            var policyBase64 = Base64.encode(JSON.stringify(policyText))
+
+            var bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, this.dataKey.accessKeySecret, { asBytes: true })
+            var signature = Crypto.util.bytesToBase64(bytes);
+            const sendData = new FormData(),
+                reader = new window.FileReader();
+            reader.readAsDataURL(files)
+            reader.onload = e => {
+                if (num === 1) {
+                    this.avatarImg = e.target.result;
+                } else if (num === 2) {
+                    this.sfzImg = e.target.result;
+                } else if (num === 3) {
+                    this.sffImag = e.target.result;
+                } else if (num === 4) {
+                    this.zjImg = e.target.result;
+                }
+
+            }
+            let renderNum = this.generateUUID();
+            sendData.append('key', `images/${this.getDateFn()}${renderNum}.${type}`)
+            sendData.append('OSSAccessKeyId', this.dataKey.accessKeyId)
+            sendData.append('signature', signature)
+            sendData.append('x-oss-security-token', this.dataKey.securityToken)
+            sendData.append('policy', policyBase64)
+            sendData.append('success_action_status', 200) // 指定返回的状态码
+            sendData.append('file', files);
+            if (num === 1) {
+                this.data.avatar = ossUrl + '/' + `images/${this.getDateFn()}${renderNum}.${type}`;
+            } else if (num === 2) {
+                this.data.certificateFacade = ossUrl + '/' + `images/${this.getDateFn()}${renderNum}.${type}`;
+            } else if (num === 3) {
+                this.data.certificateBack = ossUrl + '/' + `images/${this.getDateFn()}${renderNum}.${type}`;
+            } else if (num === 4) {
+                this.data.qualification = ossUrl + '/' + `images/${this.getDateFn()}${renderNum}.${type}`;
+            }
+            axios.post(ossUrl, sendData).then((res) => {
+                console.log('得到上传到阿里云的图片地址')
+            }).catch(err => {
+                console.log(err);
+            })
+        },
+        // 头像上传图片
+        onFileChangeTX(e) {
+            this.upLoadFn(e, 1)
+        },
+        // 上传资格证书
+        onFileChangeCardbook(e) {
+            this.upLoadFn(e, 4)
+        },
+        // 上传身份证 正面
+        onFileChangeface(e) {
+            this.upLoadFn(e, 2)
+        },
+        // 上传身份证 反面
+        onFileChangeCard(e) {
+            this.upLoadFn(e, 3)
+        },
+        submitForm(formName) {
+            this.$refs[formName].validate((valid) => {
+                if (valid) {
+                    if (this.data.avatar && this.data.certificateFacade && this.data.certificateBack && this.data.qualification) {
+                        this.$confirm('审核期间，其他用户仍可在您的讲师主页看到原有信息，修改后的信息审核通过后，讲师主页信息将同步更新', '提示', {
+                            confirmButtonText: '确认提交',
+                            cancelButtonText: '取消',
+                            type: 'warning'
+                        }).then(() => {
+                            this.data.qualification = this.data.book+','+this.data.qualification;
+                            delete this.data.book
+                            api.lecturerUpdata(this.data).then(res => {
+                                if (res.code == 200) {
+                                    this.$message({
+                                        message: '讲师入驻成功!',
+                                        type: 'success'
+                                    })
+                                    this.$emit('subMitClickChild', false)
+                                }
+                            })
+                        })
+                    } else {
+                        this.$message('还有图片未上传！');
+                    }
+                } else {
+                    console.log('error submit!!')
+                    return false
+                }
+            })
+        }
+    }
+}
+</script>
+<style lang="less" scoped>
+.fillInMessage {
+    overflow-x: hidden;
+    padding: 12px 32px;
+    display: flex;
+    flex-direction: column;
+    /deep/ .el-form {
+        .el-form-item__label {
+            line-height: 14px;
+            padding-bottom: 12px!important;
+        }
+        .el-form-item__label:before {
+            margin-right: 2px;
+            color: #E23732;
+        }
+        .el-input {
+            width: 260px;
+            height: 30px;
+        }
+        .el-input__inner {
+            border-radius: 0;
+        }
+        .el-form-item {
+            position: relative;
+            width: 100%;
+        }
+        .el-textarea__inner {
+            height: 150px;
+        }
+        .recommed {
+            font-size: 12px;
+            color: #999999;
+            margin-top: -35px;
+            margin-left: 80px;
+        }
+        .recommedRinght {
+            position: absolute;
+            left: 150px;
+            top: 50px;
+            width: 280px;
+            line-height: 24px;
+        }
+        .upload-tx {
+            width: 120px;
+            height: 120px;
+            position: relative;
+            >label {
+                display: block;
+                width: 100%;
+                height: 120px;
+                background: #DDDDDD;
+                border: 1px solid #EEEEEE;
+                border-radius: 10px;
+                position: relative;
+                >.iconTx {
+                    display: inline-block;
+                    width: 28px;
+                    height: 28px;
+                    background: #E23732;
+                    color: #fff;
+                    border-radius: 50%;
+                    text-align: center;
+                    line-height: 28px;
+                    position: absolute;
+                    left: 50%;
+                    margin-left: -14px;
+                    top: 42px;
+                }
+                >input {
+                    width: 100%;
+                    height: 120px;
+                    background: red;
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    opacity: 0;
+                    z-index: 99;
+                    &:hover {
+                        cursor: pointer;
+                    }
+                }
+                >p {
+                    position: absolute;
+                    color: #4A4A4A;
+                    top: 80px;
+                    left: 32px;
+                }
+            }
+            >img {
+                width: 100%;
+                height: 120px;
+                border-radius: 10px;
+                position: absolute;
+                left: 0;
+                top: 0;
+            }
+        }
+        .upload-sfz {
+            width: 200px;
+            >label {
+                >p {
+                    left: 51px;
+                }
+            }
+        }
+    }
+}
+
+.fillInMessage_main {
+    flex: 1;
+}
+
+.fillInMessage_footer {
+    width: 100%;
+    height: 50px;
+    border-top: 1px solid #DDDDDD;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    button {
+        width: 90px;
+        height: 34px;
+        color: #fff;
+        background: #E23732;
+        border-radius: 5px;
+        box-sizing: border-box;
+        border: 1px solid #E23732;
+        &:nth-child(2) {
+            margin-left: 5px;
+        }
+        &:hover {
+            cursor: pointer;
+        }
+    }
+    .write {
+        background: #fff;
+        border: 1px solid #DDDDDD;
+        color: #4A4A4A;
+        margin-right: 5px;
+    }
+}
+</style>

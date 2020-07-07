@@ -1,0 +1,285 @@
+<template>
+  <div class='seeInformation'>
+    <ul>
+      <li>
+        <span>讲师姓名 </span>
+        <span>{{data.realName}}</span>
+      </li>
+      <li>
+        <span>讲师头像</span>
+        <img :src="data.avatar" alt="讲师头像" class='hov'>
+        <em class='hov' @click='opendialog'>调整头像位置</em>
+      </li>
+      <li>
+        <span>身份证明</span>
+        <span>{{data.certificateType==1 ? '中国居民身份证' : '护照'}}</span>
+      </li>
+      <li>
+        <span>手持证件正面照</span>
+        <span>{{data.certificateFacade ? "已上传" : '未上传'}}</span>
+      </li>
+      <li>
+        <span>手持证件反面照</span>
+        <span>{{data.certificateBack ? "已上传" : '未上传'}}</span>
+      </li>
+      <li>
+        <span>资格证书</span>
+        <span>{{data.qualification.split(',')[0]}}{{data.qualification.split(',')[1] ? '(照片已上传)':''}}</span>
+      </li>
+      <li>
+        <span style='margin-top:4px;'>讲师简介</span>
+        <span style='width:calc(100% - 220px);line-height:24px;'>{{data.introduction}}</span>
+      </li>
+    </ul>
+    <div id='set-mask'>
+      <el-dialog title="调整头像位置" :visible.sync="dialogTableVisible">
+        <div class="cropper-img" style='height:380px;'>
+          {{option.img}}
+          <vueCropper ref="cropper" :img="option.img" :outputSize="option.size" :outputType="option.outputType" :info="true" :full="option.full" :canMove="option.canMove" :canMoveBox="option.canMoveBox" :original="option.original" :autoCrop="option.autoCrop" :fixed="option.fixed" :fixedNumber="option.fixedNumber" :centerBox="option.centerBox" :infoTrue="option.infoTrue" :fixedBox="option.fixedBox" :autoCropWidth="option.autoCropWidth" :autoCropHeight='option.autoCropHeight' :maxImgSize="option.maxImgSize" @realTime="realTime"></vueCropper>
+        </div>
+        <p class="submit-img">
+          <input type="button" class="btn btn-blue" value="保存" @click="finish('blob')">
+        </p>
+      </el-dialog>
+    </div>
+  </div>
+</template>
+<script>
+import { VueCropper } from 'vue-cropper'
+import api from '@/fetch'
+import axios from 'axios'
+export default {
+  components: {
+    VueCropper
+  },
+  props: {
+    data: Object
+  },
+  data() {
+    return {
+      dialogTableVisible: false,
+      dataKey: {},
+      ruleForm: {
+        avatar: '',
+        id: ''
+      },
+      option: {
+        img: '',
+        // img: this.data.avatar, //赋值报错
+        outputSize: 0.8, //剪切后的图片质量（0.1-1）
+        full: false, //输出原图比例截图 props名full
+        outputType: 'jpeg', // 裁剪生成图片的格式
+        canMove: true,
+        original: false,
+        canMoveBox: true,
+        autoCrop: true,
+        autoCropWidth: 300,
+        autoCropHeight: 300,
+        centerBox: true,
+        maxImgSize: 3000
+      }
+    }
+  },
+  watch: {
+    $props: {
+      handler(val, old) {
+        console.log(val, 'valsss')
+      },
+      deep: true,
+      immediate: true
+    }
+  },
+  mounted() {
+    this.getAliyunKey()
+    this.ruleForm.id = this.data.accountId
+  },
+  methods: {
+    opendialog() {
+      this.dialogTableVisible = true
+      let _this = this
+      // 设置头像base64
+      // 其中this.avatar为当前头像
+      this.setAvatarBase64(this.data.avatar, base64 => {
+        console.log(base64, 'base64')
+        _this.option.img = base64
+      })
+    },
+    // 设置头像base64
+    setAvatarBase64(src, callback) {
+      let _this = this
+      let image = new Image()
+      // 处理缓存
+      // 支持跨域图片
+      //   在safari浏览器中发现一个bug，即用户选择本地的图片文件时，如果使用了crossorigin话也会报错，解决办法是判断图片的地址是否是以http开头的，即：
+      //   if (path.substring(0, 4).toLowerCase() === 'http') {
+      //     img.crossOrigin = 'anonymous'
+      //   }
+      image.crossOrigin = 'anonymous'
+      console.log(image, 'image')
+      image.onload = function() {
+        console.log('11111111111111')
+        let base64 = _this.transBase64FromImage(image)
+        callback && callback(base64)
+      }
+      image.src = src + '?v=' + Math.random()
+    },
+    // 将网络图片转换成base64格式
+    transBase64FromImage(image) {
+      let canvas = document.createElement('canvas')
+      canvas.width = image.width
+      canvas.height = image.height
+      let ctx = canvas.getContext('2d')
+      ctx.drawImage(image, 0, 0, image.width, image.height)
+      // 可选其他值 image/jpeg
+      return canvas.toDataURL('image/jpeg')
+    },
+
+    // 获取阿里云的授权码
+    getAliyunKey(up, filename, ret) {
+      api.aliyunConfig().then(res => {
+        this.dataKey = res.data
+      })
+    },
+    //获取日期
+    getDateFn() {
+      var date = new Date()
+      var Y = date.getFullYear()
+      var M = date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1
+      var D = date.getDate() < 10 ? '0' + date.getDate() : date.getDate()
+      return Y + M + D + '/'
+    },
+    //随机生成32位数字 字母组合的字符串
+    generateUUID() {
+      var d = new Date().getTime()
+      var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = (d + Math.random() * 16) % 16 | 0
+        d = Math.floor(d / 16)
+        return (c == 'x' ? r : (r & 0x3) | 0x8).toString(16)
+      })
+      return uuid
+    },
+    //上传图片（点击上传按钮）
+    finish(type) {
+      let that = this
+      //this.dialogTableVisible = false;
+      if (type === 'blob') {
+        this.$refs.cropper.getCropBlob(data => {
+          const ossUrl = this.dataKey.host
+          var policyText = {
+            expiration: this.dataKey.expiration, //设置该Policy的失效时间，超过这个失效时间之后，就没有办法通过这个policy上传文件了
+            conditions: [
+              ['content-length-range', 0, 1048576000] // 设置上传文件的大小限制
+            ]
+          }
+          let Base64 = require('js-base64').Base64
+          var policyBase64 = Base64.encode(JSON.stringify(policyText))
+
+          var bytes = Crypto.HMAC(Crypto.SHA1, policyBase64, this.dataKey.accessKeySecret, { asBytes: true })
+          var signature = Crypto.util.bytesToBase64(bytes)
+          const sendData = new FormData()
+          let renderNum = this.generateUUID()
+          sendData.append('key', `images/${this.getDateFn()}${renderNum}.jpeg`)
+          sendData.append('OSSAccessKeyId', this.dataKey.accessKeyId)
+          sendData.append('signature', signature)
+          sendData.append('x-oss-security-token', this.dataKey.securityToken)
+          sendData.append('policy', policyBase64)
+          sendData.append('success_action_status', 200) // 指定返回的状态码
+          sendData.append('file', data)
+          this.ruleForm.avatar = ossUrl + '/' + `images/${this.getDateFn()}${renderNum}.jpeg`
+          axios
+            .post(ossUrl, sendData)
+            .then(res => {
+              console.log('得到上传到阿里云的图片地址')
+            })
+            .catch(err => {
+              console.log(err)
+            })
+          setTimeout(function() {
+            api.lecturerUpdata(that.ruleForm).then(res => {
+              if (res.data.code == 200) {
+                this.$message({
+                  message: '更换头像成功!',
+                  type: 'success'
+                })
+              }
+            })
+          }, 0)
+        })
+      }
+    },
+    // 实时预览函数
+    realTime(data) {}
+  }
+}
+</script>
+<style lang="less" scoped>
+.seeInformation {
+  height: calc(100vh - 220px); // background: #fff;
+  > ul {
+    padding-left: 32px;
+    padding-top: 32px;
+    > li {
+      vertical-align: top;
+      display: flex;
+      span {
+        display: block;
+        padding: 15px 0;
+        &:nth-child(1) {
+          color: #666666;
+          width: 98px;
+          text-align: right;
+          padding-right: 38px;
+          font-weight: 500;
+          vertical-align: top;
+        }
+        &:nth-child(2) {
+          color: #333333;
+          font-weight: 500;
+        }
+      }
+      img {
+        display: block;
+        width: 120px;
+        height: 120px;
+        margin-top: 15px;
+        margin-bottom: 15px;
+        border-radius: 50%;
+      }
+      em {
+        line-height: 140px;
+        padding-left: 20px;
+        color: #e23732;
+        text-decoration: underline;
+      }
+    }
+    .hov:hover {
+      cursor: pointer;
+    }
+  }
+}
+
+#set-mask {
+  /deep/.el-dialog {
+    width: 600px !important;
+  }
+}
+
+.el-dialog {
+  .submit-img {
+    display: flex;
+    justify-content: center;
+    input {
+      width: 120px;
+      height: 34px;
+      background: #e23732;
+      color: #fff;
+      margin-top: 20px;
+      border-radius: 5px;
+      &:hover {
+        cursor: pointer;
+      }
+    }
+  }
+}
+</style>
+

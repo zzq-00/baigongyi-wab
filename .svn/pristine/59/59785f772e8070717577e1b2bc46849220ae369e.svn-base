@@ -1,0 +1,37 @@
+/**
+ * 讲堂
+ */
+export default [
+  {
+    path: '/layout',
+    name: 'layout',
+    component: () => import('@/views/layout/layout.vue'),
+    children: [
+      {
+        path: '/lectureRoom',
+        component: () => import('@/views/lectureRoom/lectureRoom.vue')
+      }, {
+        name: 'freecourseDetail',
+        path: '/freecourseDetail/:id',
+        component: () => import('@/views/lectureRoom/free/freeCourse.vue')
+      }, {
+        name: 'freecolumnDetail',
+        path: '/freecolumnDetail/:id',
+        component: () => import('@/views/lectureRoom/free/freeColumn.vue')
+      }, {
+        name: 'paycourseDetail',
+        path: '/paycourseDetail/:id',
+        component: () => import('@/views/lectureRoom/pay/payCourse.vue')
+      }, {
+        name: 'paycolumnDetail',
+        path: '/paycolumnDetail/:id',
+        component: () => import('@/views/lectureRoom/pay/payColumn.vue')
+      },
+      {
+        name: 'teacherHome',
+        path: '/teacherHome/:id',
+        component: () => import('@/views/lectureRoom/teacherHome/teacherHome.vue')
+      }
+    ]
+  }
+]

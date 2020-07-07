@@ -1,0 +1,16 @@
+import { get } from 'axios'
+/**
+ * 获取token ，上传视屏
+ *
+ */
+
+export default {
+  // 获取token
+  getUploadToken () {
+    return get('/qiniu/config')
+  },
+  // 上传图片
+  getUploadPic () {
+    return get('/aliyun/config')
+  }
+}

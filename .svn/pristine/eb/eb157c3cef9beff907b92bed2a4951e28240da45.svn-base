@@ -1,0 +1,84 @@
+<template>
+  <div class="userInfo">
+    <div class="headerInfo">
+      <div class="info">
+        <img src="@/assets/images/cd-teacherPhoto.png" style="width:90px;height:90px;">
+        <div class="text">
+          <div>
+            <div>
+              <span class="name"> 易志亮 </span>
+              <el-tooltip class="item" effect="dark" content="显示讲师信息" placement="top">
+                <!-- @click="$router.push('/teacherHome/'+ id )" -->
+                <el-button class="hintMess" >讲师</el-button>
+              </el-tooltip>
+            </div>
+            <p><span>高级工程师</span><span>| xxx公司</span></p>
+          </div>
+          <p>简介： 我一直关注工程</p>
+        </div>
+      </div>
+      <div>
+        <!-- <el-button >关注</el-button> -->
+        <el-button @click="$router.push('/personalData')">编辑个人资料</el-button>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style lang="less" scope>
+  .userInfo {
+    // width: 860px; // 根据页面来决定宽度
+    height: 150px;
+    padding: 30px;
+    background-color: #fff;
+    border-radius: 10px;
+    box-sizing: border-box;
+    .headerInfo {
+      display:flex;
+      justify-content: space-between;
+      align-items: center;
+      .info {
+        display:flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        img {
+          width: 90px;
+          height: 90px;
+          border-radius: 50%;
+        }
+        .text {
+          height: 100px;
+          margin-left:20px;
+          display:flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: flex-start;
+          .name {
+            font-size: 18px;
+            color: #4a4a4a;
+          }
+          .hintMess {
+            color: #CB860F;
+            font-size: 12px;
+            padding: 5px 10px;
+            margin-top: -5px;
+            margin-left: 10px;
+            background-color: #FAF3E7;
+            border:none;
+          }
+          p{
+            font-size: 14px;
+            color:#999;
+          }
+        }
+      }
+    }
+  }
+
+</style>

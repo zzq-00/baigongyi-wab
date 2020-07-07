@@ -1,0 +1,245 @@
+<template>
+  <div class="previewCourse">
+    <div class="course">
+      <div class="cover">
+        <img src="@/assets/images/cd-fengmian.png" alt="">
+      </div>
+      <div class="info">
+        <div class="courseInfo">
+          <h3 class="title font-18">{{courseDetail.name}}</h3>
+          <div class="other font-14 gray">
+            <span>观看：<i>{{courseDetail.watchCount}}</i> 次</span>
+            <span> | </span>
+            <span>讲师：<i>{{courseDetail.realName}}</i></span>
+            <span> | </span>
+            <span>2019-10{{courseDetail.publishTime}}</span>
+          </div>
+        </div>
+        <!-- <div class="price green font-16">
+          <i :class="courseDetail.price > 0 ? 'red' : 'green'">{{courseDetail.price>0 ? '￥'+courseDetail.price : '免费' }}</i>
+        </div> -->
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="leftcontent">
+        <div class="toggleTab">
+          <span v-for="(item,index) in tabsName" :key="index" @click="toggleTabs(index)"
+              :class="{active:index==nowIndex}">{{item}}
+          </span>
+        </div>
+        <div class="middle">
+          <!-- 介绍 -->
+          <div v-show="nowIndex===0" class="introduce">
+            <h3>课程简介</h3>
+            <p>{{courseDetail.courseDescription}}--课程安排及注意事项课程安排及注意事项课程安排及注意事项课程安排
+              及注意事项课程安排及注意事项课程安排及注意事项课程安排及注意事
+              课程安排及注意事项课程安排及注意事项课程安排及注意事项课程安排
+              课程安排及注意事项课程安排及注意事项课程安排及注意事项课程安排
+              课程安排及注意事项课程安排及注意事项课程安排及注意事项
+            </p>
+          </div>
+
+          <!-- 图文-->
+          <div v-show="nowIndex===1" class="PicTxt"></div>
+          <!-- 评论 -->
+          <div v-show="nowIndex===2" class="comment"></div>
+
+        </div>
+      </div>
+
+      <div class="rightContent">
+        <div class="teacher">
+          <h3 class="font-16">讲师简介</h3>
+          <div class="teaInfo">
+            <div class="photo">
+              <img src="@/assets/images/cd-teacherPhoto.png" alt="">
+              <span class="name font-16">{{courseDetail.realName}}</span>
+            </div>
+            <span class="gray">查看主页<i class="el-icon-arrow-right"></i></span>
+          </div>
+          <div class="motto">望每一位学员学有所成</div>
+        </div>
+        <div class="download">
+          <img src="@/assets/images/erweima.png" alt="">
+          <div class="downPro">
+            <p>扫码下载百工驿APP</p>
+            <p>工程人都在用的分享交流神奇</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+import { mapState } from 'vuex'
+export default {
+  name: 'PreviewCourse',
+  data () {
+    return {
+      tabsName: ['介绍', '图文', '评论'],
+      nowIndex: 0
+      // courseDetail: {}
+    }
+  },
+  computed: {
+    ...mapState(['courseDetail'])
+  },
+  methods: {
+    // 标签切换
+    toggleTabs (index) {
+      this.nowIndex = index
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .previewCourse {
+    .course{
+      height: 250px;
+      border-radius:10px;
+      margin-top: 20px;
+      background-color: #fff;
+      box-sizing: border-box;
+      padding: 20px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      .info {
+        height: 100%;
+        margin-left: 20px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .courseInfo {
+          .title {
+            font-weight: 700;
+            margin-bottom: 10px;
+          }
+          .other {
+            vertical-align: middle;
+            span:nth-child(2n) {
+              padding: 0 5px;
+            }
+          }
+        }
+
+      }
+    }
+    .container {
+      margin-top: 20px;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      .leftcontent {
+        width: 780px;
+        background-color: #fff;
+        border-radius: 10px;
+        .toggleTab {
+          position: relative;
+          height: 50px;
+          padding: 20px 0 0 20px;
+          box-sizing: border-box;
+          border-bottom: 1px solid #ddd;
+          color:#999;
+          span + span {
+            margin-left: 20px;
+          }
+          .active{
+            position: relative;
+            color: #4A4A4A;
+            font-size: 18px;
+            font-weight: 400;
+          }
+          .active::after{
+            content: "";
+            display: inline-block;
+            position: absolute;
+            bottom:-6px;
+            left: 2px;
+            height: 3px;
+            width:24px;
+            background-color: #e43c31;
+          }
+        }
+        .middle {
+          // padding: 20px 20px 0 20px;
+          // height: cacl(100vh);
+          .introduce {
+            padding: 20px 20px 0 20px;
+            height: 100vh;
+            h3 {
+              font-weight: bold;
+              font-size: 16px;
+              color:#4a4a4a
+            }
+            p {
+              font-size: 14px;
+              color:#666;
+              margin-top:20px;
+            }
+          }
+          .PicTxt, .comment{
+            height: 100vh;
+          }
+
+        }
+      }
+      .rightContent {
+        .teacher {
+          width: 300px;
+          height: 150px;
+          border-radius: 10px;
+          background-color: #fff;
+          box-sizing: border-box;
+          padding: 15px 8px 15px 20px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          align-items: flex-start;
+          color: #4a4a4a;
+          .teaInfo {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            .photo {
+              display: flex;
+              justify-content: space-between;
+              align-items: flex-start;
+              .name {
+                margin-left: 10px;
+                font-weight: bold;
+              }
+            }
+            .motto {
+              color: #666;
+            }
+          }
+        }
+        .download {
+          width: 300px;
+          height: 106px;
+          border-radius: 10px;
+          box-sizing: border-box;
+          background-color: #fff;
+          margin-top: 20px;
+          padding: 20px 0 20px 20px;
+          .downPro {
+            display: inline-block;
+            vertical-align: middle;
+            margin-left:10px;
+            p {
+              height: 20px;
+              line-height: 20px;
+            }
+          }
+        }
+      }
+    }
+
+  }
+</style>

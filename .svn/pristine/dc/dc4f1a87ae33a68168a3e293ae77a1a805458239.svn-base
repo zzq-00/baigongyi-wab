@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="_来自百工驿的分享">
+    <!-- Open Graph data -->
+    <meta property="og:title" content="百工驿-想法" />
+    <meta property="og:image" content="../images/baigongyi.png" />
+    <meta property="og:description" content="聚百工之驿，悟工程之道" />
+    <title>百工驿-想法</title>
+
+    <style type="text/css">
+
+    </style>
+    <link href="../stylesheets/base.css" rel="stylesheet">
+    <!-- 分享sdk -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+   	<script src="https://g.alicdn.com/dingding/open-develop/1.9.0/dingtalk.js"></script>
+    <!-- vue 开发版本 -->
+    <!-- <script src="../javascripts/vue/vue.js"></script> -->
+    <!-- vue 生产版本 -->
+    <script src="../javascripts/vue/vue.min.js"></script>
+    <!-- axios -->
+    <script src="../javascripts/axios/axios.min.js"></script>
+    <!-- lib-flexible -->
+    <script src="../javascripts/lib-flexible/index.min.js"></script>
+    <!-- polyfill -->
+    <script src="../javascripts/polyfill/polyfill.min.js"></script>
+    <!-- api.js -->
+    <script src="../javascripts/api.js"></script>
+    <!-- common.js -->
+    <script src="../javascripts/common.js"></script>
+</head>
+
+<body>
+    <div id="idea" class="main" v-cloak>
+        <template v-if="loaded">
+            <div class="author">
+                <div>
+                    <div class="avatar fl" :style="{backgroundImage: 'url('+ (idea.avatar ? resource.aliyun + idea.avatar : '') +')'}"></div>
+                    <div class="author-name fl">
+                        <span>{{idea.nickName}}</span><br>
+                        <span class="date">{{convertDate(idea.createTime)}}</span>
+                    </div>
+                </div>
+                <div class="watch-btn">关注</div>
+            </div>
+            <div class="content">
+                <div class="idea-content">{{idea.content}}</div>
+                <div class="idea-images" v-if="idea.ideaImgs.length > 0">
+                    <template v-for="(img, index) in idea.ideaImgs">
+                        <div v-if="idea.ideaImgs.length == 1"
+                            class="img-item1" :style="{backgroundImage: 'url('+ (img.url ? resource.aliyun + img.url : '') +')'}"></div>
+                        <div v-if="idea.ideaImgs.length >= 2 && idea.ideaImgs.length < 7"
+                            class="img-item2" :style="{backgroundImage: 'url('+ (img.url ? resource.aliyun + img.url : '') +')'}"></div>
+                        <div v-if="idea.ideaImgs.length >= 7"
+                            class="img-item3" :style="{backgroundImage: 'url('+ (img.url ? resource.aliyun + img.url : '') +')'}"></div>
+                    </template>
+                </div>
+            </div>
+            <div class="comment">
+                <div class="comm-label">评论（{{idea.commentCount}}条）</div>
+                <input type="text" placeholder="写评论...">
+                <ul>
+                    <li v-for="(comment, index) in comments">
+                        <div class="avatar" :style="{backgroundImage: 'url('+ (comment.avatar ? resource.aliyun + comment.avatar : '../images/icon-fang.png') +')'}"></div>
+                        <div class="comm-box" :class="{'comm-box_line' : index != comments.length - 1}">
+                            <div class="comm-author">
+                                <span>{{comment.nickName}}</span>
+                                <span class="comm-date">{{convertDate(comment.commentsTime)}}</span>
+                            </div>
+                            <div class="comm-content">{{comment.comment}}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="app-open">
+                <div class="app-open-btn" @click="openApp">App内打开</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="like-comm-count">
+                <div class="like-comm-count_box">
+                    <i class="like-icon"></i>
+                    <span>{{idea.likeCount}}</span>
+                </div>
+                <div class="like-comm-count_box">
+                    <i class="comm-icon"></i>
+                    <span>{{idea.commentCount}}</span>
+                </div>
+            </div>
+        </template>
+    </div>
+</body>
+<script type="text/javascript">
+
+    var vm = new Vue({
+        el: "#idea",
+        data: {
+            loaded: false,
+            idea: {
+                ideaImgs: []
+            },
+            comments: [],
+            commentParam: {
+                pageNum: 1,
+                pageSize: 3,
+                paramObject: {
+                    objId: "",
+                    objType: 10
+                }
+            },
+            resource: {},
+            shareConfig: {}
+        },
+        created() {
+            this.getData.call(this);
+            common.share(this.shareConfig);
+        },
+        methods: {
+            getData() {
+                var _this = this;
+                var id = common.getParameterByName("id");
+                _this.commentParam.paramObject.objId = id;
+                api.refreshToken()
+                .then(function(token) {
+                    api.resourceInfo(token)
+                    .then(function(data) {
+                        _this.resource = data;
+
+                        api.getIdea(id, token)
+                        .then(function(data) {
+                            _this.idea = data;
+                            _this.shareConfig.wechat_title = data.content;
+                            _this.shareConfig.wechat_desc = "_来自百工驿的分享";
+                            _this.shareConfig.wechat_images0 = _this.resource.aliyun + "images/baigongyi.png";
+
+                            api.shareConfig(token)
+                            .then(function(data) {
+                                _this.shareConfig.appId = data.appId;
+                                _this.shareConfig.timestamp = data.timestamp;
+                                _this.shareConfig.nonceStr = data.nonceStr;
+                                _this.shareConfig.signature = data.signature;
+                                _this.shareConfig.url = data.url;
+                                
+                                common.share(_this.shareConfig);
+                            })
+
+                            _this.loaded = true;
+                        })
+                    })
+                    api.getComments(token, _this.commentParam)
+                    .then(function(data) {
+                        _this.comments = data.records;
+                    })
+                })
+            },
+            openApp() {
+                common.openApp();
+            },
+            convertDate(datetime) {
+                return common.convertDate(datetime);
+            }
+        }
+    });
+        
+    </script>
+</html>

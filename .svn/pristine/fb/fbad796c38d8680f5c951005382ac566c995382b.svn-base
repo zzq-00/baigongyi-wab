@@ -1,0 +1,270 @@
+<template>
+  <div class="addColumnForCourse">
+    <div class="content">
+      <el-form ref="ruleForm" :model="ruleForm" :rules="rules" label-width="80px" label-position="top">
+        <div class="content">
+          <div class="left">
+            <uploadPic type="hasButton" v-model="ruleForm.image" :description="uploadDesc" />
+          </div>
+          <div class="right">
+            <span class="reject" @click="openReason" v-show="courseStatus===1001">点击查看审核驳回原因</span>
+            <el-form-item label="课程名称" prop="name">
+              <el-input v-model="ruleForm.name" class="columnName" maxlength="50" show-word-limit></el-input>
+            </el-form-item>
+            <el-form-item  label="选择课程类型" prop="type">
+              <el-select disabled v-model="ruleForm.type">
+<!--                <el-option :value="1" label="音频"></el-option>-->
+                <el-option :value="2" label="视频"></el-option>
+              </el-select>
+            </el-form-item>
+            <el-form-item label="选择视频文件" prop="url">
+              <div class="recommed">建议上传视频大小不超过2g，视频类型为：'FLV','MOV','MP4'</div>
+              <uploadVideo @getValue="getVideoValue" :value="ruleForm"></uploadVideo>
+            </el-form-item>
+            <el-form-item v-if="!free" label="是否为免费试听" prop="allowAudition">
+              <el-radio-group v-model="ruleForm.allowAudition">
+                <el-radio :label="1">是</el-radio>
+                <el-radio :label="0">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+            <el-form-item label="是否为最后一节课" prop="wasLastOne">
+              <el-radio-group v-model="ruleForm.wasLastOne">
+                <el-radio :label="1">是</el-radio>
+                <el-radio :label="0">否</el-radio>
+              </el-radio-group>
+            </el-form-item>
+          </div>
+        </div>
+      </el-form>
+    </div>
+    <div class="bottom">
+      <el-button @click="saveForColumn('ruleForm')">存为草稿</el-button>
+      <el-button type="danger" @click="publishForColumn('ruleForm')">提交审核</el-button>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import uploadVideo from '@/utils/uploadVideo'
+import uploadPic from '@/utils/uploadPic'
+export default {
+  name: 'ColumnforCourse',
+  components: {
+    uploadVideo,
+    uploadPic
+  },
+  props: {
+    editCourseId: String,
+    free:false
+  },
+  data() {
+    return {
+      courseStatus: '',
+      rejectReason: '',
+      uploadDesc: {
+        title: '课程主页图',
+        desc: '可上传jpg/jpeg/png/bmp格式图片，建议分辨率为900*506，最大4M',
+        maxsize: 4
+      },
+      ruleForm: {
+        image: '',
+        name: '',
+        type: 2, // 类型--音频视频
+        url: '',
+        originalFileName: '',
+        allowAudition: 1, // 是否为免费试听课
+        wasLastOne: 1, // 是否为最后一节课
+        columnId: this.$route.params.id
+      },
+      rules: {
+        name: [{ required: true, message: '请输入课程名称', trigger: 'blur' }, { min: 1, max: 50, message: '长度在 1 到 50 个字符', trigger: 'blur' }],
+        type: [{ required: true, message: '请选择课程类型', trigger: 'change' }],
+        url: [{ required: true, message: '上传视频文件', trigger: 'change' }],
+        allowAudition: [{ required: true, message: '请选择', trigger: 'change' }],
+        wasLastOne: [{ required: true, message: '请选择', trigger: 'change' }]
+      }
+    }
+  },
+  watch: {
+    editCourseId: {
+      handler: function(val) {
+        val === '' ? this.resetRuleForm() : this.getCourseDetail(val)
+      },
+      immediate: true
+    }
+  },
+  methods: {
+    resetRuleForm() {
+      this.ruleForm = {
+        image: '',
+        name: '',
+        type:2, // 类型--音频视频
+        url: '',
+        originalFileName: '',
+        allowAudition: 1, // 是否为免费试听课
+        wasLastOne: 1, // 是否为最后一节课
+        columnId: this.$route.params.id
+      }
+    },
+    getCourseDetail(id) {
+      api.getCourseDetail(id).then(res => {
+        const { id, image, name, type, url, originalFileName, allowAudition, wasLastOne, status, rejectReason } = res.data
+        this.ruleForm = { id, image, name, type, url, originalFileName, allowAudition, wasLastOne }
+        this.ruleForm.columnId = this.$route.params.id
+        this.courseStatus = status
+        this.rejectReason = rejectReason
+      })
+    },
+    getVideoValue(val) {
+      this.ruleForm.url = val.url
+      this.ruleForm.originalFileName = val.originalFileName
+    },
+    openReason() {
+      this.$alert(this.rejectReason, { confirmButtonText: '确定' })
+    },
+    saveForColumn(formName) {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          api.saveForColumn(this.ruleForm).then(res => {
+            this.$message.success('保存成功')
+            this.$emit('finish')
+            this.resetRuleForm()
+          })
+        } else {
+          return false
+        }
+      })
+    },
+    publishForColumn(formName) {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      this.$refs[formName].validate(valid => {
+        if (valid) {
+          if(this.free){
+            this.ruleForm.allowAudition = 0
+          }
+          api.publishForColumn(this.ruleForm).then(res => {
+            this.$message.success('发布成功')
+            this.$emit('finish')
+            this.resetRuleForm()
+          })
+        } else {
+          return false
+        }
+      })
+    }
+  },
+  mounted() {}
+}
+</script>
+
+<style lang="less" scoped>
+.addColumnForCourse {
+  .content {
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    .left {
+      width: 320px;
+      padding: 12px 20px 0 0px;
+      box-sizing: border-box;
+      .ask {
+        font-size: 12px;
+        color: #ccc;
+        line-height: 18px;
+      }
+    }
+    .right {
+      position: relative;
+      padding-left: 20px;
+      border-left: 1px solid #ddd;
+      .reject {
+        position: absolute;
+        font-weight: bold;
+        top: 6px;
+        left: 100px;
+        color: #e23732;
+        font-size: 12px;
+      }
+    }
+  }
+  .bottom {
+    width: 100%;
+    height: 60px;
+    line-height: 60px;
+    border-top: 1px solid #ddd;
+    text-align: center;
+    .el-button + .el-button {
+      margin-left: 30px;
+    }
+  }
+  /deep/.el-form {
+    margin-left: 20px;
+    .el-form-item {
+      margin-bottom: 18px;
+      .el-form-item__content {
+        .el-input {
+          width: auto;
+          width: 260px;
+        }
+        .columnName {
+          width: 560px;
+        }
+        .tag1 + .tag2 {
+          margin-left: 40px;
+        }
+        .recommed {
+          font-size: 12px;
+          color: #ccc;
+          margin-top: -30px;
+          margin-left: 100px;
+        }
+      }
+      .addTag {
+        margin-bottom: 22px; // position: relative;
+        // img {
+        //   margin-left: 10px;
+        // }
+        i {
+          font-size: 16px;
+          padding-left: 10px;
+        }
+      }
+    }
+    .update {
+      margin-left: 28px;
+    }
+    .button {
+      margin-left: 230px;
+      /deep/.el-button {
+        width: 90px;
+        height: 34px;
+      }
+    }
+  }
+  /deep/.el-form--label-top {
+    .el-form-item__label {
+      padding: 0px !important;
+      line-height: 30px !important;
+    }
+  }
+  .avatar-uploader {
+    position: relative;
+    width: 280px;
+    height: 210px;
+    border: 1px dashed #ccc; // margin-right:30px;
+    font-size: 28px;
+    float: left;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    /deep/.el-button {
+      position: absolute;
+      bottom: -40px;
+      left: 0;
+      width: 100%;
+    }
+  }
+}
+</style>

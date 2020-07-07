@@ -1,0 +1,550 @@
+<template>
+  <div class="index-page">
+    <div class="header-box">
+      <a href="/">
+      <img class="web-icon" src="@/assets/images/logo214-49.png" alt="">
+      </a>
+      <div class="search-box">
+        <input type="text" ref="boxs" @focus="getHistory" v-model.trim="searchWord" placeholder="搜索你感兴趣的内容" @keyup.enter="searchFun">
+        <button @click.stop="searchFun">
+          <img src="@/assets/images/search-icon.png" alt="">
+          <span>搜索</span>
+        </button>
+        <div class="search-history" v-show="searchDia" ref="box" @click="blursureDia">
+          <div class="history-box">
+            <span>搜索历史</span>
+            <span @click="empty">清空</span>
+          </div>
+          <ul class="history-list">
+            <li v-for="(item,index) in searchHistory" :key="index">
+              <span @click.stop="selection(item,index)">{{item}}</span>
+              <div class="icon-box" @click.stop="deleteword(index)">
+                <img src="@/assets/images/close-icon.png" alt="" class="close-icons">
+                <img src="@/assets/images/closehover-icon.png" alt="" class="closehover-icons">
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="header-right">
+        <ul v-if="userInfo.accountId">
+          <li class="app-li" @mouseenter="showQr" @mouseleave="hideQr">
+            <img src="@/assets/images/index-QR.png" alt="">
+            <p>百工驿APP</p>
+            <img class="app-images" :src="$store.state.imageDomain + 'images/download/bgy_download.png'" alt="" srcset="" v-if="appQRStatus">
+          </li>
+          <li>
+            <el-popover placement="top" width="150" trigger="click" popper-class="muens-ul">
+              <ul class="menu-info">
+                <li v-for="(item, index) in tabItem" :key="index">
+                  <a :href="`/information?activeTab=${item.name}`" target="_blank" rel="noopener noreferrer">{{item.name}}
+                    <span class="counts" v-if="item.unreadCount>0">{{item.unreadCount>0?item.unreadCount:'' |  formatNumbers}}</span>
+                  </a>
+                </li>
+              </ul>
+              <div slot="reference">
+                <el-badge :is-dot="hasUnreadCount">
+                  <img src="@/assets/images/news-icon.png" alt="">
+                </el-badge>
+                <p>消息中心</p>
+              </div>
+            </el-popover>
+          </li>
+          <li class="person-center">
+            <el-popover placement="top" width="150" trigger="click" popper-class="muens-ul">
+              <ul class="menus">
+                <p style="border-bottom: 1px solid #eeeeee;">
+                  <a href="/myHome/myReply" target="_blank" rel="noopener noreferrer">{{$store.state.userInfo.nickName}}</a>
+                </p>
+                <li>
+                  <a href="/userCenter" target="_blank" rel="noopener noreferrer">我的主页</a>
+                </li>
+                <li>
+                  <a href="/myWallet" target="_blank" rel="noopener noreferrer">我的钱包</a>
+                </li>
+                <li>
+                  <a href="/personalData" target="_blank" rel="noopener noreferrer">账号管理</a>
+                </li>
+                <p style="border-top: 1px solid #eeeeee;" @click='onLogout'>退出登录</p>
+              </ul>
+              <div slot="reference">
+                <img src="@/assets/images/indexUser.png" alt="">
+                <p>个人中心</p>
+              </div>
+            </el-popover>
+          </li>
+        </ul>
+        <ul v-else>
+          <li class="app-li" @mouseenter="showQr" @mouseleave="hideQr">
+            <img src="@/assets/images/index-QR.png" alt="">
+            <p>百工驿APP</p>
+            <img class="app-images" :src="$store.state.imageDomain + 'images/download/bgy_download.png'" alt="" srcset="" v-if="appQRStatus">
+          </li>
+          <li>
+            <a href="/login">
+              <img src="@/assets/images/news-icon.png" alt="">
+              <p>登录/注册</p>
+            </a>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <navListIndex :tasList='tasList'></navListIndex>
+    <div class="index-main">
+      <div class="planting-login-box">
+        <div class="planting-box">
+          <swiperComponents :tasList='sliderData'></swiperComponents>
+        </div>
+        <div class="login-box">
+          <a href="/myHome/myReply" rel="noopener noreferrer" v-if="userInfo.accountId">
+            <img class="user-portrait" :src="$store.state.imageDomain + userInfo.avatar" alt="" style="border-radius:50%;" v-if="userInfo.avatar">
+            <img class="user-portrait" src="@/assets/images/login-user.png" alt="" style="border-radius:50%;" v-else>
+          </a>
+          <a href="/login" rel="noopener noreferrer" v-else>
+            <img class="user-portrait" src="@/assets/images/user-icon.png" alt="">
+          </a>
+          <p class="login-name">
+            <a href="/myHome/myReply" v-if="userInfo.accountId">Hi {{userInfo.nickName}}</a>
+            <a href="/login" v-else>Hi 请<span>登录/注册</span>账户</a>
+          </p>
+          <ul>
+            <li v-for="(item,index) in userNavList" :key="index">
+              <a :href="userInfo.accountId?item.url:'/login'" target="_blank" rel="noopener noreferrer">
+                <img :src="item.imgs" alt="">
+                <button>{{item.name}}</button>
+              </a>
+            </li>
+          </ul>
+        </div>
+        <div style="clear:both"></div>
+      </div>
+      <hotAndCurriculumIndex :newHotObj="newHotObj" :hotColumns='hotColumns'></hotAndCurriculumIndex>
+      <columnAndLiveIndex :dataObj="columnAndLiveDataObj"></columnAndLiveIndex>
+      <bgcommunity :bgyCommunityObj='bgyCommunityObj' :tasList='tasList'></bgcommunity>
+    </div>
+    <footerComponents></footerComponents>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import footerComponents from '@/components/footerComponents.vue'
+import swiperComponents from '@/components/swiperComponents.vue'
+import navListIndex from '@/components/navListIndex.vue' //导航条
+import hotAndCurriculumIndex from '@/components/hotAndCurriculumIndex.vue' //热点和新上好课
+import columnAndLiveIndex from '@/components/columnAndLiveIndex.vue' //热门专栏和直播
+import bgcommunity from '@/components/bgcommunity.vue' //百工社区
+import { mapState } from 'vuex'
+
+export default {
+  components: {
+    navListIndex,
+    hotAndCurriculumIndex,
+    swiperComponents,
+    footerComponents,
+    columnAndLiveIndex,
+    bgcommunity
+  },
+  data() {
+    return {
+      searchWord: '', //顶部搜索
+      newHotObj: {}, //环球资讯，行业热点，建筑前沿，资质热点，职场资讯
+      userNavList: [
+        { name: '发文章', imgs: require('@/assets/images/write-icon.png'), url: '/article/publishArticle' },
+        // { name: '发视频', imgs: require('@/assets/images/yivideo/yivideo-pub-icon.png'), url: '/yivideo/publish' },
+        { name: '提问题', imgs: require('@/assets/images/asking-icon.png'), url: '/askingQuestions' },
+        { name: '写想法', imgs: require('@/assets/images/ideas-icon.png'), url: '/engineering' }
+      ],
+      hotColumns: [],
+      userInfo: {},
+      columnAndLiveDataObj: {}, //热门专栏和直播回放
+      bgyCommunityObj: {}, //百工驿社区分类
+      tasList: [],
+      appQRStatus: false,
+      searchHistory: [],
+      searchDia: false, //搜索框
+      sliderData: [] //轮播图数据
+    }
+  },
+  watch: {
+    searchHistory: {
+      handler(val, oldval) {
+        let arr = val.length > 5 ? val.slice(0, 5) : val
+        window.localStorage.setItem('searchHistory', arr)
+      },
+      deep: true
+    }
+  },
+  computed: {
+    ...mapState({
+      hasUnreadCount(state) {
+        return !!state.informationCount.filter(item => item.unreadCount > 0).length
+      },
+      tabItem: 'informationCount'
+    })
+  },
+  methods: {
+    blursureDia(e) {
+      if (!this.$refs.box.contains(e.target) && !this.$refs.boxs.contains(e.target)) {
+        /* 关闭元素 */
+        this.searchDia = false
+      }
+    },
+    // 清空历史记录
+    empty() {
+      this.searchHistory = []
+    },
+    // 选中历史关键词
+    selection(item, index) {
+      this.searchDia = false
+      this.searchHistory.splice(index, 1)
+      this.searchHistory.unshift(item)
+      this.searchWord = item
+      window.localStorage.setItem('searchHistory', this.searchHistory)
+      this.$router.push({ path: '/searchPage', query: { searchWord: this.searchWord } })
+    },
+    // 删除关键词
+    deleteword(index) {
+      this.searchHistory.splice(index, 1)
+    },
+    // 输入框获取焦点
+    getHistory() {
+      if (window.localStorage.searchHistory) {
+        this.searchDia = true
+        this.searchHistory = window.localStorage.searchHistory.split(',')
+      }
+    },
+    // 搜索
+    searchFun() {
+      if (this.searchWord) {
+        if (this.searchWord != this.searchHistory[0]) {
+          if (this.searchHistory.indexOf(this.searchWord) != -1) {
+            let sameIndex = this.searchHistory.findIndex(data => data == this.searchWord)
+            this.searchHistory.splice(sameIndex, 1)
+          }
+          this.searchHistory.unshift(this.searchWord)
+          this.searchHistory = this.searchHistory.length > 5 ? this.searchHistory.slice(0, 5) : this.searchHistory
+          window.localStorage.setItem('searchHistory', this.searchHistory)
+        }
+        this.$router.push({ path: '/searchPage', query: { searchWord: this.searchWord } })
+      }
+    },
+    // 退出登录
+    onLogout() {
+      this.$confirm('确定退出?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning',
+        center: true,
+        closeOnClickModal: false
+      })
+        .then(() => {
+          window.localStorage.clear()
+          window.location.reload()
+          // window.location.href = '/index'
+          this.$message({
+            type: 'success',
+            message: '退出成功!'
+          })
+        })
+        .catch(() => {
+          this.$message({
+            type: 'info',
+            message: '已取消退出'
+          })
+        })
+    },
+    showQr() {
+      this.appQRStatus = true
+    },
+    hideQr() {
+      this.appQRStatus = false
+    },
+    getIndexPageData() {
+      api.getIndexPageData().then(res => {
+        this.hotColumns = res.data.hotCourses.records
+        this.newHotObj = {
+          hot_news: res.data.hot_news, //行业热点
+          architectural_frontier: res.data.architectural_frontier, //建筑前沿
+          qualification_hotspot: res.data.qualification_hotspot, //资质热点
+          global_information: res.data.global_information, //环球资讯
+          workplace_information: res.data.workplace_information, //职场资讯
+        }
+        this.columnAndLiveDataObj = {
+          hotColumns: res.data.hotColumns, //专栏头部
+          hotFreeColumns: res.data.hotFreeColumns, //热门免费专栏
+          hotPayColumns: res.data.hotPayColumns, //热门付费专栏
+          hotLives: res.data.hotLives //直播回放
+        }
+        this.bgyCommunityObj = res.data.tagContent
+        this.tasList = res.data.tasList.records
+      })
+    },
+    getSliderData() {
+      api.getSliderData().then(res => {
+        this.sliderData = res.data
+      })
+    }
+  },
+  mounted() {
+    if (window.localStorage.userInfo) {
+      this.userInfo = JSON.parse(window.localStorage.userInfo)
+    }
+    this.getSliderData()
+    this.getIndexPageData()
+    document.addEventListener('click', this.blursureDia)
+  },
+  // 清除click监听
+  beforeDestroy() {
+    document.removeEventListener('click', this.blursureDia)
+  }
+}
+</script>
+<style lang="less" scoped>
+.index-page {
+  background-color: #fff;
+  .header-box {
+    width: 1100px;
+    margin: 0 auto;
+    padding-top: 21px;
+    padding-bottom: 32px;
+    .web-icon {
+      float: left;
+      width: 178px;
+      height: 41px;
+    }
+    .search-box {
+      margin-left: 140px;
+      display: inline-block;
+      width: 465px;
+      height: 36px;
+      background: rgba(255, 255, 255, 1);
+      border: 1px solid rgba(228, 61, 48, 1);
+      border-radius: 19px;
+      position: relative;
+      > input {
+        height: 14px;
+        line-height: 14px;
+        width: 335px;
+        border: none;
+        float: left;
+        border-top-left-radius: 19px;
+        border-bottom-left-radius: 19px;
+        padding: 11px 22px;
+        font-size: 14px;
+      }
+      > button {
+        border-top-right-radius: 19px;
+        border-bottom-right-radius: 19px;
+        float: left;
+        width: 86px;
+        height: 38px;
+        background: #e23632;
+        position: absolute;
+        right: 0;
+        top: -1px;
+        vertical-align: middle;
+        cursor: pointer;
+        img {
+          vertical-align: middle;
+          margin-right: 4px;
+        }
+        span {
+          vertical-align: middle;
+          display: inline-block;
+          height: 14px;
+          line-height: 14px;
+          font-size: 14px;
+
+          color: rgba(255, 255, 255, 1);
+        }
+      }
+      .search-history {
+        position: absolute;
+        top: 44px;
+        left: 0;
+        z-index: 3;
+        width: 330px;
+        background: rgba(255, 255, 255, 1);
+        box-shadow: 0px 0px 10px 0px rgba(166, 171, 167, 0.35);
+        padding: 0 0 20px 0;
+        .history-box {
+          height: 33px;
+          line-height: 33px;
+          border-bottom: 1px solid #eeeeee;
+          padding: 13px 25px 0 28px;
+          span {
+            font-size: 14px;
+            color: #b8bac8;
+          }
+          span:nth-child(2) {
+            float: right;
+            cursor: pointer;
+          }
+          span:nth-child(2):hover {
+            color: #e23732;
+          }
+        }
+        .history-list {
+          margin-top: 10px;
+          li {
+            vertical-align: middle;
+            height: 30px;
+            line-height: 30px;
+            padding: 0 25px 0px 28px;
+            box-sizing: border-box;
+            span {
+              display: inline-block;
+              vertical-align: middle;
+              color: #333333;
+              max-width: 235px;
+              text-overflow: ellipsis;
+              overflow: hidden;
+              white-space: nowrap;
+              cursor: pointer;
+              font-size: 14px;
+            }
+            span:hover {
+              color: #e23732;
+            }
+            .icon-box {
+              height: 16px;
+              float: right;
+              img {
+                vertical-align: middle;
+                cursor: pointer;
+                height: 16px;
+                width: 16px;
+              }
+              .closehover-icons {
+                display: none;
+              }
+            }
+            .icon-box:hover {
+              .close-icons {
+                display: none;
+              }
+              .closehover-icons {
+                display: inline-block;
+              }
+            }
+          }
+          li:hover {
+            background: #f2f2f2;
+          }
+        }
+      }
+    }
+    .header-right {
+      float: right;
+      > img {
+        float: right;
+        margin-top: 4px;
+        cursor: pointer;
+      }
+      ul {
+        display: inline-block;
+        li {
+          display: inline-block;
+          text-align: center;
+          cursor: pointer;
+          p {
+            height: 13px;
+            line-height: 13px;
+            font-size: 12px;
+            color: rgba(140, 140, 140, 1);
+            margin-top: 4px;
+          }
+        }
+        li {
+          margin-right: 24px;
+        }
+        .app-li {
+          position: relative;
+          .app-images {
+            width: 100px;
+            height: 100px;
+            position: absolute;
+            left: -10px;
+            top: 49px;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0px 0px 10px 0px rgba(166, 171, 167, 0.35);
+          }
+        }
+      }
+    }
+  }
+
+  .index-main {
+    width: 1100px;
+    margin: 0 auto;
+    padding: 24px 0 114px 0;
+    .planting-login-box {
+      .planting-box {
+        float: left;
+        width: 726px;
+        height: 336px;
+        img {
+          border-radius: 4px;
+        }
+      }
+      .login-box {
+        float: right;
+        width: 338px;
+        height: 334px;
+        background: rgba(255, 255, 255, 1);
+        border: 1px solid rgba(232, 232, 232, 1);
+        border-radius: 4px;
+        .user-portrait {
+          display: block;
+          width: 80px;
+          height: 80px;
+          margin: 32px auto 27px auto;
+        }
+        .login-name {
+          height: 17px;
+          line-height: 17px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(89, 89, 89, 1);
+          text-align: center;
+          span {
+            color: #e43d30;
+          }
+        }
+        ul {
+          margin-top: 61px;
+          padding: 0 42px;
+          li {
+            display: inline-block;
+            cursor: pointer;
+            img {
+              display: block;
+              margin: 0 auto;
+              margin-bottom: 10px;
+            }
+            button {
+              display: block;
+              width: 63px;
+              height: 30px;
+              background: rgba(255, 255, 255, 1);
+              border: 1px solid rgba(228, 61, 48, 1);
+              border-radius: 4px;
+              color: #e43d30;
+              cursor: pointer;
+            }
+            button:hover {
+              background-color: #e43d30;
+              color: #fff;
+            }
+          }
+          li:nth-child(2) {
+            margin: 0 32px;
+          }
+        }
+      }
+    }
+  }
+}
+</style>

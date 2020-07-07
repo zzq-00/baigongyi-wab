@@ -1,0 +1,17 @@
+
+module.exports = {
+  lintOnSave: false,
+  devServer: {
+    open: true,
+    port: 8086,
+    // 代理
+    proxy: {
+      '/proxyHeader': {
+        target: 'http://bgywebtest.tzecc.com/api/',
+        pathRewrite: {
+          '^/proxyHeader': '/' // rewrite path
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,58 @@
+<template>
+  <div class="hisAttention">
+    <div class="title">
+      <span v-for="(item,index) in tabsColumn" :key="index" @click="toggleTabs(index)"
+          :class="{active:index==nowIndex}">{{item}}
+      </span></div>
+    <div class="content">
+      <attention-com></attention-com>
+    </div>
+  </div>
+</template>
+
+<script>
+import AttentionCom from '@/components/Attention'
+export default {
+  name: 'hisAttention',
+  components: {
+    AttentionCom
+  },
+  data () {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['他关注的人', '关注他的人', '他关注的问题']
+    }
+  },
+  created () {
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) { } else {}
+    })
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs (index) {
+      this.nowIndex = index
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .hisAttention {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+      cursor: pointer;
+      span + span {
+        margin-left: 16px;
+      }
+      .active {
+        color:#E23732;
+      }
+    }
+    .content {
+      // padding: 20px;
+      background-color: #fff;
+    }
+  }
+</style>

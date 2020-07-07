@@ -1,0 +1,24 @@
+import { post, get, put, delete as deleteMethod } from 'axios'
+/**
+ * 专栏
+ */
+export default {
+  // 讲堂--专栏列表
+  getColumn: params => post('column/list', params),
+  // 专栏详情
+  getColumnDetail: id => get('column/' + id),
+  // 下架专栏
+  downColumn: id => put(`column/${id}`),
+  // 删除专栏
+  delColumn: id => post(`column/${id}`),
+  // 专栏下课程
+  ColumnCourse: params => post('column/course', params),
+  // 发布专栏
+  publishColumn: params => post('column', params),
+  // 保存专栏
+  saveColumn: params => put('column', params),
+  // 专栏推荐
+  recommendColumn: params => post('column/recommend', params),
+  // 专栏下课程删除
+  delColumnCourse: (columnId, courseId) => post(`column/${columnId}/${courseId}`),
+}

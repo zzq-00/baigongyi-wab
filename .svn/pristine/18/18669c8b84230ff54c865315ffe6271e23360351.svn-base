@@ -1,0 +1,13 @@
+<template>
+  <div>讲师入驻</div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style>
+
+</style>

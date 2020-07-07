@@ -1,0 +1,108 @@
+<template>
+    <div class="Collect">
+    <!-- <el-button @click="click">批量管理</el-button> -->
+    <div class="list" v-for="item in collectData" :key="item.id">
+      <el-checkbox ></el-checkbox>
+      <img src="@/assets/images/live.png" style="width:200px;height:118px;">
+      <div class="text">
+        <div class="headline">
+          <h3>{{item.name}}</h3>
+        </div>
+        <div class="tag">
+          <span :class="item.price>0 ? 'red' : 'price'">{{item.price>0 ? '￥' + item.price : '免费'}}</span>
+          <span class="video" v-if="nowIndex===0">{{item.type===1 ? '音频': '视频'}}</span>
+          <span class="video" v-if="nowIndex===1">{{item.upToTime}}</span>
+        </div>
+        <div class="botTag">
+          <p>{{item.auditTime}}</p>
+          <el-button size="mini" v-if="nowIndex===0">{{item.collectStatus ? '取消收藏' : '收藏'}}</el-button>
+          <el-button size="mini" v-if="nowIndex===1">{{item.hasCollected ? '取消收藏' : '收藏'}}</el-button>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  name: 'CollectCom',
+  props: {
+    collectData: Array,
+    nowIndex: Number
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .Collect {
+    height: 100vh;
+    .list:after{
+      position: absolute;
+      content: '';
+      display: block;
+      height: 1px;
+      width:360px;
+      background-color: #ddd;
+      right: -20px;
+      bottom: 0px;
+    }
+    .list{
+      position: relative;
+      height: 146px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      .text {
+        width: 100%;
+        height: 100%;
+        padding: 20px 0 12px 15px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .headline {
+          h3 {
+            font-size: 16px;
+            color:#333;
+            font-weight:bold;
+            display: -webkit-box;
+            -webkit-box-orient: vertical;
+            -webkit-line-clamp: 1;
+            overflow: hidden;
+          }
+        }
+        .tag {
+          width: 100%;
+          .video {
+            padding: 3px 10px;
+            border-radius: 6px;
+            background-color: #F2F2F2;
+            font-size: 12px;
+          }
+          .price {
+            color:#7355F6;
+            font-size: 16px;
+            margin-right: 20px;
+          }
+          .red {
+            font-size: 16px;
+            color: #f00;
+            margin-right: 20px;
+          }
+        }
+        .botTag {
+          width: 100%;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          p{
+            font-size: 12px;
+            color:#999;
+          }
+        }
+      }
+
+    }
+  }
+</style>

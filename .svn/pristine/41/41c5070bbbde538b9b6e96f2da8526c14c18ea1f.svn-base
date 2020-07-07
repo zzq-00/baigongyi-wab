@@ -1,0 +1,225 @@
+<template>
+  <div class="couresMessage">
+    <div class="title">课程管理</div>
+    <div class="middle">
+      <img src="@/assets/images/couresMessage.png" alt="">
+      <div class="content">
+        <div class="courseName">
+          <h3>课程名称</h3>
+          <p><span>观看:  4 次</span><span>|</span><span>讲师： 名字</span> </p>
+        </div>
+        <div>免费</div>
+        <el-button>查看专栏信息</el-button>
+      </div>
+    </div>
+    <div class="button">
+      <el-button type="danger" @click="addColumnforCourse = true">新增专栏课程</el-button>
+      <el-button @click="CourseOrder = true">课程排序</el-button>
+    </div>
+    <div class="tableData">
+      <!-- @sort-change="sortChange" @row-click='rowClick' stripe border -->
+      <el-table ref="project-table" style="width: 100%;" height="calc(100vh - 280px)"
+        :data="tableData"  size="mini" >
+        <el-table-column label="序号" align="center" width="60px">
+          <template slot-scope="scope">
+            {{scope.$index+1+(conditionParams.pageNum-1)*conditionParams.pageSize}}
+          </template>
+        </el-table-column>
+        <el-table-column label="提交/保存时间" prop="updateTime"  width="160px">
+        </el-table-column>
+        <el-table-column label="课程名称" prop="name"  width="200px">
+        </el-table-column>
+        <el-table-column label="课程类型" prop="type"  width="80px">
+        </el-table-column>
+        <el-table-column label="审核状态" prop="status"  width="80px">
+        </el-table-column>
+        <el-table-column label="审核时间" prop="auditTime"  width="160px">
+        </el-table-column>
+        <el-table-column label="操作" width="120px">
+          <template slot-scope="scope">
+            <span class="edit" @click="$router.push('/editCourse/' + scope.row.id)">编辑</span>
+            <span class="delete" @click="ondelete(scope.row.id)">删除</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <el-dialog title="新增专栏课程" :visible.sync="addColumnforCourse" width="1100px" >
+      <column-course ></column-course>
+    </el-dialog>
+
+    <el-dialog title="课程排序" :visible.sync="CourseOrder" width="1100px" >
+      <course-order :tableData='tableData'></course-order>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="CourseOrder = false">取 消</el-button>
+        <el-button type="danger" @click="CourseOrder = false">确 定</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import CourseOrder from '@/components/courseOrder'
+import ColumnCourse from '@/components/addColumnforCourse'
+import api from '@/fetch'
+export default {
+  name: 'CourseMessage',
+  components: {
+    ColumnCourse,
+    CourseOrder
+  },
+  data () {
+    return {
+      addColumnforCourse: false,
+      CourseOrder: false,
+      conditionParams: {
+        pageNum: 1,
+        pageSize: 8
+      },
+      tableData: [
+        {
+          id: '1',
+          updateTime: '2016-05-03',
+          name: '上海市普陀区金沙江路',
+          type: '视频',
+          status: '待审核',
+          auditTime: '审核时间'
+        }, {
+          id: '2',
+          updateTime: '2016-05-03',
+          name: '上海市普陀区金沙江路',
+          type: '视频',
+          status: '待审核',
+          auditTime: '审核时间'
+        }, {
+          id: '3',
+          updateTime: '2016-05-03',
+          name: '上海市普陀区金沙江路',
+          type: '视频',
+          status: '待审核',
+          auditTime: '审核时间'
+        }, {
+          id: '4',
+          updateTime: '2016-05-03',
+          name: '上海市普陀区金沙江路',
+          type: '视频',
+          status: '待审核',
+          auditTime: '审核时间'
+        }, {
+          id: '5',
+          updateTime: '2016-05-03',
+          name: '上海市普陀区金沙江路',
+          type: '视频',
+          status: '待审核',
+          auditTime: '审核时间'
+        }
+      ]
+    }
+  },
+  methods: {
+    async ondelete (id) {
+      const res = await api.delCourse(id)
+      console.log(res)
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .couresMessage {
+    width: 860px;
+    border-radius: 10px;
+    background-color: #fff;
+    .title {
+      height: 50px;
+      line-height: 50px;
+      padding: 0 20px;
+      box-sizing: border-box;
+      font-size: 16px;
+      color:#4A4A4A
+    }
+    .middle {
+      height: 250px;
+      box-sizing: border-box;
+      padding: 20px 20px;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      border-bottom: 1px solid #ddd;
+      border-top: 1px solid #ddd;
+      img {
+        height: 100%;
+      }
+      .content {
+        margin-left: 20px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: flex-start;
+        .courseName {
+          h3 {
+            font-size: 18px;
+            font-weight: bold;
+            color:#4A4A4A;
+          }
+          p{
+            color:#999;
+            margin-top: 10px;
+            span:nth-child(2) {
+              margin: 0 10px;
+            }
+          }
+        }
+      }
+    }
+    .button {
+      height: 60px;
+      line-height: 60px;
+      padding: 0 20px;
+    }
+    .tableData {
+      .edit {
+        color: #E23732;
+        cursor: pointer;
+      }
+      .delete {
+        cursor: pointer;
+        margin-left: 10px;
+        color: #E23732;
+      }
+      .el-table th {
+        background-color: #fafafb;
+      }
+      // 表格斑马纹颜色
+      .el-table--striped .el-table__body tr.el-table__row--striped td {
+        background-color: #F5F6F8 !important;
+      }
+      // 表格HOVER颜色
+      .el-table--striped .el-table__body tr.el-table__row--striped.current-row td, .el-table__body tr.current-row>td, .el-table__body tr.hover-row.current-row>td, .el-table__body tr.hover-row.el-table__row--striped.current-row>td, .el-table__body tr.hover-row.el-table__row--striped>td, .el-table__body tr.hover-row>td {
+        background-color: #ecf4ff !important;
+      }
+      .el-table--enable-row-hover .el-table__body tr:hover>td {
+        background-color: #ecf4ff !important;
+      }
+      //表头的下部边框取消
+      .el-table__body-wrapper .el-table--border.is-scrolling-left~.el-table__fixed {
+        // border-bottom: none !important;
+      }
+    }
+    .el-dialog__header, .el-dialog__body, .el-dialog__footer {
+      // padding: 20px 0 10px;
+    }
+    .el-dialog__header {
+      border-bottom: 1px solid #ddd;
+      padding: 12px 20px;
+    }
+    .el-dialog__body {
+      padding: 0
+    }
+    .el-dialog__footer  {
+      border-top: 1px solid #ddd;
+      padding: 12px 20px;
+    }
+  }
+</style>

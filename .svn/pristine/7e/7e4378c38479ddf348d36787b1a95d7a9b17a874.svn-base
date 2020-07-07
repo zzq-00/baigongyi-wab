@@ -1,0 +1,260 @@
+<!-- 百工社区 -->
+<template>
+  <div class="index-bgcommunity">
+    <div class="bgcommunity-title">
+      <span class="bgcommunity-color">百工社区</span>
+    </div>
+    <div class="bgcommunity-img-list clearfix">
+      <div class="img-box fl clearfix">
+        <div class="img-box-left fl">
+          <!-- <img src="@/assets/images/live.png" alt=""> -->
+          <p class="img-titles-vertical">工程/技术</p>
+        </div>
+        <div class="img-box-right fr">
+          <div>
+            <p class="img-titles-transverse">造价/预算</p>
+            <!-- <img src="@/assets/images/banner.png" alt=""> -->
+          </div>
+          <div>
+            <p class="img-titles-transverse">工程/施工</p>
+            <!-- <img src="@/assets/images/live.png" alt=""> -->
+          </div>
+        </div>
+      </div>
+      <div class="img-box fr clearfix">
+        <div class="img-box-left fl">
+          <!-- <img src="@/assets/images/live.png" alt=""> -->
+          <p class="img-titles-vertical">BIM技术</p>
+        </div>
+        <div class="img-box-right fr">
+          <div>
+            <p class="img-titles-transverse">机电/设备</p>
+            <!-- <img src="@/assets/images/banner.png" alt=""> -->
+          </div>
+          <div>
+            <p class="img-titles-transverse">咨询/管理</p>
+            <!-- <img src="@/assets/images/banner.png" alt=""> -->
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="bgcommunity-classification">
+      <ul class="classification-list">
+        <li class="classification-list-li" v-for="(i,index) in 4" :key="index">
+          <p class="classification-name">
+            <span>社区分类</span>
+            <span>分类介绍文字介绍短语第二段文字</span>
+          </p>
+          <img src="@/assets/images/live.png" alt="" srcset="">
+          <ul class="classification-article-list fr">
+            <li v-for="(item,index) in 4" :key="index">
+              <span></span>
+              <span>[文章]</span>
+              <span>
+                <a href="http://" target="_blank" rel="noopener noreferrer">峡公铁大桥开始铺轨施工，文章名称峡铁始…</a>
+              </span>
+            </li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</template>
+
+<script>
+export default {
+  components: {},
+  data() {
+    return {}
+  },
+  watch: {},
+  computed: {},
+  methods: {},
+  mounted() {}
+}
+</script>
+<style lang="less" scoped>
+.index-bgcommunity {
+  margin-top: 46px;
+  .bgcommunity-title {
+    padding-bottom: 12px;
+    border-bottom: 1px solid #f8e7e6;
+    .bgcommunity-color {
+      display: inline-block;
+      height: 25px;
+      line-height: 25px;
+      font-size: 24px;
+      font-weight: bold;
+      color: rgba(228, 61, 48, 1);
+      padding-top: 0;
+      padding-bottom: 0;
+      position: relative;
+    }
+    .bgcommunity-color::before {
+      content: '';
+      display: block;
+      height: 3px;
+      width: 100%;
+      position: absolute;
+      bottom: -13px;
+      left: 0;
+      background-color: rgba(228, 61, 48, 1);
+    }
+  }
+  .bgcommunity-img-list {
+    margin-top: 24px;
+    .img-box {
+      width: 538px;
+      div {
+        border-radius: 8px;
+        img {
+          border-radius: 8px;
+          height: 100%;
+          width: 100%;
+        }
+      }
+      .img-box-left {
+        width: 206px;
+        height: 256px;
+        .img-titles-vertical {
+          text-align: center;
+          margin-top: 86px;
+          height: 22px;
+          line-height: 22px;
+          font-size: 22px;
+          font-weight: bold;
+          color: rgba(255, 255, 255, 1);
+          text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.16);
+        }
+      }
+
+      .img-box-right {
+        > div {
+          width: 308px;
+          height: 116px;
+          .img-titles-transverse {
+            height: 23px;
+            line-height: 23px;
+            font-size: 22px;
+            font-weight: bold;
+            color: rgba(255, 255, 255, 1);
+            text-shadow: 0px 4px 12px rgba(0, 0, 0, 0.16);
+            padding: 26px 0 0 24px;
+          }
+        }
+        > div:nth-child(1) {
+          margin-bottom: 24px;
+        }
+      }
+    }
+    .img-box:nth-of-type(1) {
+      .img-box-left {
+        background: url('../assets/images/Community1.png') no-repeat center center;
+        background-size: cover;
+      }
+      .img-box-right {
+        div:nth-child(1) {
+          background: url('../assets/images/Community2.png') no-repeat center center;
+          background-size: cover;
+        }
+        div:nth-child(2) {
+          background: url('../assets/images/Community3.png') no-repeat center center;
+          background-size: cover;
+        }
+      }
+    }
+    .img-box:nth-of-type(2) {
+      .img-box-left {
+        background: url('../assets/images/Community4.png') no-repeat center center;
+        background-size: cover;
+      }
+      .img-box-right {
+        div:nth-child(1) {
+          background: url('../assets/images/Community5.png') no-repeat center center;
+          background-size: cover;
+        }
+        div:nth-child(2) {
+          background: url('../assets/images/Community6.png') no-repeat center center;
+          background-size: cover;
+        }
+      }
+    }
+  }
+  .bgcommunity-classification {
+    margin-top: 35px;
+    .classification-list {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      .classification-list-li {
+        width: 538px;
+        .classification-name {
+          margin-bottom: 16px;
+          span {
+            display: inline-block;
+          }
+          span:nth-child(1) {
+            height: 18px;
+            line-height: 18px;
+            font-size: 18px;
+            font-weight: bold;
+            color: rgba(38, 38, 38, 1);
+            margin-right: 10px;
+          }
+          span:nth-child(2) {
+            height: 14px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(140, 140, 140, 1);
+            line-height: 18px;
+          }
+        }
+        img {
+          width: 185px;
+          height: 119px;
+          border-radius: 8px;
+        }
+        .classification-article-list {
+          margin-top: 2px;
+          li {
+            height: 15px;
+            line-height: 15px;
+            vertical-align: middle;
+            margin-bottom: 17px;
+            span {
+              display: inline-block;
+              font-size: 14px;
+              vertical-align: middle;
+            }
+            span:nth-child(1) {
+              width: 6px;
+              height: 6px;
+              background: rgba(228, 61, 48, 1);
+              margin-right: 11px;
+            }
+            span:nth-child(2) {
+              color: #e43d30;
+              margin-right: 3px;
+            }
+            span:nth-child(3) {
+              color: #262626;
+              width: 278px;
+              overflow: hidden;
+              white-space: nowrap;
+              text-overflow: ellipsis;
+            }
+          }
+          li:nth-child(4) {
+            margin-bottom: 0;
+          }
+        }
+      }
+      .classification-list-li:nth-child(3),
+      .classification-list-li:nth-child(4) {
+        margin-top: 23px;
+      }
+    }
+  }
+}
+</style>

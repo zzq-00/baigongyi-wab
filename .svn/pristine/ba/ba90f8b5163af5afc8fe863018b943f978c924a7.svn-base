@@ -1,0 +1,227 @@
+<template>
+    <el-scrollbar class="scroll-wrap">
+        <ul class="article-list" v-infinite-scroll="loadArticle" infinite-scroll-disabled="disabled">
+            <li v-for='(item,index) in listData' :key='index'>
+                <img :src="$store.state.imageDomain + item.image" alt="" width="200px">
+                <div>
+                    <h5 class="ellipsis">
+                        <router-link :to="'/article/list/'+item.id" target="_blank">{{item.title}}</router-link>
+                    </h5>
+                    <p>{{item.description}}</p>
+                    <div class="operational">
+                        <span>{{item.userName}} | {{item.publishTime.slice(0,10)}}</span>
+                        <div>
+                            <span @click="likeOperate(item)">
+                                <img v-if="item.whetherLike" src="@/assets/images/yizan.png" alt="">
+                                <img v-else src="@/assets/images/zan.png" alt=""> {{item.likeCount}}
+                            </span>
+                            <span @click="gotoDetail('/article/list/' + item.id + '#comment')">
+                                <img src="@/assets/images/pinglun.png" alt=""> {{item.commentCount}}
+                            </span>
+                            <span @click="collectOperate(item)">
+                                <img v-if="item.whetherToCollect" src="@/assets/images/yishoucang.png" alt="">
+                                <img v-else src="@/assets/images/shoucang.png" alt=""> {{item.whetherToCollect?'已收藏':'收藏'}}
+                            </span>
+                            <el-popover placement="bottom" trigger="click" @show="wxShare(item.id)" width="150">
+                                <ul class="share-list">
+                                    <li @click="copyText(item.id)" style="font-size: 12px;border-bottom: 1px solid #DDDDDD;padding-bottom: 9px;">
+                                        <img src="@/assets/images/lianjie.png" alt="">
+                                        <span style="vertical-align: middle;margin-left: 8px;">复制链接</span>
+                                    </li>
+                                    <li style="font-size: 12px;line-height: 30px">
+                                        <img src="@/assets/images/weixin.png" alt="">
+                                        <span style="vertical-align: middle;margin-left: 8px;">微信扫一扫</span>
+                                        <canvas :ref="'canvas'+item.id" style="max-width: 74px;max-height: 74px;display: block;margin: 0 auto;"></canvas>
+                                    </li>
+                                </ul>
+                                <span slot="reference">
+                                    <img src="@/assets/images/share.png" alt=""> 分享
+                                </span>
+                            </el-popover>
+                        </div>
+                    </div>
+                </div>
+            </li>
+        </ul>
+        <p v-if="loading" class="nomore-data">加载中...</p>
+        <p v-if="noMore" class="nomore-data">没有更多了</p>
+    </el-scrollbar>
+</template>
+<script>
+import api from '@/fetch'
+import QRCode from 'qrcode'
+export default {
+    data() {
+        return {
+            loading: false,
+            totals: 0,
+            params: {
+                "keywords": '',
+                "pageNum": 1,
+                "pageSize": 10
+            },
+            listData: [],
+            operating: false,
+            objType: 3, //文章
+        }
+    },
+    computed: {
+        noMore() {
+            return this.listData.length >= this.totals
+        },
+        disabled() {
+            return this.loading || this.noMore
+        }
+    },
+    watch: {
+        $route(to, from) {
+            this.listData = [];
+            this.getListData(this.$route.query.id)
+        }
+    },
+    mounted() {
+        this.getListData(this.$route.query.id);
+    },
+    methods: {
+        getListData(id) {
+            this.loading = true
+            this.params.keywords = id;
+            // this.params.pageNum = 1;
+            api.tagsArticleList(this.params)
+                .then(res => {
+                    this.loading = false
+                    // this.listData = [...this.listData, ...res.data.records];
+                    //this.listData = res.data.records;
+                    this.listData = this.listData.concat(res.data.records)
+                    this.totals = res.data.total
+                    !this.noMore && this.params.pageNum++
+                })
+        },
+        loadArticle() {
+            this.getListData(this.$route.query.id);
+        },
+        //点赞
+        likeOperate(item) {
+            if (this.operating) return
+            this.operating = true
+            if (item.whetherLike) {
+                api
+                    .likeDelete(this.objType, item.id)
+                    .then(res => {
+                        item.whetherLike = false
+                        item.likeCount--
+                    })
+                    .finally(() => (this.operating = false))
+            } else {
+                api
+                    .likeAdd({ objType: this.objType, objId: item.id })
+                    .then(res => {
+                        item.whetherLike = true
+                        item.likeCount++
+                    })
+                    .finally(() => (this.operating = false))
+            }
+        },
+        //评论
+        gotoDetail(url) {
+            window.open(url)
+        },
+        // 收藏
+        collectOperate(item) {
+            if (item.whetherToCollect) {
+                api.cancelCollect({ objType: this.objType, objId: item.id }).then(res => {
+                    item.whetherToCollect = false
+                })
+            } else {
+                api.addCollect({ objType: this.objType, objId: item.id }).then(res => {
+                    item.whetherToCollect = true
+                })
+            }
+        },
+        // 复制链接
+        copyText(id) {
+            let text = `${window.location.origin}/article/list/${id}`
+            console.log(text)
+            var textarea = document.createElement('textarea') //创建input对象
+            var currentFocus = document.activeElement //当前获得焦点的元素
+            var toolBoxwrap = document.getElementById('NewsToolBox') //将文本框插入到NewsToolBox这个之后
+            toolBoxwrap.appendChild(textarea) //添加元素
+            textarea.value = text
+            textarea.focus()
+            if (textarea.setSelectionRange) {
+                textarea.setSelectionRange(0, textarea.value.length) //获取光标起始位置到结束位置
+            } else {
+                textarea.select()
+            }
+            try {
+                var flag = document.execCommand('copy') //执行复制
+            } catch (eo) {
+                var flag = false
+            }
+            toolBoxwrap.removeChild(textarea) //删除元素
+            currentFocus.focus()
+            return flag ? this.$message.success('链接复制成功') : this.$message.warning('链接复制失败，请手动复制地址栏T_T')
+        },
+        // 微信分享
+        wxShare(id) {
+            QRCode.toCanvas(this.$refs['canvas' + id][0], `${window.location.origin}/article/list/${id}`, error => {
+                if (error) console.error(error)
+            })
+        },
+    }
+}
+</script>
+<style lang="less" scoped>
+.article-list {
+    padding: 5px 92px 5px 20px;
+    >li {
+        padding: 15px 0;
+        display: flex;
+        align-items: center;
+        >img {
+            height: 118px;
+            margin-right: 20px;
+            border-radius: 5px;
+        }
+        >div {
+            flex: 1;
+            overflow: hidden;
+            >h5 {
+                font-size: 16px;
+                margin-bottom: 5px;
+            }
+            >p {
+                color: #666666;
+                line-height: 20px;
+                margin-bottom: 22px;
+                height: 40px;
+                word-wrap: break-word;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                display: -webkit-box;
+                -webkit-line-clamp: 2;
+                -webkit-box-orient: vertical;
+            }
+            >.operational {
+                caret-color: #999999;
+                display: flex;
+                justify-content: space-between;
+                >div {
+                    >span {
+                        cursor: pointer;
+                        vertical-align: middle;
+                        margin-left: 28px;
+                    }
+                }
+            }
+        }
+    }
+}
+
+.nomore-data {
+    text-align: center;
+    margin: 20px 0 10px;
+    color: #999;
+}
+</style>
+

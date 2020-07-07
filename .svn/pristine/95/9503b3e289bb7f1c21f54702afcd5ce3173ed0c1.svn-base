@@ -1,0 +1,341 @@
+<!--创建专栏-->
+<template>
+  <div class="creatColumn">
+    <div class="content">
+      <div class="title">{{ $route.params.d ? '编辑专栏' : '创建专栏' }}创建专栏</div>
+      <el-form ref="form" :model="form" :rules="rules" label-width="80px" label-position="top" :inline='true' size="small">
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="专栏主页图" required prop="image">
+              <div class="ask">可上传jpg/jpeg/png/bmp格式图片，建议分辨率为900*506，最大4M</div>
+              <upload-pic @getPicUrl="getPicUrl"></upload-pic>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="发布专栏角色" required prop="accountIdentity">
+              <el-select placeholder="讲师" disabled v-model="form.accountIdentity">
+                <el-option value="讲师" ></el-option>
+              </el-select>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="专栏名称" required prop="name">
+              <el-input v-model="form.name" class="columnName" maxlength="10" show-word-limit></el-input>
+            </el-form-item>
+          </el-col>
+        </el-row>
+        <el-form-item label="订阅价格(元)" required prop="price">
+          <el-input v-model="form.price"></el-input>
+        </el-form-item>
+
+        <el-form-item label="选择更新频率" required class="update" prop="upToTime">
+          <el-select class="update1" v-model="updateTime1" @change="timeChange">
+            <el-option v-for="(time,index) in times1" :key="index" :label="time" :value="time"></el-option>
+          </el-select>
+          <el-select :disabled="timesDisable" class="update2" v-model="updateTime2">
+            <el-option v-for="time2 in times2" :key="time2" :label="time2" :value="time2"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-row :gutter="20">
+          <el-col :span="24">
+            <el-form-item label="专栏标签" required prop="tagIds">
+              <!-- <div v-for="(item,i) of items" :key="i" class="addTag">
+                <el-select placeholder="请选择一级标签" class="tag1" v-model="items[i].tag1">
+                  <el-option v-for="tag in tags" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                </el-select>
+                <el-select placeholder="请选择二级标签" class="tag2" v-model="items[i].tag2">
+                  <el-option v-for="tag in tagsTwo" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                </el-select>
+                <i class="el-icon-circle-plus-outline" @click.prevent="onAdd"></i>
+                <i class="el-icon-circle-close"  @click.prevent="onReduce(items[i])" v-show="items.length>1" style='color:#E23732;'></i>
+              </div> -->
+              <div v-for="(item,index) in tagItems" :key="index" class="addTag">
+                <el-select placeholder="请选择一级标签" class="tag1" v-model="tagItems[index].tag1" @change="tagItems[index].tag2 = ''">
+                  <el-option v-for="tag in firstTag" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                </el-select>
+                <el-select placeholder="请选择二级标签" class="tag2" v-model="tagItems[index].tag2" v-if="computedSecondTag(tagItems[index].tag1).length">
+                  <el-option v-for="tag in computedSecondTag(tagItems[index].tag1)" :key="tag.id" :label="tag.tagName" :value="tag.id"></el-option>
+                </el-select>
+                <i class="el-icon-circle-plus-outline" @click.prevent="onAdd" v-show="index===tagItems.length-1"></i>
+                <i class="el-icon-circle-close"  @click.prevent="onReduce(index)" v-show="tagItems.length>1" style='color:#E23732;'></i>
+              </div>
+            </el-form-item>
+          </el-col>
+        </el-row>
+
+        <el-form-item label="专栏内容" required prop="description">
+          <quill-editor ref="myQuillEditor" v-model="form.description">
+          </quill-editor>
+        </el-form-item>
+
+        <el-form-item class="button">
+          <el-button @click="preview">预览</el-button>
+          <el-button @click="saveSraft">存为草稿</el-button>
+          <el-button type="danger" @click="onSubmit">提交审核</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import 'quill/dist/quill.core.css'
+import 'quill/dist/quill.snow.css'
+import 'quill/dist/quill.bubble.css'
+
+import { quillEditor } from 'vue-quill-editor'
+import UploadPic from '@/utils/upLoadPic'
+import api from '@/fetch'
+export default {
+  name: 'creatColumn',
+  components: {
+    quillEditor,
+    UploadPic
+  },
+  data () {
+    return {
+      rules: {
+        image: [{ required: true, message: '不能为空', trigger: 'blur' }],
+        accountIdentity: [{ required: true, message: '不能为空', trigger: 'blur' }],
+        name: [{ required: true, message: '不能为空', trigger: 'blur' }],
+        price: [{ required: true, message: '不能为空', trigger: 'blur' }],
+        upToTime: [{ required: true, message: '不能为空', trigger: 'blur' }],
+        tagIds: [{ required: true, message: '不能为空', trigger: 'blur' }],
+        description: [{ required: true, message: '不能为空', trigger: 'blur' }]
+      },
+      tagItems: [{ tag1: '', tag2: '' }],
+      allTags: [],
+      tags: [],
+      tagsTwo: [],
+      times1: ['每月', '每周', '每天'],
+      times2: [],
+      updateTime1: '',
+      updateTime2: '',
+      timesDisable: false,
+      form: {
+        image: '',
+        accountIdentity: '', // 发布者身份
+        name: '',
+        price: '',
+        upToTime: '',
+        tagIds: '',
+        description: ''
+      }
+    }
+  },
+  created () {
+    this.getTaglist1()
+    this.getColumnDetail()
+  },
+  computed: {
+    firstTag () {
+      return this.allTags.filter(item => !item.parentId)
+    }
+  },
+  methods: {
+    computedSecondTag (id) {
+      return this.allTags.filter(item => item.parentId === id)
+    },
+    onAdd () {
+      this.tagItems.push({ tag1: '', tag2: '' })
+    },
+    onReduce (index) {
+      this.$confirm('确定要删除？', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        this.tagItems.splice(index, 1)
+      })
+    },
+    // 更新时间
+    timeChange (val) {
+      if (val === '每月') {
+        this.timesDisable = false
+        this.times2 = []
+        this.updateTime2 = ''
+        for (let i = 1; i <= 28; i++) {
+          this.times2.push(i + '号')
+        }
+      } else if (val === '每周') {
+        this.timesDisable = false
+        this.times2 = []
+        this.updateTime2 = ''
+        var num = ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+        for (let i = 0; i <= num.length; i++) {
+          this.times2.push(num[i])
+        }
+      } else {
+        this.times2 = []
+        this.updateTime2 = ''
+        this.timesDisable = true
+      }
+    },
+    // 标签
+    // 标签
+    async getTaglist1 () {
+      const { data } = await api.tagList(this.tagParams)
+      this.allTags = data.records
+    },
+    // 上传图片
+    getPicUrl (pciUrl) {
+      this.form.image = pciUrl
+    },
+    // 预览
+    preview () {
+      this.$refs.form.validate(isOk => {
+        if (isOk) {
+          this.form.upToTime = this.updateTime1 + this.updateTime2
+          this.$store.commit('previewColumn', this.form)
+          this.$router.push('/previewColumn')
+        } else {
+          return false
+        }
+      })
+    },
+
+    // 编辑专栏
+    // 获取数据
+    // async getColumnDetail () {
+    //   const res = await api.getColumnDetail(this.$route.params.id)
+    //   this.form = res.data
+    // },
+
+    // 存为草稿
+    async saveSraft () {
+      const tagArr = []
+      this.items.forEach((item, index) => {
+        for (var i in item) {
+          tagArr.push(item[i])
+        }
+      })
+      this.form.tagId = tagArr.join(',')
+      this.form.upToTime = this.updateTime1 + this.updateTime2
+      this.$refs.form.validate(async isOk => {
+        if (isOk) {
+          const res = await api.saveColumn(this.form)
+          if (res.code === 200) {
+            this.$router.push('/myLecture')
+          }
+        }
+      })
+    },
+    // 提交审核
+    async onSubmit () {
+      const tagArr = []
+      this.items.forEach((item, index) => {
+        for (var i in item) {
+          tagArr.push(item[i])
+        }
+      })
+      this.form.tagId = tagArr.join(',')
+      this.form.upToTime = this.updateTime1 + this.updateTime2
+      this.$refs.form.validate(async isOk => {
+        if (isOk) {
+          const res = await api.publishColumn(this.form)
+          if (res.code === 200) {
+            this.$router.push('/myLecture')
+          }
+        }
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .creatColumn {
+    .content {
+      width: 860px;
+      background-color: #fff;
+      border-radius: 10px;
+      .title {
+        height: 50px;
+        line-height: 50px;
+        padding-left: 20px;
+        border-bottom: 1px solid #ddd;
+        box-sizing: border-box;
+      }
+    }
+  }
+  .content {
+    .ask {
+          font-size: 12px;
+          color:#ccc;
+          line-height: 18px;
+        }
+    .el-form {
+      margin-left: 20px;
+      .el-form-item {
+        margin-bottom: 18px;
+        .el-form-item__content {
+          .el-input {
+            width: auto;
+            width: 260px;
+          }
+          .columnName {
+            width: 560px;
+          }
+          .update1, .update2 {
+            .el-input {
+              width: 120px;
+              margin-right: 20px;
+            }
+          }
+          .tag1 +.tag2{
+            margin-left: 40px;
+          }
+        }
+        .addTag{
+          margin-bottom:22px;
+          // position: relative;
+          img {
+            margin-left: 10px;
+          }
+        }
+      }
+      .update {
+        margin-left:28px;
+      }
+      .button {
+        margin-left: 230px;
+        .el-button {
+          width: 90px;
+          height: 34px;
+        }
+      }
+
+    }
+    .el-form--label-top {
+      .el-form-item__label {
+        padding: 0px!important;
+        line-height: 30px!important;
+      }
+    }
+    .avatar-uploader{
+      width: 280px;
+      height: 210px;
+      background-color: #ddd;
+      border-radius: 10px;
+      border:1px dashed #ccc;
+      // margin-right:30px;
+      font-size: 28px;
+      float: left;
+      display: flex;
+      justify-content:center;
+      align-items: center;
+      img {
+        width: 280px;
+        height: 210px;
+        border-radius: 10px;
+      }
+    }
+  }
+
+</style>

@@ -1,0 +1,272 @@
+<template>
+  <div class="couresMessage">
+    <div class="title">课程管理</div>
+    <div class="middle">
+      <img :src="$store.state.imageDomain + columnDetail.image" alt="" style="width: 276px;height: 208px;">
+      <div class="content">
+        <div class="courseName">
+          <h3>{{columnDetail.name}}</h3>
+          <p><span>观看: {{columnDetail.watchCount || 0}}次</span><span>|</span><span>讲师： {{columnDetail.lecturerInfo.realName}}</span> </p>
+        </div>
+        <div :class="columnDetail.price > 0 ? 'red' : 'purple'">{{columnDetail.price>0 ? '￥'+columnDetail.price : '免费' }}</div>
+        <el-button  @click="preview">查看专栏信息</el-button>
+      </div>
+    </div>
+    <div class="button">
+      <el-button type="danger" @click="addCourse" >新增专栏课程</el-button>
+      <el-button @click="showCourseOrder = true">课程排序</el-button>
+    </div>
+    <div class="table-data">
+      <el-table ref="project-table" style="width: 100%;padding-bottom: 50px;" :data="tableData">
+        <el-table-column label="序号" align="center" width="60px" type="index"></el-table-column>
+        <el-table-column label="提交/保存时间" prop="createTime" width="160px">
+          <template slot-scope="scope">
+            <span>{{scope.row.createTime | formatDate}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="课程名称" prop="name" width="200px">
+        </el-table-column>
+        <el-table-column label="课程类型" prop="type" width="80px">
+          <template slot-scope="scope">
+            {{scope.row && scope.row.type===1?'音频':'视频'}}
+          </template>
+        </el-table-column>
+        <el-table-column label="审核状态" prop="status" width="80px">
+          <template slot-scope="scope">
+            <el-tag v-if="scope.row && scope.row.status===1001" size="mini" type="danger">审核驳回</el-tag>
+            <el-tag v-else-if="scope.row && scope.row.status===2000" size="mini" style="color: #409eff;border-color: #d9ecff;background-color: #ecf5ff;">草稿</el-tag>
+            <el-tag v-else-if="scope.row && scope.row.status===1000" size="mini" type="warning">待审核</el-tag>
+            <el-tag v-else-if="scope.row && scope.row.status===1002" size="mini" type="success">已发布</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="审核时间" prop="auditTime" width="160px">
+          <template slot-scope="scope">
+            <span>{{scope.row.auditTime | formatDate}}</span>
+          </template>
+        </el-table-column>
+        <el-table-column label="操作" width="120px">
+          <template slot-scope="scope" v-if="scope.row && (scope.row.status===1001 || scope.row.status===2000)">
+            <span class="edit" @click="editColumnCourse(scope.row.id)">编辑</span>
+            <span class="delete" @click="ondelete(scope.row.id)">删除</span>
+          </template>
+        </el-table-column>
+      </el-table>
+    </div>
+
+    <el-dialog :title="editCourseId?'编辑专栏课程':'新增专栏课程'" :close-on-click-modal='false' :visible.sync="showEdit" width="1100px">
+      <editColumnforCourse :editCourseId="editCourseId" :free="free" @finish="columnCourseList"></editColumnforCourse>
+    </el-dialog>
+
+    <el-dialog title="课程排序" :visible.sync="showCourseOrder" width="1100px">
+      <courseOrder :tableData='tableData' :showCourseOrder="showCourseOrder" @newTable="newTable"></courseOrder>
+      <span slot="footer" class="dialog-footer">
+        <el-button @click="showCourseOrder = false">取 消</el-button>
+        <el-button type="danger" @click="sortChange">确 定</el-button>
+      </span>
+    </el-dialog>
+  </div>
+</template>
+
+<script>
+import courseOrder from '@/components/courseOrder'
+import editColumnforCourse from './editColumnforCourse'
+import api from '@/fetch'
+export default {
+  components: {
+    editColumnforCourse,
+    courseOrder
+  },
+  data() {
+    return {
+      // 课程状态码：
+      // DRAFT(2000, "草稿"),;
+      // APPROVING(1000, "审核中"),
+      // REJECT(1001, "审核驳回"),
+      // AGREE(1002, "审核通过"),
+      showEdit: false,
+      showCourseOrder: false,
+      editCourseId: '', // 编辑课程传的id
+      free:'', //是否免费
+      columnDetail: {
+        lecturerInfo: {}
+      },
+      // 专栏课程列表
+      columnCourseParams: {
+        keywords: this.$route.params.id,
+        pageNum: 1,
+        pageSize: 500
+      },
+      ColumnCourse: [], // 上面的课程
+      // 表格课程
+      tableData: []
+    }
+  },
+  methods: {
+    newTable (v) {
+      this.tableData = v;
+    },
+    preview(){
+      this.$store.commit('previewColumn', this.columnDetail)
+      window.open('/previewColumn')
+    },
+    sortChange() {
+      api.sortCourse(this.tableData).then(res => {
+        this.showCourseOrder = false
+        this.columnCourseList()
+      })
+    },
+    addCourse() {
+      var hasLastOne=false
+      this.tableData.map(function(value,index){
+        if(value.wasLastOne==1){
+          hasLastOne=true
+        }
+      });
+      if(hasLastOne){
+        this.$message({
+          message: '已有最后一节课'
+        });
+      }else {
+        this.editCourseId = ''
+        this.showEdit = true
+      }
+
+    },
+    // 获取专栏数据
+    async getColumnDetail() {
+      const { data: columnDetail } = await api.getColumnDetail(this.$route.params.id)
+      this.columnDetail = columnDetail
+      this.free= !(columnDetail.price!=0)
+    },
+    editColumnCourse(id) {
+      this.editCourseId = id
+      this.showEdit = true
+    },
+    // 获取去课程管理
+    async getColumnCourse() {
+      const res = await api.getColumnDetail(this.$route.params.id)
+      this.ColumnCourse = res.data.records
+    },
+    // 获取专栏课程列表
+    async columnCourseList() {
+      this.showEdit = false
+      const res = await api.columnCourseList(this.columnCourseParams)
+      this.tableData = res.data.records.filter(item => item != null)
+      this.editCourseId = ""
+    },
+    // 删除专栏课程
+    ondelete(id) {
+      this.$confirm('确定删除该课程?', {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }).then(() => {
+        api.delColumnCourse(this.$route.params.id, id).then(() => {
+          this.$message.success('删除成功')
+          this.columnCourseList()
+        })
+      })
+    }
+  },
+  created() {
+    this.getColumnDetail()
+    this.columnCourseList()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.couresMessage {
+  border-radius: 10px;
+  background-color: #fff;
+  .title {
+    height: 50px;
+    line-height: 50px;
+    padding: 0 20px;
+    box-sizing: border-box;
+    font-size: 16px;
+    color: #4a4a4a;
+  }
+  .middle {
+    height: 250px;
+    box-sizing: border-box;
+    padding: 20px 20px;
+    display: flex;
+    justify-content: flex-start;
+    align-items: flex-start;
+    border-bottom: 1px solid #ddd;
+    border-top: 1px solid #ddd;
+    img {
+      height: 100%;
+    }
+    .content {
+      margin-left: 20px;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: flex-start;
+      .courseName {
+        h3 {
+          font-size: 18px;
+          font-weight: bold;
+          color: #4a4a4a;
+        }
+        p {
+          color: #999;
+          margin-top: 10px;
+          span:nth-child(2) {
+            margin: 0 10px;
+          }
+        }
+      }
+    }
+  }
+  .button {
+    height: 60px;
+    line-height: 60px;
+    padding: 0 20px;
+  }
+  .table-data {
+    .edit {
+      color: #e23732;
+      cursor: pointer;
+    }
+    .delete {
+      cursor: pointer;
+      margin-left: 10px;
+      color: #e23732;
+    }
+    /deep/.el-table th {
+      background-color: #fafafb;
+    }
+    // 表格斑马纹颜色
+    /deep/.el-table--striped .el-table__body tr.el-table__row--striped td {
+      background-color: #f5f6f8 !important;
+    }
+    // 表格HOVER颜色
+    /deep/.el-table--striped .el-table__body tr.el-table__row--striped.current-row td,
+    /deep/.el-table__body tr.current-row > td,
+    /deep/.el-table__body tr.hover-row.current-row > td,
+    /deep/.el-table__body tr.hover-row.el-table__row--striped.current-row > td,
+    /deep/.el-table__body tr.hover-row.el-table__row--striped > td,
+    /deep/.el-table__body tr.hover-row > td {
+      background-color: #ecf4ff !important;
+    }
+    .el-table--enable-row-hover .el-table__body tr:hover > td {
+      background-color: #ecf4ff !important;
+    }
+  }
+  /deep/.el-dialog__header {
+    border-bottom: 1px solid #ddd;
+    padding: 12px 20px;
+  }
+  /deep/.el-dialog__body {
+    padding: 0;
+  }
+  /deep/.el-dialog__footer {
+    border-top: 1px solid #ddd;
+    padding: 12px 20px;
+  }
+}
+</style>

@@ -1,0 +1,22 @@
+import { post } from 'axios'
+
+export default {
+  // 收藏课程列表
+  CollectCourse: params => post('homePage/myCollectCourseList', params),
+  // 收藏专栏列表
+  CollectColumn: params => post('homePage/collection/column', params),
+  // 收藏文章列表
+  CollectArticle: params => post('homePage/myCollectArticleList', params),
+  // 我关注的人
+  myAttention: params => post('homePage/myConcernPersonList', params),
+  // 关注我的人--粉丝
+  myFans: params => post('homePage/concernMePersonList', params),
+  // 我购买的--专栏
+  getMybuyColumn: params => post('homePage/bought/column', params),
+  // 我的讲堂--专栏
+  getMyclassColumn: params => post('homePage/myColumnList', params),
+  // 个人收藏信息
+  userCollectCount: accountId => post(`homePage/myCollectInfos/${accountId}`),
+  // 个人信息
+  userInfo: accountId => post(`homePage/userInfo/${accountId}`),
+}

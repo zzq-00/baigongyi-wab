@@ -1,0 +1,66 @@
+<template>
+  <div class="freeCourse">
+    免费课程
+  </div>
+</template>
+
+<script>
+
+import api from '@/fetch'
+export default {
+  name: 'LectureRoom',
+  components: {
+  },
+  data () {
+    return {
+      attentionType: '', // danger 关注，已关注
+      // 课程参数
+      courseParams: {
+        // page: 1, // 当前页
+        // size: 8, // 每页多少跳
+        asc: true,
+        keywords: 'keywords',
+        orderBy: 'id',
+        pageNum: 1,
+        pageSize: 10,
+        searchKey: 'searchKey'
+      },
+      // 专栏参数
+      columnParams: {
+        page: 1, // 当前页
+        size: 8 // 每页多少跳
+      },
+      dataList: {
+        course: [],
+        column: []
+
+      }
+    }
+  },
+  created () {
+    this.getCourse()
+  },
+  methods: {
+    attention () {
+      if (this.attentionType === '') {
+        this.attentionType = 'danger'
+      } else {
+        this.attentionType = ''
+      }
+    },
+    // 课程
+    async getCourse () {
+      const res = await api.getCourse(this.courseParams)
+      // this.dataList.course = res.data.records
+    }
+
+  }
+}
+</script>
+
+<style lang="less" scope>
+  .freeCourse {
+    width: 1100px;
+    overflow: hidden;
+}
+</style>

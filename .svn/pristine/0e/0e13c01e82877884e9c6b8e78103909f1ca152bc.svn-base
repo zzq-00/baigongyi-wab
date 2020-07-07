@@ -1,0 +1,129 @@
+// axios 基本配置
+axios.defaults.baseURL = apiHost();
+axios.defaults.headers['Content-Type'] = 'application/json;charset=UTF-8';
+// 添加响应拦截器
+axios.interceptors.response.use(function (response) {
+    // 对响应数据做点什么
+    return response.data;
+  }, function (error) {
+    // 对响应错误做点什么
+    return Promise.reject(error);
+});
+
+// 接口地址
+function apiHost() {
+    // 正式
+    if(window.location.host.includes("baigongyi.com")){
+        return "";
+    }
+    // 测试
+    return "http://bgywebapitest.tzecc.com";
+}
+
+var api = {
+      
+    // 获取不需要登录的token
+    refreshToken: function () {
+        return axios.post("/refreshToken")
+        .then(response => {
+            if(response.code = 200) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+
+    // 获取分享所需参数
+    shareConfig: function (token) {
+        return axios.get("/share/config?host="+ encodeURIComponent(location.href.split('#')[0]), 
+        {
+            headers: {
+                "Authentication": token
+            }
+        })
+        .then(response => {
+            if(response.code = 200) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+
+    // 获取oss资源域名
+    resourceInfo: function (token) {
+        return axios.get("/resource/info",
+        {
+            headers: {
+                "Authentication": token
+            }
+        })
+        .then(response => {
+            if(response.code = 200) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+
+    // 获取评论列表
+    getComments: function (token, commentParam) {
+        return axios.post("/commentRecord/list", commentParam,
+        {
+            headers: {
+                "Authentication": token
+            },
+        }
+        ).then(response => {
+            if(response.code = 200) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+
+    // 想法详情
+    getIdea: function(id, token) {
+        return axios.get("/idea/"+ id,
+        {
+            headers: {
+                "Authentication": token
+            }
+        }
+        ).then(response => {
+            if(response.code = 200) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+
+    // 热点资讯详情
+    getHotNews: function(id, token) {
+        return axios.get("/hotNews/"+ id,
+        {
+            headers: {
+                "Authentication": token
+            }
+        }
+        ).then(response => {
+            if(response.code = 200) {
+                return response.data;
+            }
+        })
+        .catch(err => {
+            console.log(err);
+        });
+    },
+
+ }
+ window.api = api;

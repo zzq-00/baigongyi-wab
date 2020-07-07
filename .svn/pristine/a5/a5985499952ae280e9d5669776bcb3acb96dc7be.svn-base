@@ -1,0 +1,292 @@
+<!--编辑课程-->
+<template>
+  <div class="creatColumn">
+    <div class="content">
+      <div class="title">{{$route.name === 'reEditCourse'?'编辑课程':'创建课程'}} <span class="reject" v-if="$route.name === 'reEditCourse'&&status===1001" @click="openReason">点击查看审核驳回原因</span></div>
+
+      <el-form ref="ruleForm" :model="ruleForm" :rules="rules" label-position="top" inline>
+        <el-form-item style="display:block;">
+          <uploadPic type="course" v-model="ruleForm.image" :description="uploadDesc"></uploadPic>
+        </el-form-item>
+        <br>
+        <el-form-item label="发布课程角色" prop="accountIdentity">
+          <el-select disabled v-model="ruleForm.accountIdentity">
+            <el-option :value="1" label="讲师"></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="课程名称" prop="name">
+          <el-input v-model.trim="ruleForm.name" class="columnName" maxlength="50" show-word-limit></el-input>
+        </el-form-item>
+
+        <el-form-item label="课程价格(元)" prop="price">
+          <el-input v-model.trim="ruleForm.price" maxlength="15"></el-input>
+        </el-form-item>
+
+        <el-form-item label="选择课程类型" class="coursetype" prop="type">
+          <el-select disabled v-model="ruleForm.type">
+            <!--<el-option :value="1" label="音频"></el-option>-->
+            <el-option :value="2" label="视频"></el-option>
+          </el-select>
+        </el-form-item>
+
+        <el-form-item label="选择视频文件" prop="url">
+          <div class="recommed">建议上传视频大小不超过2g，视频类型为：'FLV','MOV','MP4'</div>
+          <uploadVideo @getValue="getVideoValue" :value="ruleForm"></uploadVideo>
+        </el-form-item>
+
+        <el-form-item prop="tagIds" ref="tagList">
+          <template slot="label">
+            课程标签 <span style="font-size: 12px;color: #999999;">添加标签后，您的课程将显示在对应标签分区中，方便学员进行检索；标签不分先后</span>
+          </template>
+          <addTagDialog v-model="confirmTags" />
+        </el-form-item>
+
+        <el-form-item label="课程介绍" prop="courseDescription" style="display: block;">
+          <Editor v-model="editorContent" @checkFormItem="$refs.ruleForm.validateField('courseDescription')" />
+        </el-form-item>
+
+        <el-form-item class="button">
+          <el-button @click="preview">预览</el-button>
+          <el-button @click="saveSraft">存草稿</el-button>
+          <el-button type="danger" @click="onSubmit">提交审核</el-button>
+        </el-form-item>
+      </el-form>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import uploadVideo from '@/utils/uploadVideo'
+import uploadPic from '@/utils/uploadPic'
+import Editor from '@/components/Editor.vue'
+import addTagDialog from '@/components/addTagDialog.vue'
+
+export default {
+  components: {
+    uploadVideo,
+    uploadPic,
+    Editor,
+    addTagDialog
+  },
+  data() {
+    return {
+      editorContent: '',
+      rejectReason: '',
+      status: -100,
+      uploadDesc: {
+        title: '课程主页图',
+        desc: '可上传jpg/jpeg/png/bmp格式图片，建议分辨率为900*506，最大4M',
+        maxsize: 4
+      },
+      ruleForm: {
+        image: '',
+        accountIdentity: 1, // 发布者身份
+        name: '',
+        price: '',
+        type: 2, // 类型--音频视频
+        url: '', // 音频视频地址
+        tagIds: '',
+        courseDescription: '',
+        originalFileName: '' // 文件名
+      },
+      rules: {
+        accountIdentity: [{ required: false, message: '选择发布课程角色', trigger: 'blur' }],
+        name: [{ required: true, message: '请填写课程名称', trigger: 'blur' }],
+        price: [
+          {
+            required: true,
+            message: '请填写正确的课程价格,保留两位小数',
+            pattern: /(^[\d]|^[1-9][\d]*)($|[\.][\d]{0,2}$)/,
+            trigger: 'blur'
+          }
+        ],
+        type: [{ required: false, message: '请选择课程类型', trigger: 'blur' }],
+        url: [{ required: true, message: '上传视频文件', trigger: 'change' }],
+        tagIds: [{ required: true, message: '请选择课程标签', trigger: 'change' }],
+        courseDescription: [{ required: true, message: '请填写课程介绍', trigger: 'blur' }]
+      },
+      confirmTags: []
+    }
+  },
+  watch: {
+    $route: {
+      handler: function(val) {
+        if (val.name === 'reEditCourse') {
+          this.getCourseDetail(val.params.id)
+        } else if (val.name === 'createCourse') {
+          this.ruleForm = {
+            image: '',
+            accountIdentity: 1, // 发布者身份
+            name: '',
+            price: '',
+            type: 2, // 类型--音频视频
+            url: '', // 音频视频地址
+            tagIds: '',
+            courseDescription: '',
+            originalFileName: '' // 文件名
+          }
+          this.editorContent = ''
+          this.confirmTags = []
+        }
+      },
+      immediate: true
+    },
+    editorContent: function(val) {
+      this.ruleForm.courseDescription = this.handleHtml(val)
+    },
+    confirmTags: function(val) {
+      this.$set(this.ruleForm, 'tagIds', val.map(item => item.id).join(','))
+      if (val.length) this.$refs.ruleForm.clearValidate('tagIds')
+    }
+  },
+  methods: {
+    openReason() {
+      this.$alert(this.rejectReason, { confirmButtonText: '确定' })
+    },
+    getVideoValue(val) {
+      this.ruleForm.url = val.url
+      this.ruleForm.originalFileName = val.originalFileName
+      this.ruleForm.duration = val.duration
+    },
+    // 预览
+    preview() {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      this.$refs.ruleForm.validate(isOk => {
+        if (isOk) {
+          this.$store.commit('previewCourse', this.ruleForm)
+          window.open('/previewCourse')
+        }
+      })
+    },
+    // 存为草稿
+    saveSraft() {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      this.$refs.ruleForm.validate(async isOk => {
+        if (isOk) {
+          const res = await api.saveCourse(this.ruleForm)
+          this.$message.success('保存成功')
+          this.$router.push('/myLecture')
+        }
+      })
+    },
+    // 提交审核
+    onSubmit() {
+      if (!this.ruleForm.image) return this.$message.warning('请上传课程主页图')
+      this.$refs.ruleForm.validate(async isOk => {
+        if (isOk) {
+          const res = await api.publishCourse(this.ruleForm)
+          this.$message.success('提交成功，等待后台审核')
+          this.$router.push('/myLecture')
+        }
+      })
+    },
+    // 课程详情
+    getCourseDetail(id) {
+      api.getCourseDetail(id).then(res => {
+        let { id, image, accountIdentity, name, price, type, url, courseDescription, originalFileName, courseTagList } = res.data
+        this.editorContent = courseDescription
+        this.ruleForm = { id, image, accountIdentity, name, price, type, url, originalFileName }
+        this.rejectReason = res.data.rejectReason
+        this.status = res.data.status
+        // this.confirmTags = courseTagList
+        //   .map(item => {
+        //     return item.children.map(its => {
+        //       its.tagName = item.tagName + '-' + its.tagName
+        //       return its
+        //     })
+        //   })
+        //   .flat()
+
+        res.data.courseTagList.map(item => {
+          item.children.map(items => {
+            this.confirmTags.push({
+              id: items.id,
+              createTime: items.createTime,
+              updateTime: items.createTime,
+              tagName: item.tagName + '-' + items.tagName,
+              icon: items.icon,
+              description: items.description,
+              sortNumber: items.sortNumber,
+              parentId: item.id,
+              children: [],
+              checkedArr: [],
+              parentTagName: item.tagName
+            })
+          })
+        })
+      })
+    }
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.creatColumn {
+  .content {
+    background-color: #fff;
+    border-radius: 10px;
+    .title {
+      height: 50px;
+      line-height: 50px;
+      padding-left: 20px;
+      border-bottom: 1px solid #ddd;
+      box-sizing: border-box;
+      .reject {
+        margin-left: 20px;
+        color: #e23732;
+        font-size: 12px;
+        font-weight: bold;
+        cursor: pointer;
+      }
+    }
+  }
+}
+.content {
+  .ask {
+    font-size: 12px;
+    color: #ccc;
+    line-height: 18px;
+  }
+  .el-form {
+    padding: 10px 90px 10px 30px;
+    /deep/.el-form-item {
+      margin-bottom: 18px;
+      .el-form-item__content {
+        .el-input {
+          width: auto;
+          width: 260px;
+        }
+        .columnName {
+          width: 560px;
+        }
+        .recommed {
+          font-size: 12px;
+          color: #ccc;
+          margin-top: -30px;
+          margin-left: 100px;
+        }
+      }
+    }
+    .button {
+      margin-left: 230px;
+      /deep/.el-button {
+        width: 90px;
+        height: 34px;
+      }
+    }
+    .coursetype {
+      margin-left: 29px;
+      /deep/.el-input {
+        width: 120px;
+      }
+    }
+  }
+  /deep/.el-form--label-top {
+    .el-form-item__label {
+      padding: 0px !important;
+      line-height: 30px !important;
+    }
+  }
+}
+</style>

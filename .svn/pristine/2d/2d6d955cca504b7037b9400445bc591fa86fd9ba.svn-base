@@ -1,0 +1,26 @@
+<template>
+  <div class="myReply">
+    <div class="title">我的回答</div>
+    <div class="content">回答的内容</div>
+  </div>
+</template>
+
+<script>
+export default {
+
+}
+</script>
+
+<style lang="less" scope>
+  .myReply {
+    .title {
+      padding: 10px 20px;
+      background-color: #FFF3F3;
+    }
+    .content {
+      padding: 20px;
+      height: 100vh;
+      background-color: #fff;
+    }
+  }
+</style>

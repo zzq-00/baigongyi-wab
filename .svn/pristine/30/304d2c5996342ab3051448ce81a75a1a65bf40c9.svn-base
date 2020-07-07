@@ -1,0 +1,112 @@
+<template>
+  <div class="myAttention">
+    <div class="title">
+      <span v-for="(item,index) in $route.query.own!='Others'?tabsColumn:tabsColumns" :key="index" @click="toggleTabs(index)" :class="{active:index==nowIndex}">{{item}}
+      </span>
+    </div>
+    <div class="content">
+      <attention-com :attentionData="attentionData" :nowIndex='nowIndex' v-if="nowIndex!=2"></attention-com>
+      <concerns :attentionData="attentionData" v-if="nowIndex==2"></concerns>
+      <!-- 分页 -->
+    </div>
+  </div>
+</template>
+
+<script>
+import AttentionCom from '@/components/Attention'
+import concerns from '@/components/concerns' //关注的问题
+import api from '@/fetch'
+export default {
+  name: 'myAttention',
+  components: {
+    AttentionCom,
+    concerns
+  },
+  data() {
+    return {
+      nowIndex: 0, // tab栏切换
+      tabsColumn: ['我关注的人', '关注我的人', '我关注的问题'],
+      tabsColumns: ['他关注的人', '关注他的人', '他关注的问题'],
+      attentionData: [], // 关注列表
+      // 我关注的人
+      myAttentionParams: {
+        accountId: this.$store.state.userInfo.accountId,
+        pageNum: 1,
+        pageSize: 10
+      },
+      // 关注我的人
+      myFansParams: {
+        accountId: this.$store.state.userInfo.accountId,
+        pageNum: 1,
+        pageSize: 10
+      }
+    }
+  },
+  created() {
+    this.myAttention()
+    if (this.tabActive == 5) {
+      this.nowIndex = 2
+    }
+    this.$watch('nowIndex', (newVal, oldVal) => {
+      if (this.nowIndex === 0) {
+        this.myAttention()
+      } else if (this.nowIndex === 1) {
+        this.myFans()
+      } else {
+        // 关注问题
+      }
+    })
+  },
+  computed: {
+    tabActive() {
+      return this.$store.state.tabActive
+    }
+  },
+  methods: {
+    // tab栏切换
+    toggleTabs(index) {
+      this.nowIndex = index
+      if (this.nowIndex == 2) {
+        this.$store.commit('setTab', 5)
+      } else {
+        this.$store.commit('setTab', -1)
+      }
+    },
+    // 我关注的人
+    async myAttention() {
+      const res = await api.myAttention(this.myAttentionParams)
+      this.attentionData = res.data.records
+    },
+    // 关注我的人
+    async myFans() {
+      const res = await api.myFans(this.myFansParams)
+      this.attentionData = res.data.records
+    },
+    // 我关注的问题
+    attentionQuestion() {
+      // 接口
+    }
+  }
+}
+</script>
+
+<style lang="less" scope>
+.myAttention {
+  .title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+    cursor: pointer;
+    span + span {
+      margin-left: 16px;
+    }
+    .active {
+      color: #e23732;
+    }
+  }
+  .content {
+    // padding: 10px 20px 20px 20px;
+    // height: 100vh;
+    background-color: #fff;
+  }
+}
+</style>

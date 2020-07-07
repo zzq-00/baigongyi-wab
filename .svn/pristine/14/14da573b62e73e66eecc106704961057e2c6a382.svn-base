@@ -1,0 +1,111 @@
+import Vue from 'vue'
+import Router from 'vue-router'
+import ElementUI from 'element-ui'
+import dragVerify from 'vue-drag-verify'
+import VideoPlayer from 'vue-video-player'
+import vuePayPwd from 'vue-pay-pwd' // 支付密码
+
+import App from './App.vue'
+import router from './router'
+import store from './store'
+
+import './permission'
+
+import '@/assets/theme/index.css'
+import '@/assets/style/main.css'
+
+import mixins from '@/mixins'//引入混合
+
+Vue.config.productionTip = false
+Vue.use(ElementUI, { size: 'small' })
+Vue.use(dragVerify)
+Vue.use(VideoPlayer)
+Vue.use(Router)
+Vue.use(vuePayPwd)
+Vue.mixin(mixins);
+
+// 当点击相同页面时防止报错
+const originalPush = Router.prototype.push
+Router.prototype.push = function push(location) {
+  return originalPush.call(this, location).catch(err => err)
+}
+
+new Vue({
+  router,
+  store,
+  render: h => h(App)
+}).$mount('#app')
+
+// 评论时间格式化过滤器
+Vue.filter('commentDate', datetimes => {
+  let datetime = new Date(datetimes).getTime()
+  function timestampFormat(datetime) {
+    let curTimestamp = new Date().getTime(); //当前时间戳
+    let timestampDiff = curTimestamp - datetime; // 参数时间戳与当前时间戳相差秒数
+    let leave1 = timestampDiff % (24 * 3600 * 1000); //相差小时数时间戳
+    let disparityH = Math.floor(leave1 / (3600 * 1000)); //相差小时数转化为具体几个小时
+    let curDate = new Date(curTimestamp); // 当前时间日期对象
+    let tmDate = new Date(datetime);  // 参数时间戳转换成的日期对象, 评论的时间
+
+    let Y = tmDate.getFullYear(), m = tmDate.getMonth() + 1, d = tmDate.getDate();
+    let H = tmDate.getHours(), i = tmDate.getMinutes(), s = tmDate.getSeconds();
+    if ((timestampDiff) / 1000 < 3600) {
+      if (timestampDiff / 1000 / 60 < 1) {
+        return '刚刚'
+      } else {
+        return Math.floor(timestampDiff / 1000 / 60) + "分钟前";
+      }
+    } else if (timestampDiff / 1000 >= 3600 && curDate.getFullYear() == Y && curDate.getMonth() + 1 == m && curDate.getDate() == d) {
+      return disparityH + "小时前";
+    } else if (curDate.getFullYear() == Y && curDate.getMonth() + 1 == m && curDate.getDate() - 1 == d) {
+      return "昨天" + (H < 10 ? '0' + H : H) + ":" + (i < 10 ? '0' + H : i);
+    } else if (curDate.getFullYear() == Y && (curDate.getMonth() + 1 != m || (curDate.getMonth() + 1 == m && curDate.getDate() - 1 != d))) {
+      return (m < 10 ? '0' + m : m) + "-" + (d < 10 ? '0' + d : d)
+    } else if (curDate.getFullYear() != Y) {
+      return Y + "-" + (m < 10 ? '0' + m : m) + "-" + (d < 10 ? '0' + d : d)
+    }
+  }
+  // 返回
+  return timestampFormat(datetime)
+})
+
+// 时间格式化过滤器
+Vue.filter('formatDate', (datetime, format) => {
+  if (!datetime) return ''
+  const date = new Date(datetime) // 时间戳为10位需*1000，时间戳为13位的话不需乘1000
+  const year = date.getFullYear()
+  const month = ('0' + (date.getMonth() + 1)).slice(-2)
+  const sdate = ('0' + date.getDate()).slice(-2)
+  const hour = ('0' + date.getHours()).slice(-2)
+  const minute = ('0' + date.getMinutes()).slice(-2)
+  const second = ('0' + date.getSeconds()).slice(-2)
+  if (format === 'hasSecond') {
+    return year + '-' + month + '-' + sdate + ' ' + hour + ':' + minute + ':' + second
+  } else if (format === 'noTime') {
+    return year + '-' + month + '-' + sdate
+  }
+  return year + '-' + month + '-' + sdate + ' ' + hour + ':' + minute
+})
+// 播放量、点赞、收藏数格式化
+Vue.filter('formatNumbers', num => num > 9999 ? Math.round(num / 10000) + '万' : num)
+// 自定义指令，无限滚动
+Vue.directive('scroll', {
+  // 在指令第一次绑定到元素时调用，只会调用一次。可以在此钩子函数中，执行一次性的初始化设置。
+  bind: function (el, binding, vnode) {
+    var wrapper = vnode.elm
+    wrapper.addEventListener('scroll', function () {
+      // 视图高度
+      var viewportHeight = wrapper.clientHeight
+      // 滚动高度
+      var scrollHeight = wrapper.scrollTop
+      // 页面高度
+      var pageHeight = Math.max(wrapper.scrollHeight, wrapper.offsetHeight)
+      console.log(`${pageHeight}====${viewportHeight}====${scrollHeight}========${pageHeight - viewportHeight - scrollHeight}`)
+      if (pageHeight - viewportHeight - scrollHeight < 2) {
+        // 触发加载数据
+        const fnc = binding.value
+        fnc()
+      }
+    })
+  },
+})

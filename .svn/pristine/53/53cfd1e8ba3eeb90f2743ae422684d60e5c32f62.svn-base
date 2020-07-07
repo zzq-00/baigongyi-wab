@@ -1,0 +1,333 @@
+<template>
+  <div class="qa-list-page">
+    <div class="qa-list-left">
+      <p class="qa-list-title">热门回答</p>
+      <ul class="qa-list-box" v-infinite-scroll="qaload">
+        <li v-for="(item,index) in qaList" :key="index">
+          <p class="qa-box-title" @click="gotoDetails(item)">{{item.title}}</p>
+          <div class="qa-person-info">
+            <img :src="item.avatar" alt="" @click="gotoUser(item.accountId)">
+            <div>
+              <p @click="gotoUser(item.accountId)" class="answer-name">{{item.userName}}</p>
+              <p class="answer-time">{{item.lastAnswerTime}}</p>
+            </div>
+            <button class="already" v-if="item.concernStatus==1" @click="follow('1',item,index)">已关注</button>
+            <button class="not" v-if="item.concernStatus==2" @click="follow('2',item,index)">关注</button>
+            <button class="already" v-if="item.concernStatus==3" @click="follow('3',item,index)">互相关注</button>
+          </div>
+          <div class="qa-content" @click="gotoDetails(item)" v-html="item.questionContent"></div>
+          <p class="tagging">
+            <span>{{item.likeCount}}个赞</span>
+            <span>·</span>
+            <span>{{item.commentCount}}条评论</span>
+          </p>
+        </li>
+      </ul>
+    </div>
+    <div class="fabulous-right">
+      <p class="fabulous-title">最赞用户</p>
+      <ul class="fabulous-list-box">
+        <li v-for="(its,index) in fabulousUser" :key="index">
+          <img :src="its.avatar" alt="">
+          <div class="user-info">
+            <p class="users">
+              <span class="user-name">{{its.userName}}</span>
+              <span class="user-more" @click="gotoUser(its.accountId)">了解更多</span>
+            </p>
+            <p class="user-introduce">{{its.introduction}}</p>
+          </div>
+        </li>
+      </ul>
+    </div>
+
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  components: {},
+  data() {
+    return {
+      qaParams: {
+        pageNum: 0,
+        pageSize: 10
+      },
+      qaList: [], //问答列表
+      fabulousUser: [], //最赞用户列表
+      loginaccountId: '', //登录人id
+      attentionParams: {
+        objId: this.$route.params.id,
+        objType: 6
+      }
+    }
+  },
+  watch: {},
+  computed: {},
+  methods: {
+    // 数据瀑布流
+    qaload() {
+      this.qaParams.pageNum += 1
+      this.getQuestionList()
+    },
+    gotoUser(accountId) {
+      // 本人
+      if (accountId == this.loginaccountId) {
+        this.$router.push('/myHome/myReply')
+      } else {
+        // this.$router.push()
+      }
+    },
+    gotoDetails(item) {
+      //   this.$router.push('/questionsDetails')
+      this.$router.push({ path: `/questionsDetails/${item.id}`, })
+    },
+    getQuestionList() {
+      if (this.qaParams.pageNum != 0) {
+        api
+          .getQuestionList(this.qaParams)
+          .then(res => {
+            this.qaList = this.qaList.concat(res.data.records)
+            this.qaList.map(itmem => {
+              if (item.questionContent.length > 150) {
+                item.questionContent = item.questionContent.substring(0, 150) + '...'
+              }
+            })
+          })
+          .catch(res => {})
+      }
+    },
+    getFavoriteUser() {
+      api.getFavoriteUser().then(res => {
+        this.fabulousUser = res.data
+      })
+    },
+    // 关注
+    follow(val, item, index) {
+      // val:1:已关注;2:关注;3:互相关注;
+      if (!this.loginaccountId) {
+        this.$router.push('/login')
+      } else {
+        let objId = item.answerAccountId
+        let objType = 6
+        if (val == 1) {
+          api.delAttention({ objId: objId, objType: objType }).then(res => {
+            item.concernStatus = 2
+          })
+        } else if (val == 2) {
+          api.addAttention({ objId: objId, objType: objType }).then(res => {
+            item.concernStatus = 1
+          })
+        } else if (val == 3) {
+          api.delAttention({ objId: objId, objType: objType }).then(res => {
+            item.concernStatus = 2
+          })
+        }
+      }
+    }
+  },
+  mounted() {
+    this.loginaccountId = JSON.parse(window.localStorage.getItem('user')).accountId
+    this.getQuestionList() //问答列表
+    this.getFavoriteUser() //问答右侧边栏
+  }
+}
+</script>
+<style lang="less" scoped>
+.qa-list-page {
+  padding: 20px 0;
+  overflow: hidden;
+  .qa-list-left {
+    float: left;
+    width: 780px;
+    background: #ffffff;
+    border-radius: 10px;
+    .qa-list-title {
+      padding: 22px 0 12px 20px;
+      height: 16px;
+      line-height: 16px;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(74, 74, 74, 1);
+      border-bottom: 1px solid #dddddd;
+    }
+    .qa-list-box {
+      overflow: auto;
+      height: calc(100vh - 140px);
+      padding-bottom: 71px;
+      li {
+        padding: 20px;
+        border-bottom: 1px solid #dddddd;
+        .qa-box-title {
+          max-width: 740px;
+          overflow: hidden;
+          height: 17px;
+          line-height: 17px;
+          font-size: 16px;
+          font-weight: bold;
+          color: rgba(51, 51, 51, 1);
+          cursor: pointer;
+        }
+        .qa-box-title:hover {
+          color: #e23732;
+        }
+        .qa-person-info {
+          margin-top: 10px;
+          img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            margin-right: 10px;
+            float: left;
+            cursor: pointer;
+          }
+          div {
+            display: inline-block;
+            .answer-name {
+              height: 12px;
+              line-height: 12px;
+              font-size: 14px;
+              font-weight: 400;
+              color: rgba(74, 74, 74, 1);
+              margin-top: 4px;
+            }
+            .answer-name:hover {
+              color: #e23732;
+              cursor: pointer;
+            }
+            .answer-time {
+              margin-top: 11px;
+              height: 9px;
+              line-height: 9px;
+              font-size: 12px;
+              font-weight: 400;
+              color: rgba(153, 153, 153, 1);
+            }
+          }
+          button {
+            padding: 0 13px;
+            float: right;
+            height: 34px;
+            border-radius: 5px;
+            background-color: #ffffff;
+            cursor: pointer;
+          }
+          .not {
+            border: 1px solid #e23732;
+            color: #e23732;
+          }
+          .already {
+            border: 1px solid #666666;
+            color: #666666;
+          }
+        }
+        .qa-content {
+          margin-top: 12px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(102, 102, 102, 1);
+          line-height: 19px;
+          max-height: 55px;
+          overflow: hidden;
+          cursor: pointer;
+        }
+        .tagging {
+          margin-top: 10px;
+          height: 15px;
+          line-height: 15px;
+          font-size: 14px;
+          font-weight: 400;
+          color: rgba(153, 153, 153, 1);
+        }
+      }
+    }
+    .qa-list-box::-webkit-scrollbar {
+      display: none;
+    }
+  }
+  .fabulous-right {
+    width: 280px;
+    height: 450px;
+    float: right;
+    background: rgba(255, 255, 255, 1);
+    border-radius: 10px;
+    padding: 20px 0 20px 20px;
+    .fabulous-title {
+      height: 17px;
+      line-height: 17px;
+      font-size: 16px;
+      font-weight: 400;
+      color: rgba(74, 74, 74, 1);
+    }
+    .fabulous-list-box {
+      padding: 10px 0 20px 0;
+      li {
+        height: 90px;
+        img {
+          width: 60px;
+          height: 60px;
+          border-radius: 50%;
+          float: left;
+          margin-top: 10px;
+        }
+        .user-info {
+          margin-left: 10px;
+          margin-top: 20px;
+          display: inline-block;
+          position: relative;
+          .users {
+            .user-name {
+              width: 120px;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              white-space: nowrap;
+              height: 15px;
+              line-height: 15px;
+              font-size: 14px;
+              font-weight: bold;
+              color: rgba(74, 74, 74, 1);
+            }
+            .user-more {
+              float: right;
+              width: 67px;
+              height: 15px;
+              line-height: 16px;
+              font-size: 14px;
+              font-weight: 400;
+              color: rgba(153, 153, 153, 1);
+              background: url(../../assets/images/more.png) no-repeat center right;
+            }
+            .user-more:hover {
+              color: #e23732;
+              cursor: pointer;
+              background: url(../../assets/images/morehover.png) no-repeat center right;
+            }
+          }
+          .user-introduce {
+            margin-top: 15px;
+            width: 192px;
+            height: 15px;
+            line-height: 15px;
+            font-size: 14px;
+            font-weight: 400;
+            color: rgba(102, 102, 102, 1);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+          }
+        }
+        .user-info:after {
+          position: absolute;
+          content: '';
+          display: block;
+          height: 1px;
+          width: 210px;
+          background-color: #ddd;
+          left: 0px;
+          bottom: -25px;
+        }
+      }
+    }
+  }
+}
+</style>

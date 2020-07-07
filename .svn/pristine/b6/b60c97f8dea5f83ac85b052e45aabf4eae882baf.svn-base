@@ -1,0 +1,19 @@
+import { post, get } from 'axios'
+
+export default {
+  tagList (params) {
+    return post('/tags/list', params)
+  },
+  // bizId查询
+  tagId (id) {
+    return get(`/tags/${id}`)
+  },
+  // 工程圈课程
+  courseTag (params) {
+    return post('/tags/course/list', params)
+  },
+  // 工程圈专栏
+  columnTag (params) {
+    return post('/tags/column/list', params)
+  }
+}

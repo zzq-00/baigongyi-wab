@@ -1,0 +1,186 @@
+<template>
+  <div class="courseOrder">
+    <div class="remind">提示: 上下拖动可改变课成顺序</div>
+    <div class="tableData">
+      <!-- @sort-change="sortChange" @row-click='rowClick' stripe border -->
+      <el-table ref="project-table" style="width: 100%;" height="calc(100vh - 280px)" :data="tableData" row-key="id">
+        <el-table-column label="操作" align="center" width="120px">
+          <template slot-scope="scope">
+            <img src="@/assets/images/yidong.png" alt draggable="true" @dragstart="handleEdit(scope.row)" />
+          </template>
+        </el-table-column>
+        <el-table-column label="提交/保存时间" prop="createTime" width="220px"></el-table-column>
+        <el-table-column label="课程名称" prop="name" width="240px"></el-table-column>
+        <el-table-column label="课程类型" prop="type" width="120px"></el-table-column>
+        <el-table-column label="审核状态" prop="status" width="180px"></el-table-column>
+        <el-table-column label="审核时间" prop="auditTime" width="220px"></el-table-column>
+      </el-table>
+    </div>
+
+    <!-- <el-table :data="list" row-key='id' ref="dragTable" highlight-current-row >
+        <el-table-column label="id" width="60" prop="id"></el-table-column>
+        <el-table-column label="name" prop="name"></el-table-column>
+      </el-table> -->
+
+    <!-- <table border="1" class="tableOrder">
+        <tr>
+          <th>操作</th>
+          <th>提交/保存时间</th>
+          <th>课程名称</th>
+          <th>课程类型</th>
+          <th>审核状态</th>
+          <th>审核时间</th>
+        </tr>
+        <draggable v-model="colors" @update="datadragEnd" :options = "{animation:500}" class="draggable">
+          <transition-group>
+            <tr v-for="item in tableData" :key="item.id">
+              <td><img src="../assets/images/yidong.png" alt /></td>
+              <td>{{item.updateTime}}</td>
+              <td>{{item.name}}</td>
+              <td>{{item.type}}</td>
+              <td>{{item.status}}</td>
+              <td>{{item.auditTime}}</td>
+            </tr>
+          </transition-group>
+        </draggable>
+    </table> -->
+  </div>
+</template>
+
+<script>
+// import draggable from 'vuedraggable'
+import Sortable from 'sortablejs'
+export default {
+  props: {
+    tableData: Array
+  },
+  data() {
+    return {
+      list: [{ id: 1, name: 'aa' }, { id: 2, name: 'bb' }, { id: 3, name: 'cc' }],
+      startArr: [],
+      endArr: [],
+      count: 0
+    }
+  },
+  methods: {
+    getdata(evt) {},
+    datadragEnd(evt) {
+      evt.preventDefault()
+    },
+    handleEdit(val) {
+      const tbody = document.querySelector('.el-table__body-wrapper tbody')
+      const _this = this
+      Sortable.create(tbody, {
+        onEnd({ newIndex, oldIndex }) {
+          const currRow = _this.tableData.splice(oldIndex, 1)[0]
+          _this.tableData.splice(newIndex, 0, currRow)
+        }
+      })
+    }
+  },
+  mounted() {
+    //
+    // 为了防止火狐浏览器拖拽的时候以新标签打开，此代码真实有效
+    // document.body.ondrop = function (event) {
+    //   event.preventDefault()
+    //   event.stopPropagation()
+    // }
+    // this.dragSort()
+    // this.setSort()
+  }
+  // 表格拖动排序
+  // dragSort () {
+  //   const el = this.$refs.singleTable.$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0]
+  //   this.sortable = Sortable.create(el, {
+  //     ghostClass: 'sortable-ghost',
+  //     setData: function (dataTransfer) {
+  //       dataTransfer.setData('Text', '')
+  //     },
+  //     onEnd: e => {
+  //       // e.oldIndex为拖动一行原来的位置，e.newIndex为拖动后新的位置
+  //       const targetRow = this.tableData.splice(e.oldIndex, 1)[0]
+  //       this.tableData.splice(e.newIndex, 0, targetRow)
+  //       const dragId = this.tableData[e.newIndex].id// 拖动行的id
+  //       let oneId, twoId
+  //       // 拖动行的前一行
+  //       if (this.tableData[e.newIndex - 1]) {
+  //         oneId = this.tableData[e.newIndex - 1].id
+  //       } else {
+  //         oneId = ''
+  //       }
+  //       // 拖动行的后一行
+  //       if (this.tableData[e.newIndex + 1]) {
+  //         twoId = this.tableData[e.newIndex + 1].id
+  //       } else {
+  //         twoId = ''
+  //       }
+  //       this.postRequest({
+  //         url: this.dragUrl,
+  //         data: {
+  //           dragId: dragId,
+  //           oneId: oneId,
+  //           twoId: twoId,
+  //           projectId: ''
+  //         },
+  //         success: (result) => {
+  //           if (result) {
+  //             this.$message({
+  //               message: '拖动排序成功!',
+  //               type: 'success'
+  //             })
+  //           } else {
+  //             this.$message({
+  //               message: '拖动排序失败！',
+  //               type: 'error'
+  //             })
+  //           }
+  //         }
+  //       })
+  //     }
+  //   })
+  // },
+  /**
+   * 排序方法
+   */
+  // setSort () {
+  //   const el = this.$refs.dragTable.$el.querySelectorAll('.el-table__body-wrapper > table > tbody')[0]
+  //   this.sortable = Sortable.create(el, {
+  //     ghostClass: 'sortable-ghost',
+  //     setData: function (dataTransfer) {
+  //       dataTransfer.setData('Text', '')
+  //     },
+  //     onEnd: evt => {
+  //       const targetRow = this.list.splice(evt.oldIndex, 1)[0]
+  //       this.list.splice(evt.newIndex, 0, targetRow)
+  //     }
+  //   })
+  // }
+}
+</script>
+
+<style lang="less" scope>
+.courseOrder {
+  .remind {
+    color: #e23732;
+    font-size: 12px;
+    padding: 20px 0 10px 20px;
+  }
+
+  .tableOrder {
+    .draggable {
+      width: 100%;
+    }
+    tr {
+      height: 36px;
+      line-height: 36px;
+      // background-color: #999;
+      th {
+        width: 180px;
+      }
+      td {
+        widows: 180px;
+      }
+    }
+  }
+}
+</style>

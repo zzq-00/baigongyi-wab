@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="_来自百工驿的分享">
+    <!-- Open Graph data -->
+    <meta property="og:title" content="百工驿-热点资讯" />
+    <meta property="og:image" content="../images/baigongyi.png" />
+    <meta property="og:description" content="聚百工之驿，悟工程之道" />
+    <title>百工驿-热点资讯</title>
+
+    <style type="text/css">
+
+    </style>
+    <link href="../stylesheets/base.css" rel="stylesheet">
+    <!-- 分享sdk -->
+    <script src="https://res.wx.qq.com/open/js/jweixin-1.2.0.js"></script>
+   	<script src="https://g.alicdn.com/dingding/open-develop/1.9.0/dingtalk.js"></script>
+    <!-- vue 开发版本 -->
+    <!-- <script src="../javascripts/vue/vue.js"></script> -->
+    <!-- vue 生产版本 -->
+    <script src="../javascripts/vue/vue.min.js"></script>
+    <!-- axios -->
+    <script src="../javascripts/axios/axios.min.js"></script>
+    <!-- lib-flexible -->
+    <script src="../javascripts/lib-flexible/index.min.js"></script>
+    <!-- polyfill -->
+    <script src="../javascripts/polyfill/polyfill.min.js"></script>
+    <!-- api.js -->
+    <script src="../javascripts/api.js"></script>
+    <!-- common.js -->
+    <script src="../javascripts/common.js"></script>
+</head>
+
+<body>
+    <div id="hotnews" class="main" v-cloak>
+        <template v-if="loaded">
+            <div class="title">{{hotNews.title}}</div>
+            <div class="desc">
+                <div>
+                    <span>{{hotNews.sourceName}}</span>
+                    <span>丨</span>
+                    <span>{{convertDate(hotNews.publishTime)}}</span>
+                </div>
+                <div class="flex-align-center">
+                    <i class="eye-icon"></i>
+                    <span>&nbsp;{{hotNews.watchCount}}&nbsp;&nbsp;&nbsp;</span>
+                </div>
+            </div>
+            <div class="content" v-html="hotNews.content"></div>
+            <div class="separate-line"></div>
+            <div class="comment">
+                <div class="comm-label">评论（{{hotNews.commentCount}}条）</div>
+                <input type="text" placeholder="写评论...">
+                <ul>
+                    <li v-for="(comment, index) in comments">
+                        <div class="avatar" :style="{backgroundImage: 'url('+ (comment.avatar ? resource.aliyun + comment.avatar : '../images/icon-fang.png') +')'}"></div>
+                        <div class="comm-box" :class="{'comm-box_line' : index != comments.length - 1}">
+                            <div class="comm-author">
+                                <span>{{comment.nickName}}</span>
+                                <span class="comm-date">{{convertDate(comment.commentsTime)}}</span>
+                            </div>
+                            <div class="comm-content">{{comment.comment}}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="app-open">
+                <div class="app-open-btn" @click="openApp">App内打开</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="like-comm-count">
+                <div class="like-comm-count_box">
+                    <i class="like-icon"></i>
+                    <span>{{hotNews.likeCount}}</span>
+                </div>
+                <div class="like-comm-count_box">
+                    <i class="comm-icon"></i>
+                    <span>{{hotNews.commentCount}}</span>
+                </div>
+            </div>
+        </template>
+    </div>
+</body>
+<script type="text/javascript">
+
+var vm = new Vue({
+    el: "#hotnews",
+    data: {
+        loaded: false,
+        hotNews: {},
+        comments: [],
+        commentParam: {
+            pageNum: 1,
+            pageSize: 3,
+            paramObject: {
+                objId: "",
+                objType: 7
+            }
+        },
+        resource: {},
+        shareConfig: {}
+    },
+    created() {
+        this.getData.call(this);
+    },
+    methods: {
+        getData() {
+            var _this = this;
+            var id = common.getParameterByName("id");
+            _this.commentParam.paramObject.objId = id;
+            api.refreshToken()
+            .then(function(token) {
+                api.resourceInfo(token)
+                .then(function(data) {
+                    _this.resource = data;
+
+                    api.getHotNews(id, token)
+                    .then(function(data) {
+                        _this.hotNews = data;
+                        _this.shareConfig.wechat_title = data.title;
+                        _this.shareConfig.wechat_desc = "_来自百工驿的分享";
+                        _this.shareConfig.wechat_images0 = _this.resource.aliyun + "images/baigongyi.png";
+
+                        api.shareConfig(token)
+                        .then(function(data) {
+                            _this.shareConfig.appId = data.appId;
+                            _this.shareConfig.timestamp = data.timestamp;
+                            _this.shareConfig.nonceStr = data.nonceStr;
+                            _this.shareConfig.signature = data.signature;
+                            _this.shareConfig.url = data.url;
+                            
+                            common.share(_this.shareConfig);
+                        })
+
+                        _this.loaded = true;
+                    })
+                })
+                api.getComments(token, _this.commentParam)
+                .then(function(data) {
+                    _this.comments = data.records;
+                })
+            })
+        },
+        openApp() {
+            common.openApp();
+        },
+        convertDate(datetime) {
+            return common.convertDate(datetime);
+        }
+    }
+});
+    
+</script>
+</html>

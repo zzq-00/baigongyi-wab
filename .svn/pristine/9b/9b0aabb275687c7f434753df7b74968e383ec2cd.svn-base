@@ -1,0 +1,154 @@
+<template>
+    <div id="question" class="main">
+        <template v-if="true">
+            <div class="ques-box">
+                <div class="ques-tags">
+                    <span v-for="(item,index) in questionTagList" :key="index">{{item.tagName1}}-{{item.tagName2}}</span>
+                </div>
+                <div class="ques-title">{{question.title}}</div>
+                <div class="more-answer">{{"查看全部回答"}}&nbsp;<img :src="require('@/assets/images/next.png')" alt=""></div>
+            </div>
+            <div class="separate-box"></div>
+            <div class="answer-box">
+                <div class="author">
+                    <div>
+                        <div class="avatar fl" :style="{backgroundImage: 'url('+ (answer.avatar ? $store.state.imageDomain + answer.avatar : '') +')'}"></div>
+                        <div class="author-name fl">
+                            <span>{{answer.userName}}</span><br>
+                        </div>
+                    </div>
+                    <div class="watch-btn">关注</div>
+                </div>
+                <div class="answer-con" v-html="answer.answerContent"></div>
+                <div class="time-protocol">{{"发布于"+ answer.createTime +" · 著作权归作者所有"}}</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="comment">
+                <div class="comm-label">评论（{{answer.commentCount}}条）</div>
+                <input type="text" placeholder="写评论...">
+                <ul>
+                    <li v-for="(comment, index) in comments" :key="index">
+                        <div class="avatar" :style="{backgroundImage: 'url('+ (comment.avatar ? $store.state.imageDomain + comment.avatar : require('@/assets/images/icon-fang.png')) +')'}"></div>
+                        <div class="comm-box" :class="{'comm-box_line' : index != comments.length - 1}">
+                            <div class="comm-author">
+                                <span>{{comment.nickName}}</span>
+                                <span class="comm-date">{{comment.commentsTime}}</span>
+                            </div>
+                            <div class="comm-content">{{comment.comment}}</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div class="app-open">
+                <div class="app-open-btn" @click="openApp">App内打开</div>
+            </div>
+            <div class="separate-line"></div>
+            <div class="like-comm-count">
+                <div class="like-comm-count_box">
+                    <i class="like-icon"></i>
+                    <span>{{answer.likeCount}}</span>
+                </div>
+                <div class="like-comm-count_box">
+                    <i class="comm-icon"></i>
+                    <span>{{answer.commentCount}}</span>
+                </div>
+            </div>
+        </template>
+    </div>
+</template>
+<script>
+require('@/assets/style/share.css')
+require('@/assets/js/lib-flexible/index.min.js')
+
+import api from "@/fetch"
+import { openApp, share} from '@/assets/js/shareUtil.js'
+export default {
+    data() {
+        return {
+            loaded: false,
+            answerId: "",
+            question: {},
+            answer: {},
+            questionTagList: [],
+            comments: [],
+            commentParam: {
+                pageNum: 1,
+                pageSize: 3,
+                paramObject: {
+                    objId: "",
+                    objType: 9
+                }
+            },
+            shareConfig: {}
+        };
+    },
+    async created() {
+        let _this = this;
+        _this.answerId = _this.$route.query.id;
+        _this.commentParam.paramObject.objId = _this.answerId;
+        let {data: {question: _question, questionAnswerDto: _answer, questionTagList: _questionTagList}} = await api.answerDetails(_this.answerId);
+        _this.question = _question;
+        _this.answer = _answer;
+        _this.questionTags = _questionTagList;
+        _questionTagList.map(item => {
+            item.children.map(items => {
+              _this.questionTagList.push({ tagName1: item.tagName, tagName2: items.tagName })
+            })
+        });
+
+        // 分享参数
+        let {data: _shareConfig} = await api.getShareConfig();
+        _this.shareConfig.appId = _shareConfig.appId;
+        _this.shareConfig.timestamp = _shareConfig.timestamp;
+        _this.shareConfig.nonceStr = _shareConfig.nonceStr;
+        _this.shareConfig.signature = _shareConfig.signature;
+        _this.shareConfig.url = _shareConfig.url;
+        share(_this.shareConfig);
+        // 评论列表
+        api.getCommentList(_this.commentParam)  
+        .then(function(res) {
+            _this.comments = res.data.records;
+            _this.loaded = true;
+        });
+    },
+    methods: {
+        openApp() {
+            openApp();
+        }
+    }
+}
+</script>
+<style lang="less">
+.ques-title{
+    font-size: .4rem;
+    height: .56rem;
+    line-height: .56rem;
+    color: #333;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-bottom: .29rem;
+}
+.more-answer{
+    font-size: .35rem;
+    line-height: .48rem;
+    color: #666;
+    text-align: left;
+    margin-bottom: .35rem;
+}
+.answer-box{
+    padding-top: .27rem;
+}
+.answer-con{
+    font-size: .35rem;
+    line-height: .48rem;
+    color: #666;
+    word-wrap: break-word;
+    margin-bottom: .27rem;
+}
+.time-protocol{
+    font-size: .29rem;
+    line-height: .48rem;
+    color: #999;
+    margin-bottom: .43rem;
+}
+</style>

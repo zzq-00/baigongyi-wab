@@ -1,0 +1,103 @@
+<template>
+  <div class='engineering'>
+    <ul class='engineering_left'>
+      <li v-for='(item,index) in menuList' :key='index' :class="{active:currentIndex==item}" @click='currentIndexFn(item)'>
+        {{item}}
+      </li>
+    </ul>
+    <div class='engineering_right'>
+      <div class='engineering_box_left'>
+        <div class='engineering_box_left_top'>
+          <!-- 发布想法 -->
+          <ideaPublishCom @publishFinish="publishFinish" :key="updataKey" VueEmojiHeight="68" />
+        </div>
+        <div class="engineering_box_left_bottom">
+          <ideaListCom :key="updataKey" />
+        </div>
+      </div>
+      <fabulousList :type="type"></fabulousList>
+    </div>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+import ideaPublishCom from '@/components/ideaPublishCom'
+import ideaListCom from '@/components/ideaListCom'
+import fabulousList from '@/components/fabulousList'
+export default {
+  components: {
+    ideaPublishCom,
+    ideaListCom,
+    fabulousList
+  },
+  data() {
+    return {
+      updataKey: 1,
+      currentIndex: this.$route.query.currentIndex || '最新',
+      menuList: ['最新', '热门', '关注'],
+      type: 'idea'
+    }
+  },
+  methods: {
+    // 发布成功
+    publishFinish() {
+      this.updataKey++
+    },
+    currentIndexFn(index) {
+      this.updataKey++
+      this.currentIndex = index
+      this.$router.replace('/engineering?currentIndex=' + index)
+    }
+  },
+  mounted() {}
+}
+</script>
+
+<style lang="less" scoped>
+.engineering {
+  margin-top: 20px;
+  display: flex;
+}
+
+.engineering_left {
+  width: 100px;
+  > li {
+    cursor: pointer;
+    height: 40px;
+    line-height: 40px;
+    color: #333333;
+    background-color: #ffffff;
+    text-align: center;
+    border-radius: 6px;
+    margin-bottom: 6px;
+    &.active {
+      background-color: #e23732;
+      color: #fff;
+    }
+  }
+}
+
+.engineering_right {
+  flex: 1;
+  overflow: hidden;
+  margin-left: 20px;
+  display: flex;
+  .engineering_box_left {
+    flex: 1;
+    overflow: hidden;
+    margin-right: 20px;
+    .engineering_box_left_top {
+      border-radius: 10px;
+      background-color: #fff;
+      padding: 20px 20px 8px;
+    }
+    .engineering_box_left_bottom {
+      height: calc(100vh - 320px);
+      border-radius: 10px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+  }
+}
+</style>

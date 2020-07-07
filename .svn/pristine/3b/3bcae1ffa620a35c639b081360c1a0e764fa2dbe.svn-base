@@ -1,0 +1,114 @@
+<template>
+  <div class="publishArt">
+    <div class="title font-12">
+      <p class="active">我的文章（已发布）</p>
+      <div>
+        <span style="cursor: pointer;" :class="{'active': params.orderBy==='publish_time'}" @click="sortData('publish_time')">按发布时间排序</span>
+        |
+        <span style="cursor: pointer;" :class="{'active': params.orderBy==='watch_count'}" @click="sortData('watch_count')">按阅读量排序</span>
+      </div>
+    </div>
+    <div class="content">
+      <el-scrollbar class="scroll-wrap">
+        <div v-infinite-scroll="getArticlelist" infinite-scroll-disabled="disabled" style="padding: 12px 20px 20px 20px;">
+          <articelCom v-for="(item, index) in articleList" :articleData="item" :key="index" @getNewData='getNewData'></articelCom>
+        </div>
+        <p v-if="loading" class="nomore-data">加载中...</p>
+        <p v-if="noMore" class="nomore-data">没有更多了</p>
+      </el-scrollbar>
+    </div>
+  </div>
+</template>
+
+<script>
+import articelCom from './components/articelCom'
+import api from '@/fetch'
+
+export default {
+  name: 'publishArt',
+  components: {
+    articelCom
+  },
+  data() {
+    return {
+      params: {
+        asc: false,
+        orderBy: 'publish_time', // watch_count阅读量排序  publish_time发布时间排序
+        pageNum: 1,
+        pageSize: 10,
+        paramObject: {
+          flag: 7
+        }
+      },
+      totalDraft: 1,
+      articleList: [],
+      loading: false
+    }
+  },
+  computed: {
+    noMore() {
+      return this.articleList.length >= this.totalDraft
+    },
+    disabled() {
+      return this.loading || this.noMore
+    }
+  },
+  methods: {
+    sortData(orderBy) {
+      this.articleList = []
+      this.params.orderBy = orderBy
+      this.params.pageNum = 1
+      this.getArticlelist()
+    },
+    // 文章列表
+    getArticlelist() {
+      this.loading = true
+      api.getArticlelist(this.params).then(res => {
+        this.loading = false
+        this.totalDraft = res.data.total
+        this.articleList = [...this.articleList, ...res.data.records]
+        !this.noMore && this.params.pageNum++
+      })
+    },
+    getNewData(delData) {
+      let index = this.articleList.findIndex(item => item === delData)
+      this.articleList.splice(index, 1)
+      if (!this.articleList.length) {
+        this.params.pageNum = 1
+        this.getArticlelist()
+      }
+    }
+  },
+  mounted() {
+    this.getArticlelist()
+  }
+}
+</script>
+
+<style lang="less" scoped>
+.publishArt {
+  .title {
+    padding: 10px 20px;
+    background-color: #fff3f3;
+    display: flex;
+    justify-content: space-between;
+    .active {
+      color: #e23732;
+    }
+  }
+  .content {
+    background-color: #fff;
+    .scroll-wrap {
+      height: calc(100vh - 450px);
+      /deep/ .el-scrollbar__wrap {
+        overflow-x: hidden;
+      }
+    }
+  }
+}
+.nomore-data {
+  text-align: center;
+  margin: 5px 0 10px;
+  color: #999;
+}
+</style>

@@ -1,0 +1,80 @@
+<template>
+  <div>
+    <el-upload accept="video/*" :file-list="fileList" :action="uploadUrl" :limit="1" :data="uploadData" :before-upload="beforeUpload" :on-success="handleSuccess" :on-error="handleError" :on-remove="handleRemove" :on-exceed="handleExceed">
+      <el-button size="small" type="danger">上传视频</el-button>
+    </el-upload>
+  </div>
+</template>
+
+<script>
+import api from '@/fetch'
+export default {
+  props: {
+    value: Object
+  },
+  data() {
+    return {
+      fileList: [],
+      uploadUrl: 'http://up-z1.qiniu.com',
+      videoDomain: '',
+      fileSuffix: ['.flv', '.mov', '.mp4'],
+      uploadData: {
+        key: '',
+        token: ''
+      }
+    }
+  },
+  watch: {
+    value: function(val) {
+      this.fileList = [{name: val.originalFileName, size: 999}]
+    }
+  },
+  methods: {
+    // 获取后缀名
+    get_suffix(filename) {
+      let pos = filename.lastIndexOf('.')
+      return pos != -1 ? filename.substring(pos).toLowerCase() : ''
+    },
+    getSystemDate() {
+      var systemDate = new Date()
+      var year = systemDate.getFullYear() // 获取当年
+      var month = systemDate.getMonth() + 1 // 获取当月 （月+1是因为js中月份是按0开始的）
+      var day = systemDate.getDate() // 获取当日
+      day = day < 10 ? '0' + day : day
+      month = month < 10 ? '0' + month : month
+      return year + month + day
+    },
+    handleRemove(file, fileList) {
+      this.$emit('getValue', {
+        url: '',
+        originalFileName: ''
+      })
+    },
+    handleSuccess(res, file, fileList) {
+      this.$emit('getValue', {
+        url: this.videoDomain + res.key,
+        originalFileName: file.name
+      })
+    },
+    handleError(err, file, fileList) {
+      this.$message.error('上传文件出错')
+      this.$emit('getValue', {
+        url: '',
+        originalFileName: ''
+      })
+    },
+    async beforeUpload(file) {
+      let fileType = this.get_suffix(file.name)
+      if (!this.fileSuffix.includes(fileType)) return this.$message.warning('上传文件只能是 mp4，flv，mov 格式!')
+      if (file.size > 2147483648) return this.$message.error('上传文件大小不能超过 2GB!')
+      this.uploadData.key = `/video/${this.getSystemDate()}/${file.name}`
+      const { data } = await api.getUploadToken()
+      this.uploadData.token = data.videoUpToken
+      this.videoDomain = data.videoDomain
+    },
+    handleExceed() {
+      this.$message.warning('当前限制上传一个视频')
+    }
+  }
+}
+</script>
